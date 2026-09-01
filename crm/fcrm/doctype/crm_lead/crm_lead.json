@@ -21,6 +21,7 @@
   "details",
   "organization",
   "website",
+  "instagram_sender_id",
   "territory",
   "industry",
   "job_title",
@@ -419,6 +420,14 @@
   {
    "fieldname": "column_break_opsm",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "instagram_sender_id",
+   "fieldtype": "Data",
+   "label": "Instagram Sender ID",
+   "no_copy": 1,
+   "read_only": 1,
+   "description": "Set automatically when a lead is created from an Instagram DM. Used to route replies back to the right conversation."
   }
  ],
  "grid_page_length": 50,

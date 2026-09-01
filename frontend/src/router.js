@@ -49,6 +49,12 @@ const routes = [
     props: true,
   },
   {
+    alias: '/instagram',
+    path: '/instagram/view/:viewType?',
+    name: 'Instagram',
+    component: () => import('@/pages/InstagramMessages.vue'),
+  },
+  {
     alias: '/financeiro',
     path: '/financeiro/view/:viewType?',
     name: 'Financeiro',

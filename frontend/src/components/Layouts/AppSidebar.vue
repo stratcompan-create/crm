@@ -269,6 +269,11 @@ const links = [
     to: 'Financeiro',
   },
   {
+    label: 'Instagram',
+    icon: CommentIcon,
+    to: 'Instagram',
+  },
+  {
     label: 'Deals',
     icon: DealsIcon,
     to: 'Deals',
@@ -362,6 +367,8 @@ function getIcon(routeName, icon) {
       return LeadsIcon
     case 'Financeiro':
       return MoneyIcon
+    case 'Instagram':
+      return CommentIcon
     case 'Deals':
       return DealsIcon
     case 'Contacts':
