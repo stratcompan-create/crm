@@ -1,5 +1,17 @@
 @import 'frappe-ui/style.css';
 
+/* Stratcompany brand accent — overrides only the solid/primary button
+   shades (surface-gray-8/9/10), used across the app for the main CTA
+   button (Button theme="gray" variant="solid"). Everything else in the
+   frappe-ui gray scale (body text, borders, subtle backgrounds) is left
+   untouched on purpose, so contrast/legibility elsewhere isn't affected. */
+:root,
+[data-theme='dark'] {
+  --surface-gray-10: #042d3c; /* default */
+  --surface-gray-9: #0f4655; /* hover */
+  --surface-gray-8: #8aa1a9; /* active */
+}
+
 @layer components {
   .prose-f {
     @apply break-all
