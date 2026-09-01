@@ -80,7 +80,7 @@ import ViewBreadcrumbs from '@/components/ViewBreadcrumbs.vue'
 import LayoutHeader from '@/components/LayoutHeader.vue'
 import ViewControls from '@/components/ViewControls.vue'
 import EmptyState from '@/components/ListViews/EmptyState.vue'
-import ChatIcon from '@/components/Icons/CommentIcon.vue'
+import ChatIcon from '@/components/Icons/InstagramIcon.vue'
 import { formatDate } from '@/utils'
 import { timestampCell } from '@/composables/useTimelinePreferences'
 import {
