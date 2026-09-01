@@ -1,0 +1,6 @@
+# Force LF for shell scripts regardless of the cloning machine's core.autocrlf
+# setting. On Windows (autocrlf=true), init.sh was silently rewritten to CRLF
+# on a routine `git clone`/checkout, which bash inside the Linux container
+# can't parse ("$'\r': command not found") — it only surfaced once the
+# container restarted and re-read the file from the bind-mounted host folder.
+*.sh text eol=lf
