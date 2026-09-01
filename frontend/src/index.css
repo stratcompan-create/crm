@@ -12,6 +12,29 @@
   --surface-gray-8: #8aa1a9; /* active */
 }
 
+/* Stratcompany brand — sidebar. Scoped to .stratcompany-sidebar (the
+   AppSidebar root) so it never touches the same tokens used elsewhere in
+   the app (buttons, cards, etc. keep the default frappe-ui gray scale).
+   --surface-sidebar covers the <Sidebar> component's own background (it's
+   opaque in light mode and would otherwise cover the bg-[#8aa1a9] set on
+   this wrapper); --ink-gray-* covers every icon/label inside, since they
+   all read from text-ink-gray-N utilities which resolve these vars. */
+.stratcompany-sidebar {
+  --surface-sidebar: #8aa1a9;
+  --ink-gray-1: #042d3c;
+  --ink-gray-2: #042d3c;
+  --ink-gray-3: #042d3c;
+  --ink-gray-4: #042d3c;
+  --ink-gray-5: #042d3c;
+  --ink-gray-6: #042d3c;
+  --ink-gray-7: #042d3c;
+  --ink-gray-8: #042d3c;
+  --ink-gray-9: #042d3c;
+  --ink-gray-10: #042d3c;
+  --ink-gray-11: #042d3c;
+  --ink-gray-12: #042d3c;
+}
+
 @layer components {
   .prose-f {
     @apply break-all
