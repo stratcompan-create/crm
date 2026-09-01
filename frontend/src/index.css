@@ -21,6 +21,13 @@
    all read from text-ink-gray-N utilities which resolve these vars. */
 .stratcompany-sidebar {
   --surface-sidebar: #8aa1a9;
+  /* SidebarItem hover uses --surface-gray-2, its active/current-page state
+     uses --surface-elevation-3 (see frappe-ui SidebarItem.vue) — both are
+     dark shades in dark mode, which combined with the navy text below is
+     unreadable. Force both to white so the highlight band stays legible
+     in either theme. */
+  --surface-gray-2: #ffffff;
+  --surface-elevation-3: #ffffff;
   --ink-gray-1: #042d3c;
   --ink-gray-2: #042d3c;
   --ink-gray-3: #042d3c;
