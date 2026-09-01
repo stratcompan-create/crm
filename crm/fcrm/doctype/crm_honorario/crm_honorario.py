@@ -24,4 +24,58 @@ class CRMHonorario(Document):
 		valor: DF.Currency
 	# end: auto-generated types
 
-	pass
+	@staticmethod
+	def default_list_data():
+		columns = [
+			{
+				"label": "Cliente / Deal",
+				"type": "Link",
+				"key": "deal",
+				"width": "12rem",
+			},
+			{
+				"label": "Status",
+				"type": "Select",
+				"key": "status",
+				"width": "8rem",
+			},
+			{
+				"label": "Tipo de Honorário",
+				"type": "Select",
+				"key": "tipo_honorario",
+				"width": "10rem",
+			},
+			{
+				"label": "Valor",
+				"type": "Currency",
+				"key": "valor",
+				"width": "8rem",
+			},
+			{
+				"label": "Forma de Pagamento",
+				"type": "Select",
+				"key": "forma_pagamento",
+				"width": "10rem",
+			},
+			{
+				"label": "Data de Vencimento",
+				"type": "Date",
+				"key": "data_vencimento",
+				"width": "8rem",
+			},
+		]
+
+		rows = [
+			"name",
+			"deal",
+			"status",
+			"tipo_honorario",
+			"valor",
+			"forma_pagamento",
+			"parcelas",
+			"data_vencimento",
+			"data_pagamento",
+			"observacoes",
+			"modified",
+		]
+		return {"columns": columns, "rows": rows}
