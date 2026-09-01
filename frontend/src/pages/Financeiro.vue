@@ -21,7 +21,6 @@
     doctype="CRM Honorario"
     :options="{
       allowedViews: ['list'],
-      defaultViewName: __('Financeiro View'),
     }"
   />
   <ListView
