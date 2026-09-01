@@ -174,7 +174,7 @@
 <script setup>
 import BrushCleaningIcon from '~icons/lucide/brush-cleaning'
 import LucideLayoutDashboard from '~icons/lucide/layout-dashboard'
-import LucideInstagram from '~icons/lucide/instagram'
+import InstagramIcon from '@/components/Icons/InstagramIcon.vue'
 import CRMLogo from '@/components/Icons/CRMLogo.vue'
 import InviteIcon from '@/components/Icons/InviteIcon.vue'
 import ConvertIcon from '@/components/Icons/ConvertIcon.vue'
@@ -271,7 +271,7 @@ const links = [
   },
   {
     label: 'Instagram',
-    icon: LucideInstagram,
+    icon: InstagramIcon,
     to: 'Instagram',
   },
   {
@@ -369,7 +369,7 @@ function getIcon(routeName, icon) {
     case 'Financeiro':
       return MoneyIcon
     case 'Instagram':
-      return LucideInstagram
+      return InstagramIcon
     case 'Deals':
       return DealsIcon
     case 'Contacts':
