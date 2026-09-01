@@ -8,7 +8,7 @@
        column falls through to the white page canvas. The token cannot be
        overridden on the Sidebar element itself — `bg-surface-sidebar` is emitted
        after `bg-surface-gray-1` in the utilities layer and would win. -->
-  <div class="relative flex h-full bg-surface-gray-1">
+  <div class="relative flex h-full bg-[#8aa1a9]">
     <Sidebar
       v-model:collapsed="isSidebarCollapsed"
       :disable-collapse="mobile"
