@@ -26,6 +26,7 @@
   "linkedin",
   "twitter",
   "facebook",
+  "instagram_sender_id",
   "territory",
   "industry",
   "job_title",
@@ -462,6 +463,14 @@
    "fieldtype": "Data",
    "label": "Facebook",
    "no_copy": 1
+  },
+  {
+   "fieldname": "instagram_sender_id",
+   "fieldtype": "Data",
+   "label": "Instagram Sender ID",
+   "no_copy": 1,
+   "read_only": 1,
+   "description": "Set automatically when a lead is created from an Instagram DM. Used to route replies back to the right conversation."
   }
  ],
  "grid_page_length": 50,
