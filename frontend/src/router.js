@@ -49,6 +49,12 @@ const routes = [
     props: true,
   },
   {
+    alias: '/financeiro',
+    path: '/financeiro/view/:viewType?',
+    name: 'Financeiro',
+    component: () => import('@/pages/Financeiro.vue'),
+  },
+  {
     alias: '/deals',
     path: '/deals/view/:viewType?',
     name: 'Deals',
