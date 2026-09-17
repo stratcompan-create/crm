@@ -8926,3 +8926,10 @@ msgstr "⚠️ Nenhum dado encontrado para o campo pai: {0}"
 msgid "⚠️ No row found for idx: {0} in parent field: {1}"
 msgstr "⚠️ Nenhuma linha encontrada para idx: {0} no campo pai: {1}"
 
+
+
+msgid "Forecasted"
+msgstr "Previsto"
+
+msgid "Actual"
+msgstr "Realizado"

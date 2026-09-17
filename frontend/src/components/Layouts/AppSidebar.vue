@@ -736,6 +736,12 @@ onMounted(async () => {
   })
 
   setUp(filteredSteps)
+  // setUp() force-opens the Help/onboarding panel ("Welcome to Frappe CRM" +
+  // steps checklist) on every mount for any user who hasn't completed it —
+  // not something a resold law-firm CRM should show. Suppress that auto-open;
+  // the panel is still reachable normally once onboarding tracking is used
+  // elsewhere.
+  showHelpModal.value = false
 })
 
 // help center
