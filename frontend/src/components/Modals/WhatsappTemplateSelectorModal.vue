@@ -38,16 +38,16 @@
         >
           <div
             class="border-b pb-2 text-base-semibold truncate"
-            :title="template.name"
+            :title="template.template_label"
           >
-            {{ template.name }}
+            {{ template.template_label }}
           </div>
           <!-- content is passed through sanitizeHTML() (DOMPurify) before rendering, so v-html is safe here -->
           <!-- eslint-disable vue/no-v-html -->
           <div
-            v-if="template.template"
+            v-if="template.message"
             class="prose-f prose-sm max-w-none !text-sm text-ink-gray-5 flex-1 overflow-hidden"
-            v-html="sanitizeHTML(template.template)"
+            v-html="sanitizeHTML(template.message)"
           />
           <!-- eslint-enable vue/no-v-html -->
         </div>
@@ -86,10 +86,10 @@ const search = ref('')
 
 const templates = createListResource({
   type: 'list',
-  doctype: 'WhatsApp Templates',
+  doctype: 'WhatsApp Template',
   cache: ['whatsappTemplates'],
-  fields: ['name', 'template', 'footer'],
-  filters: { status: 'APPROVED', for_doctype: ['in', [props.doctype, '']] },
+  fields: ['name', 'template_label', 'message', 'footer'],
+  filters: { status: 'Approved', reference_doctype: ['in', [props.doctype, '']] },
   orderBy: 'modified desc',
   pageLength: 99999,
 })
@@ -103,14 +103,16 @@ onMounted(() => {
 const filteredTemplates = computed(() => {
   return (
     templates.data?.filter((template) => {
-      return template.name.toLowerCase().includes(search.value.toLowerCase())
+      return (template.template_label || '')
+        .toLowerCase()
+        .includes(search.value.toLowerCase())
     }) ?? []
   )
 })
 
 function newWhatsappTemplate() {
   show.value = false
-  window.open('/app/whatsapp-templates/new')
+  window.open('/app/whatsapp-template/new')
 }
 
 watch(show, (value) => value && nextTick(() => searchInput.value?.el?.focus()))

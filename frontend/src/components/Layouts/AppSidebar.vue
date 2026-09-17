@@ -49,6 +49,7 @@
           </SidebarItem>
 
           <CollapsibleSection
+            v-if="isCrmSection"
             v-for="section in allViews"
             :key="section.name"
             :label="section.name"
@@ -96,6 +97,29 @@
               </SidebarItem>
             </nav>
           </CollapsibleSection>
+
+          <nav v-if="isFinanceiroSection" class="flex flex-col gap-1">
+            <SidebarItem
+              v-for="link in financeiroLinks"
+              :key="link.key"
+              :to="link.to"
+              :label="__(link.label)"
+              :active="activeItem === link.key"
+              @click="selectItem($event, link.key)"
+            >
+              <template #prefix>
+                <Icon :icon="link.icon" class="size-4 text-ink-gray-7" />
+              </template>
+              <Tooltip
+                :text="__(link.label)"
+                placement="right"
+                :hoverDelay="1.5"
+                :disabled="isCollapsed"
+              >
+                <span class="truncate text-sm">{{ __(link.label) }}</span>
+              </Tooltip>
+            </SidebarItem>
+          </nav>
         </div>
 
         <div v-if="!mobile" class="mt-auto flex flex-col gap-1 pt-2">
@@ -109,10 +133,6 @@
               v-if="isFCSite"
               :isSidebarCollapsed="isCollapsed"
               :afterUpgrade="() => capture('upgrade_plan_from_trial_banner')"
-            />
-            <GettingStartedBanner
-              v-if="!isOnboardingStepsCompleted"
-              :isSidebarCollapsed="isCollapsed"
             />
           </div>
           <SidebarItem
@@ -173,7 +193,11 @@
 
 <script setup>
 import BrushCleaningIcon from '~icons/lucide/brush-cleaning'
-import LucideLayoutDashboard from '~icons/lucide/layout-dashboard'
+import TargetIcon from '~icons/lucide/target'
+import ReportIcon from '~icons/lucide/bar-chart-3'
+import CalculatorIcon from '~icons/lucide/calculator'
+import HeartPulseIcon from '~icons/lucide/heart-pulse'
+import EstimatorIcon from '~icons/lucide/ruler'
 import InstagramIcon from '@/components/Icons/InstagramIcon.vue'
 import CRMLogo from '@/components/Icons/CRMLogo.vue'
 import InviteIcon from '@/components/Icons/InviteIcon.vue'
@@ -219,7 +243,6 @@ import {
   SignupBanner,
   TrialBanner,
   HelpModal,
-  GettingStartedBanner,
   useOnboarding,
   showHelpModal,
   minimize,
@@ -253,27 +276,82 @@ const isCollapsed = computed(() => isSidebarCollapsed.value && !props.mobile)
 const isFCSite = ref(window.is_fc_site)
 const isDemoSite = ref(window.is_demo_site)
 
-const links = [
+// Only the classic CRM routes (Leads, Deals, Contacts...) show this nav list —
+// Dashboard, Instagram and Financeiro moved to the horizontal TopNav and are
+// each a single destination, so they don't need a sidebar list under them.
+const CRM_ROUTE_NAMES = [
+  'Leads',
+  'Lead',
+  'Deals',
+  'Deal',
+  'Notes',
+  'Tasks',
+  'Contacts',
+  'Contact',
+  'Organizations',
+  'Organization',
+  'Call Logs',
+  'Calendar',
+]
+const isCrmSection = computed(() => CRM_ROUTE_NAMES.includes(route.name))
+
+// The Financeiro tab gets its own small, fixed sidebar (Honorários, Metas,
+// and whatever else lands under it) instead of the CRM saved-views list.
+const FINANCEIRO_ROUTE_NAMES = [
+  'Financeiro',
+  'Financeiro Metas',
+  'Financeiro Relatorios',
+  'Financeiro Saude',
+  'Financeiro Calculadora',
+  'Financeiro Estimador',
+]
+const isFinanceiroSection = computed(() =>
+  FINANCEIRO_ROUTE_NAMES.includes(route.name),
+)
+const financeiroLinks = [
   {
-    label: 'Dashboard',
-    icon: LucideLayoutDashboard,
-    to: 'Dashboard',
-    condition: () => !props.mobile,
+    label: 'Honorários',
+    icon: MoneyIcon,
+    key: 'Financeiro',
+    to: { name: 'Financeiro' },
   },
+  {
+    label: 'Metas',
+    icon: TargetIcon,
+    key: 'Financeiro Metas',
+    to: { name: 'Financeiro Metas' },
+  },
+  {
+    label: 'Relatórios',
+    icon: ReportIcon,
+    key: 'Financeiro Relatorios',
+    to: { name: 'Financeiro Relatorios' },
+  },
+  {
+    label: 'Saúde Financeira',
+    icon: HeartPulseIcon,
+    key: 'Financeiro Saude',
+    to: { name: 'Financeiro Saude' },
+  },
+  {
+    label: 'Calculadora',
+    icon: CalculatorIcon,
+    key: 'Financeiro Calculadora',
+    to: { name: 'Financeiro Calculadora' },
+  },
+  {
+    label: 'Estimador de Projeto',
+    icon: EstimatorIcon,
+    key: 'Financeiro Estimador',
+    to: { name: 'Financeiro Estimador' },
+  },
+]
+
+const links = [
   {
     label: 'Leads',
     icon: LeadsIcon,
     to: 'Leads',
-  },
-  {
-    label: 'Financeiro',
-    icon: MoneyIcon,
-    to: 'Financeiro',
-  },
-  {
-    label: 'Instagram',
-    icon: InstagramIcon,
-    to: 'Instagram',
   },
   {
     label: 'Deals',

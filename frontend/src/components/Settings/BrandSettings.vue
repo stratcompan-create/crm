@@ -44,6 +44,27 @@
       </div>
       <div class="h-px border-t border-outline-elevation-2" />
 
+      <!-- website url -->
+      <div class="flex items-center justify-between gap-8">
+        <div class="flex flex-col">
+          <div class="text-p-base-medium text-ink-gray-7 truncate">
+            {{ __('Site do Escritório') }}
+          </div>
+          <div class="text-p-sm text-ink-gray-5">
+            {{ __('Usado no botão "Meu Site" do menu superior.') }}
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <FormControl
+            v-model="settings.doc.website_url"
+            type="text"
+            size="md"
+            :placeholder="__('https://seusite.com')"
+          />
+        </div>
+      </div>
+      <div class="h-px border-t border-outline-elevation-2" />
+
       <!-- logo -->
       <div class="flex flex-col justify-between gap-4">
         <div class="flex items-center flex-1 gap-5">

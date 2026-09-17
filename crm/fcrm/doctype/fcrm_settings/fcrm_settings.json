@@ -27,6 +27,7 @@
   "brand_name",
   "brand_logo",
   "favicon",
+  "website_url",
   "calendar_tab",
   "default_reminder_section",
   "default_calendar_view",
@@ -78,6 +79,13 @@
    "fieldname": "favicon",
    "fieldtype": "Attach",
    "label": "Favicon"
+  },
+  {
+   "description": "Endereço do site institucional do escritório/cliente. Usado na aba \"Meu Site\" do menu superior.",
+   "fieldname": "website_url",
+   "fieldtype": "Data",
+   "label": "Site do Escritório",
+   "options": "URL"
   },
   {
    "default": "0",

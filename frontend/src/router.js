@@ -55,10 +55,40 @@ const routes = [
     component: () => import('@/pages/InstagramMessages.vue'),
   },
   {
+    path: '/whatsapp',
+    name: 'WhatsApp',
+    component: () => import('@/pages/WhatsAppMessages.vue'),
+  },
+  {
     alias: '/financeiro',
     path: '/financeiro/view/:viewType?',
     name: 'Financeiro',
     component: () => import('@/pages/Financeiro.vue'),
+  },
+  {
+    path: '/financeiro/metas',
+    name: 'Financeiro Metas',
+    component: () => import('@/pages/FinanceiroGoals.vue'),
+  },
+  {
+    path: '/financeiro/relatorios',
+    name: 'Financeiro Relatorios',
+    component: () => import('@/pages/FinanceiroReports.vue'),
+  },
+  {
+    path: '/financeiro/saude-financeira',
+    name: 'Financeiro Saude',
+    component: () => import('@/pages/FinanceiroCalculator.vue'),
+  },
+  {
+    path: '/financeiro/calculadora',
+    name: 'Financeiro Calculadora',
+    component: () => import('@/pages/FinanceiroCalculadora.vue'),
+  },
+  {
+    path: '/financeiro/estimador',
+    name: 'Financeiro Estimador',
+    component: () => import('@/pages/FinanceiroEstimador.vue'),
   },
   {
     alias: '/deals',

@@ -1,0 +1,74 @@
+{
+ "actions": [],
+ "creation": "2026-09-17 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "meta_trimestral",
+  "column_break_1",
+  "teto_despesa",
+  "section_break_1",
+  "meta_mrr"
+ ],
+ "fields": [
+  {
+   "fieldname": "meta_trimestral",
+   "fieldtype": "Currency",
+   "label": "Meta Trimestral de Receita",
+   "options": "BRL"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "teto_despesa",
+   "fieldtype": "Currency",
+   "label": "Teto de Despesa Mensal",
+   "options": "BRL"
+  },
+  {
+   "fieldname": "section_break_1",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "meta_mrr",
+   "fieldtype": "Currency",
+   "label": "Meta de Receita Recorrente Mensal (MRR)",
+   "options": "BRL"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-09-17 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "FCRM",
+ "name": "CRM Financial Goals",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "Sales Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

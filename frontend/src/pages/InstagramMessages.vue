@@ -3,6 +3,16 @@
     <template #left-header>
       <ViewBreadcrumbs v-model="viewControls" routeName="Instagram" />
     </template>
+    <template #right-header>
+      <Button
+        :label="__('Configurações')"
+        @click="openInstagramSettings"
+      >
+        <template #prefix>
+          <SettingsIcon class="size-4" />
+        </template>
+      </Button>
+    </template>
   </LayoutHeader>
   <ViewControls
     ref="viewControls"
@@ -81,8 +91,10 @@ import LayoutHeader from '@/components/LayoutHeader.vue'
 import ViewControls from '@/components/ViewControls.vue'
 import EmptyState from '@/components/ListViews/EmptyState.vue'
 import ChatIcon from '@/components/Icons/InstagramIcon.vue'
+import SettingsIcon from '@/components/Icons/SettingsIcon.vue'
 import { formatDate } from '@/utils'
 import { timestampCell } from '@/composables/useTimelinePreferences'
+import { showSettings, activeSettingsPage } from '@/composables/settings'
 import {
   ListView,
   ListHeader,
@@ -109,6 +121,11 @@ const rows = computed(() => {
 })
 
 const columns = computed(() => messages.value?.data?.columns || [])
+
+function openInstagramSettings() {
+  showSettings.value = true
+  activeSettingsPage.value = 'Instagram'
+}
 
 function parseRows(data, columns = []) {
   return data.map((msg) => {
