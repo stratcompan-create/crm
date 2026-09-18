@@ -81,7 +81,10 @@
   "status_change_log",
   "lost_details_tab",
   "lost_reason",
-  "lost_notes"
+  "lost_notes",
+  "budget_tab",
+  "budget_items",
+  "budget_discount"
  ],
  "fields": [
   {
@@ -515,6 +518,23 @@
    "fieldtype": "Data",
    "label": "Facebook",
    "no_copy": 1
+  },
+  {
+   "fieldname": "budget_tab",
+   "fieldtype": "Tab Break",
+   "label": "Budget"
+  },
+  {
+   "fieldname": "budget_items",
+   "fieldtype": "Table",
+   "label": "Budget Items",
+   "options": "CRM Budget Item"
+  },
+  {
+   "default": "0",
+   "fieldname": "budget_discount",
+   "fieldtype": "Currency",
+   "label": "Budget Discount"
   }
  ],
  "grid_page_length": 50,

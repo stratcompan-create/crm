@@ -171,11 +171,11 @@ function clearAll() {
   background: #dfe5e6;
 }
 .calc-btn-equals {
-  background: #8aa1a9;
+  background: var(--stratcompany-accent, #8aa1a9);
   color: white;
   font-weight: 600;
 }
 .calc-btn-equals:hover {
-  background: #79939c;
+  filter: brightness(0.9);
 }
 </style>

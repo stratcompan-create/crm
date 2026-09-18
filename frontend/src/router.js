@@ -34,7 +34,7 @@ const routes = [
   {
     path: '/dashboard',
     name: 'Dashboard',
-    component: () => import('@/pages/Dashboard.vue'),
+    component: () => import('@/pages/VisaoGeral.vue'),
   },
   {
     alias: '/leads',
@@ -58,6 +58,11 @@ const routes = [
     path: '/whatsapp',
     name: 'WhatsApp',
     component: () => import('@/pages/WhatsAppMessages.vue'),
+  },
+  {
+    path: '/meu-site',
+    name: 'MeuSite',
+    component: () => import('@/pages/MeuSite.vue'),
   },
   {
     alias: '/financeiro',
@@ -137,6 +142,16 @@ const routes = [
     name: 'Organization',
     component: () => import(`@/pages/${handleMobileView('Organization')}.vue`),
     props: true,
+  },
+  {
+    path: '/contas',
+    name: 'Contas',
+    component: () => import('@/pages/Contas.vue'),
+  },
+  {
+    path: '/equipe',
+    name: 'Equipe',
+    component: () => import('@/pages/Equipe.vue'),
   },
   {
     alias: '/call-logs',

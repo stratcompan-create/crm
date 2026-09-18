@@ -8933,3 +8933,843 @@ msgstr "Previsto"
 
 msgid "Actual"
 msgstr "Realizado"
+
+msgid "A section can have up to {0} columns"
+msgstr "Uma seção pode ter até {0} colunas"
+
+msgid "A website is required."
+msgstr "Um site é obrigatório."
+
+msgid "Access key for {0}. Required for fetching exchange rates."
+msgstr "Chave de acesso para {0}. Necessária para buscar taxas de câmbio."
+
+msgid "Add a description to help people fill out this form"
+msgstr "Adicione uma descrição para ajudar as pessoas a preencherem este formulário"
+
+msgid "Add fields to see them here."
+msgstr "Adicione campos para vê-los aqui."
+
+msgid "Allowed domains"
+msgstr "Domínios permitidos"
+
+msgid "An Error Occurred"
+msgstr "Ocorreu um Erro"
+
+msgid "An SLA set as default cannot be disabled"
+msgstr "Um SLA definido como padrão não pode ser desativado"
+
+msgid "Are you sure you want to clear assignment for {0} item(s)?"
+msgstr "Tem certeza que deseja limpar a atribuição de {0} item(ns)?"
+
+msgid "Are you sure you want to convert {0} lead(s) to deal(s)?"
+msgstr "Tem certeza que deseja converter {0} lead(s) em negócio(s)?"
+
+msgid "Are you sure you want to delete \"{0}\" view?"
+msgstr "Tem certeza que deseja excluir a visualização \"{0}\"?"
+
+msgid "Are you sure you want to delete {0} - {1}?"
+msgstr "Tem certeza que deseja excluir {0} - {1}?"
+
+msgid "Are you sure you want to delete {0} items?"
+msgstr "Tem certeza que deseja excluir {0} itens?"
+
+msgid "Are you sure you want to delete {0} linked doc(s)?"
+msgstr "Tem certeza que deseja excluir {0} documento(s) vinculado(s)?"
+
+msgid "Are you sure you want to make this attachment {0}?"
+msgstr "Tem certeza que deseja tornar este anexo {0}?"
+
+msgid "Are you sure you want to remove {0} from the hierarchy?"
+msgstr "Tem certeza que deseja remover {0} da hierarquia?"
+
+msgid "Are you sure you want to unlink {0} linked doc(s)?"
+msgstr "Tem certeza que deseja desvincular {0} documento(s) vinculado(s)?"
+
+msgid "Assign condition is required"
+msgstr "A condição de atribuição é obrigatória"
+
+msgid "Assign conditions are invalid"
+msgstr "As condições de atribuição são inválidas"
+
+msgid "Assignment rule created"
+msgstr "Regra de atribuição criada"
+
+msgid "Assignment rule deleted"
+msgstr "Regra de atribuição excluída"
+
+msgid "Assignment rule duplicated"
+msgstr "Regra de atribuição duplicada"
+
+msgid "Assignment rule updated"
+msgstr "Regra de atribuição atualizada"
+
+msgid "Assignment rule {0} updated"
+msgstr "Regra de atribuição {0} atualizada"
+
+msgid "At least one valid workday with a day, start time, and end time is required"
+msgstr "É necessário pelo menos um dia útil válido com dia, horário de início e horário de término"
+
+msgid "Automatically sets communication status to “Open” for the lead or deal when a new communication is created. Applies only when SLA is enabled"
+msgstr "Define automaticamente o status de comunicação como “Aberto” para o lead ou negócio quando uma nova comunicação é criada. Aplica-se somente quando o SLA está ativado"
+
+msgid "Automatically sets communication status to “Replied” for the lead or deal when a response is received. Applies only when SLA is enabled"
+msgstr "Define automaticamente o status de comunicação como “Respondido” para o lead ou negócio quando uma resposta é recebida. Aplica-se somente quando o SLA está ativado"
+
+msgid "Basic settings for this form."
+msgstr "Configurações básicas deste formulário."
+
+msgid "Be the first to add one."
+msgstr "Seja o primeiro a adicionar um."
+
+msgid "Bidirectional Product Sync"
+msgstr "Sincronização Bidirecional de Produtos"
+
+msgid "Bulk operation is enqueued in background. Failures, if any, are recorded in Error Log."
+msgstr "A operação em massa foi enfileirada em segundo plano. Falhas, se houver, são registradas no Log de Erros."
+
+msgid "Call connected, but the call log could not be saved. Please contact your administrator."
+msgstr "Chamada conectada, mas não foi possível salvar o registro. Entre em contato com o administrador."
+
+msgid "Cannot delete: linked ERPNext Item {0} is referenced by a Quotation. "
+msgstr "Não é possível excluir: o Item vinculado do ERPNext {0} é referenciado por uma Cotação. "
+
+msgid "Cannot rename: an unrelated {0} '{1}' already exists on the "
+msgstr "Não é possível renomear: já existe um {0} '{1}' não relacionado do "
+
+msgid "Capture leads and deals from public forms you embed on your website."
+msgstr "Capture leads e negócios a partir de formulários públicos incorporados no seu site."
+
+msgid "Change & remove fields"
+msgstr "Alterar e remover campos"
+
+msgid "Change form type?"
+msgstr "Alterar tipo de formulário?"
+
+msgid "Choose how {0} are assigned among the selected assignees."
+msgstr "Escolha como {0} são atribuídos entre os responsáveis selecionados."
+
+msgid "Choose the email service provider you want to configure."
+msgstr "Escolha o provedor de e-mail que deseja configurar."
+
+msgid "Choose which {0} are affected by this assignment rule."
+msgstr "Escolha quais {0} são afetados por esta regra de atribuição."
+
+msgid "Click to rename"
+msgstr "Clique para renomear"
+
+msgid "Company Description"
+msgstr "Descrição da Empresa"
+
+msgid "Conditional logic"
+msgstr "Lógica condicional"
+
+msgid "Configure telephony settings for your CRM"
+msgstr "Configure as opções de telefonia do seu CRM"
+
+msgid "Configure the exchange rate provider for your CRM"
+msgstr "Configure o provedor de taxa de câmbio do seu CRM"
+
+msgid "Configure your Exotel telephony integration settings here"
+msgstr "Configure aqui as opções de integração de telefonia com o Exotel"
+
+msgid "Configure your Twilio telephony integration settings here"
+msgstr "Configure aqui as opções de integração de telefonia com o Twilio"
+
+msgid "Configure your brand name, logo and favicon"
+msgstr "Configure o nome da marca, logo e favicon"
+
+msgid "Configure your calendar settings, including the default view and event notifications"
+msgstr "Configure as opções de calendário, incluindo a visualização padrão e notificações de eventos"
+
+msgid "Contact sales"
+msgstr "Fale com vendas"
+
+msgid "Copy"
+msgstr "Copiar"
+
+msgid "Copy link"
+msgstr "Copiar link"
+
+msgid "Could not create document"
+msgstr "Não foi possível criar o documento"
+
+msgid "Could not create form"
+msgstr "Não foi possível criar o formulário"
+
+msgid "Could not create the Frappe CRM custom fields on {0} automatically. "
+msgstr "Não foi possível criar os campos personalizados do Frappe CRM em {0} automaticamente. "
+
+msgid "Could not enrich from the website."
+msgstr "Não foi possível enriquecer a partir do site."
+
+msgid "Could not grant guest access."
+msgstr "Não foi possível conceder acesso de convidado."
+
+msgid "Could not save"
+msgstr "Não foi possível salvar"
+
+msgid "Could not save, try again"
+msgstr "Não foi possível salvar, tente novamente"
+
+msgid "Could not start enrichment."
+msgstr "Não foi possível iniciar o enriquecimento."
+
+msgid "Could not update document"
+msgstr "Não foi possível atualizar o documento"
+
+msgid "Could not update form"
+msgstr "Não foi possível atualizar o formulário"
+
+msgid "Create "
+msgstr "Criar "
+
+msgid "Create Quotation"
+msgstr "Criar Cotação"
+
+msgid "Create form"
+msgstr "Criar formulário"
+
+msgid "Create one to start capturing leads."
+msgstr "Crie um para começar a capturar leads."
+
+msgid "Current icon"
+msgstr "Ícone atual"
+
+msgid "Default calling medium for logged-in user"
+msgstr "Meio de chamada padrão do usuário conectado"
+
+msgid "Default value"
+msgstr "Valor padrão"
+
+msgid "Document ID, not the full name"
+msgstr "ID do documento, não o nome completo"
+
+msgid "Domain Enrichment"
+msgstr "Enriquecimento de Domínio"
+
+msgid "Draft"
+msgstr "Rascunho"
+
+msgid "Drop the form into your own website."
+msgstr "Incorpore o formulário no seu próprio site."
+
+msgid "ERPNext Items always sync into CRM Products. Turn this on to also sync CRM Product changes back to ERPNext Items."
+msgstr "Itens do ERPNext sempre sincronizam com Produtos do CRM. Ative isso para também sincronizar mudanças de Produtos do CRM de volta para os Itens do ERPNext."
+
+msgid "Edit "
+msgstr "Editar "
+
+msgid "Edit field"
+msgstr "Editar campo"
+
+msgid "Editor"
+msgstr "Editor"
+
+msgid "Email account created successfully"
+msgstr "Conta de e-mail criada com sucesso"
+
+msgid "Email account updated successfully"
+msgstr "Conta de e-mail atualizada com sucesso"
+
+msgid "Email address added"
+msgstr "Endereço de e-mail adicionado"
+
+msgid "Email address removed"
+msgstr "Endereço de e-mail removido"
+
+msgid "Email address updated"
+msgstr "Endereço de e-mail atualizado"
+
+msgid "Embed"
+msgstr "Incorporar"
+
+msgid "Enable the integration to create quotations and more in ERPNext."
+msgstr "Ative a integração para criar cotações e mais no ERPNext."
+
+msgid "End date cannot be before start date"
+msgstr "A data de término não pode ser anterior à data de início"
+
+msgid "End time is required"
+msgstr "O horário de término é obrigatório"
+
+msgid "End time must be after start time"
+msgstr "O horário de término deve ser depois do horário de início"
+
+msgid "Enrich"
+msgstr "Enriquecer"
+
+msgid "Enrich from website"
+msgstr "Enriquecer a partir do site"
+
+msgid "Enriched. Filled: {0}"
+msgstr "Enriquecido. Preenchidos: {0}"
+
+msgid "Enriching…"
+msgstr "Enriquecendo…"
+
+msgid "Enrichment Failed"
+msgstr "Falha no Enriquecimento"
+
+msgid "Enrichment complete — a new run was created"
+msgstr "Enriquecimento concluído — uma nova execução foi criada"
+
+msgid "Enrichment complete."
+msgstr "Enriquecimento concluído."
+
+msgid "Enrichment failed."
+msgstr "Falha no enriquecimento."
+
+msgid "Enrichment failed. Check the error log."
+msgstr "Falha no enriquecimento. Verifique o log de erros."
+
+msgid "Enrichment is not enabled for {0}."
+msgstr "O enriquecimento não está ativado para {0}."
+
+msgid "Enter Personal Mobile Number"
+msgstr "Informe o Número de Celular Pessoal"
+
+msgid "Enter a Website first."
+msgstr "Informe um site primeiro."
+
+msgid "Enter a valid phone number"
+msgstr "Informe um número de telefone válido"
+
+msgid "Error Uploading File"
+msgstr "Erro ao Enviar Arquivo"
+
+msgid "Error creating lead sync source"
+msgstr "Erro ao criar origem de sincronização de lead"
+
+msgid "Error syncing lead"
+msgstr "Erro ao sincronizar lead"
+
+msgid "Error updating lead sync source"
+msgstr "Erro ao atualizar origem de sincronização de lead"
+
+msgid "Event Notification"
+msgstr "Notificação de Evento"
+
+msgid "Failed to create email account: invalid credentials"
+msgstr "Falha ao criar conta de e-mail: credenciais inválidas"
+
+msgid "Failed to load activities"
+msgstr "Falha ao carregar atividades"
+
+msgid "Failed to update email account: invalid credentials"
+msgstr "Falha ao atualizar conta de e-mail: credenciais inválidas"
+
+msgid "Failed to update {0} record(s): {1}"
+msgstr "Falha ao atualizar {0} registro(s): {1}"
+
+msgid "File \"{0}\" was skipped because size exceeds {1} MB"
+msgstr "O arquivo \"{0}\" foi ignorado porque o tamanho excede {1} MB"
+
+msgid "Fill fields from the company website"
+msgstr "Preencher campos a partir do site da empresa"
+
+msgid "Filled {0} field(s) from the website."
+msgstr "Preenchido(s) {0} campo(s) a partir do site."
+
+msgid "Form created"
+msgstr "Formulário criado"
+
+msgid "Form deleted"
+msgstr "Formulário excluído"
+
+msgid "Form details"
+msgstr "Detalhes do formulário"
+
+msgid "Form published"
+msgstr "Formulário publicado"
+
+msgid "Form title"
+msgstr "Título do formulário"
+
+msgid "Form unpublished"
+msgstr "Formulário despublicado"
+
+msgid "Form updated"
+msgstr "Formulário atualizado"
+
+msgid "Forms"
+msgstr "Formulários"
+
+msgid "Forms can only map to: {0}"
+msgstr "Formulários só podem mapear para: {0}"
+
+msgid "GitHub"
+msgstr "GitHub"
+
+msgid "Grant Access"
+msgstr "Conceder Acesso"
+
+msgid "Guests can now select {0} records."
+msgstr "Convidados agora podem selecionar registros de {0}."
+
+msgid "Guests can't see {0} records. Grant select access to list them publicly."
+msgstr "Convidados não podem ver registros de {0}. Conceda acesso de seleção para listá-los publicamente."
+
+msgid "Helper text under the field (optional)"
+msgstr "Texto de ajuda abaixo do campo (opcional)"
+
+msgid "Hidden required fields"
+msgstr "Campos obrigatórios ocultos"
+
+msgid "I understand, add conditions"
+msgstr "Entendi, adicionar condições"
+
+msgid "Invalid recording URL"
+msgstr "URL de gravação inválida"
+
+msgid "Invalid site URL"
+msgstr "URL do site inválida"
+
+msgid "Item Group"
+msgstr "Grupo de Item"
+
+msgid "Lead sync source created successfully"
+msgstr "Origem de sincronização de lead criada com sucesso"
+
+msgid "Mandatory if"
+msgstr "Obrigatório se"
+
+msgid "Manual Sync"
+msgstr "Sincronização Manual"
+
+msgid "Maps to"
+msgstr "Mapeia para"
+
+msgid "Mobile number added"
+msgstr "Número de celular adicionado"
+
+msgid "Mobile number removed"
+msgstr "Número de celular removido"
+
+msgid "Mobile number should be a number"
+msgstr "O número de celular deve ser um número"
+
+msgid "Mobile number updated"
+msgstr "Número de celular atualizado"
+
+msgid "New form"
+msgstr "Novo formulário"
+
+msgid "No Activities Found"
+msgstr "Nenhuma Atividade Encontrada"
+
+msgid "No Attachments Found"
+msgstr "Nenhum Anexo Encontrado"
+
+msgid "No Call History"
+msgstr "Nenhum Histórico de Chamadas"
+
+msgid "No Comments Found"
+msgstr "Nenhum Comentário Encontrado"
+
+msgid "No Data Fields Added Yet"
+msgstr "Nenhum Campo de Dados Adicionado Ainda"
+
+msgid "No Emails Found"
+msgstr "Nenhum E-mail Encontrado"
+
+msgid "No Notes Found"
+msgstr "Nenhuma Anotação Encontrada"
+
+msgid "No Tasks Found"
+msgstr "Nenhuma Tarefa Encontrada"
+
+msgid "No WhatsApp Messages Found"
+msgstr "Nenhuma Mensagem de WhatsApp Encontrada"
+
+msgid "No data fields have been added yet."
+msgstr "Nenhum campo de dados foi adicionado ainda."
+
+msgid "No domains added. The embed will only work on this site until you add one."
+msgstr "Nenhum domínio adicionado. A incorporação só funcionará neste site até que você adicione um."
+
+msgid "No emails found in your inbox. New messages will appear here soon."
+msgstr "Nenhum e-mail encontrado na sua caixa de entrada. Novas mensagens vão aparecer aqui em breve."
+
+msgid "No files have been attached yet. Upload files to see them here."
+msgstr "Nenhum arquivo foi anexado ainda. Envie arquivos para vê-los aqui."
+
+msgid "No recent calls to display. Log a call or call someone now!"
+msgstr "Nenhuma chamada recente para exibir. Registre uma chamada ou ligue para alguém agora!"
+
+msgid "No web forms yet"
+msgstr "Nenhum formulário web ainda"
+
+msgid "Not Set"
+msgstr "Não Definido"
+
+msgid "Not a CRM form"
+msgstr "Não é um formulário do CRM"
+
+msgid "Not a valid domain and will be ignored: {0}"
+msgstr "Não é um domínio válido e será ignorado: {0}"
+
+msgid "Nothing could be extracted from this website."
+msgstr "Nada pôde ser extraído deste site."
+
+msgid "Nothing here for now. Add a note to keep track of things."
+msgstr "Nada por aqui ainda. Adicione uma anotação para acompanhar as coisas."
+
+msgid "Nothing to do at the moment. Start organizing by adding one here."
+msgstr "Nada a fazer no momento. Comece a organizar adicionando um aqui."
+
+msgid "Optional"
+msgstr "Opcional"
+
+msgid "Personal Mobile Number"
+msgstr "Número de Celular Pessoal"
+
+msgid "Placeholder"
+msgstr "Texto de exemplo"
+
+msgid "Please enter a valid email address"
+msgstr "Informe um endereço de e-mail válido"
+
+msgid "Please enter a valid phone number"
+msgstr "Informe um número de telefone válido"
+
+msgid "Please enter the {0} access key."
+msgstr "Informe a chave de acesso de {0}."
+
+msgid "Please provide a reason for marking this {0} as lost"
+msgstr "Informe um motivo para marcar este(a) {0} como perdido(a)"
+
+msgid "Please select a priority"
+msgstr "Selecione uma prioridade"
+
+msgid "Please setup Exotel integration"
+msgstr "Configure a integração com o Exotel"
+
+msgid "Preferences updated successfully"
+msgstr "Preferências atualizadas com sucesso"
+
+msgid "Preview"
+msgstr "Pré-visualizar"
+
+msgid "Preview again"
+msgstr "Pré-visualizar novamente"
+
+msgid "Primary email address updated"
+msgstr "E-mail principal atualizado"
+
+msgid "Primary mobile number updated"
+msgstr "Número de celular principal atualizado"
+
+msgid "Priority {0}: priority name is required"
+msgstr "Prioridade {0}: o nome da prioridade é obrigatório"
+
+msgid "Priority {0}: response time is required"
+msgstr "Prioridade {0}: o tempo de resposta é obrigatório"
+
+msgid "Product sync started."
+msgstr "Sincronização de produtos iniciada."
+
+msgid "Profile updated successfully"
+msgstr "Perfil atualizado com sucesso"
+
+msgid "Publish"
+msgstr "Publicar"
+
+msgid "Published"
+msgstr "Publicado"
+
+msgid "Queued…"
+msgstr "Na fila…"
+
+msgid "Read-only if"
+msgstr "Somente leitura se"
+
+msgid "Recording URL is not allowed"
+msgstr "URL de gravação não permitida"
+
+msgid "Recording not available"
+msgstr "Gravação não disponível"
+
+msgid "Redirect URL"
+msgstr "URL de redirecionamento"
+
+msgid "Remove and move columns to {0} section"
+msgstr "Remover e mover colunas para a seção {0}"
+
+msgid "Rename"
+msgstr "Renomear"
+
+msgid "Replace with an icon..."
+msgstr "Substituir por um ícone..."
+
+msgid "Required"
+msgstr "Obrigatório"
+
+msgid "Required by the record"
+msgstr "Obrigatório pelo registro"
+
+msgid "Response time is required"
+msgstr "O tempo de resposta é obrigatório"
+
+msgid "Retry Enrichment"
+msgstr "Tentar Enriquecimento Novamente"
+
+msgid "Run a manual bi-directional sync between ERPNext Items and CRM Products."
+msgstr "Execute uma sincronização manual bidirecional entre Itens do ERPNext e Produtos do CRM."
+
+msgid "Run a manual synchronization to pull the latest Items from ERPNext."
+msgstr "Execute uma sincronização manual para buscar os Itens mais recentes do ERPNext."
+
+msgid "SLA policy created"
+msgstr "Política de SLA criada"
+
+msgid "SLA policy deleted"
+msgstr "Política de SLA excluída"
+
+msgid "SLA policy duplicated"
+msgstr "Política de SLA duplicada"
+
+msgid "SLA policy name is required"
+msgstr "O nome da política de SLA é obrigatório"
+
+msgid "SLA policy status updated"
+msgstr "Status da política de SLA atualizado"
+
+msgid "SLA policy updated"
+msgstr "Política de SLA atualizada"
+
+msgid "Sales hierarchy disabled"
+msgstr "Hierarquia de vendas desativada"
+
+msgid "Sales hierarchy enabled"
+msgstr "Hierarquia de vendas ativada"
+
+msgid "Sandboxed in a frame. Simplest, but a fixed height and its own styling."
+msgstr "Isolado em um frame. Mais simples, mas com altura fixa e estilo próprio."
+
+msgid "Search fields…"
+msgstr "Buscar campos…"
+
+msgid "Section title"
+msgstr "Título da seção"
+
+msgid "See Error Log."
+msgstr "Veja o Log de Erros."
+
+msgid "Select Country to see state options"
+msgstr "Selecione o País para ver as opções de estado"
+
+msgid "Select a Twilio app for your CRM"
+msgstr "Selecione um aplicativo do Twilio para o seu CRM"
+
+msgid "Select an icon..."
+msgstr "Selecione um ícone..."
+
+msgid "Select an option"
+msgstr "Selecione uma opção"
+
+msgid "Send people straight to the hosted form."
+msgstr "Envie as pessoas direto para o formulário hospedado."
+
+msgid "Send visitors here after they submit. Leave blank to show the success message."
+msgstr "Envie os visitantes para cá depois que enviarem o formulário. Deixe em branco para mostrar a mensagem de sucesso."
+
+msgid "Set a Website on this record before enriching."
+msgstr "Defina um Site neste registro antes de enriquecer."
+
+msgid "Set a default value before publishing for: {0}"
+msgstr "Defina um valor padrão antes de publicar para: {0}"
+
+msgid "Set a default value for each field to publish this form."
+msgstr "Defina um valor padrão para cada campo para publicar este formulário."
+
+msgid "Set a default value for hidden required field(s): {0}"
+msgstr "Defina um valor padrão para o(s) campo(s) obrigatório(s) oculto(s): {0}"
+
+msgid "Set a website on this record before enriching."
+msgstr "Defina um site neste registro antes de enriquecer."
+
+msgid "Setting up Frappe Mail requires you to have an API key and API secret for your email account. Read more"
+msgstr "Configurar o Frappe Mail exige que você tenha uma chave de API e um segredo de API para sua conta de e-mail. Saiba mais"
+
+msgid "Share"
+msgstr "Compartilhar"
+
+msgid "Shown after a successful submission"
+msgstr "Exibido após um envio bem-sucedido"
+
+msgid "Since you added a new assignee, the {0} has been set to {1}."
+msgstr "Como você adicionou um novo responsável, {0} foi definido como {1}."
+
+msgid "Sites where this form may be embedded, one per line. Browsers block the iframe on any site not listed here."
+msgstr "Sites onde este formulário pode ser incorporado, um por linha. Navegadores bloqueiam o iframe em qualquer site não listado aqui."
+
+msgid "Some error occurred while creating SLA policy"
+msgstr "Ocorreu um erro ao criar a política de SLA"
+
+msgid "Start a conversation now!"
+msgstr "Comece uma conversa agora!"
+
+msgid "Start date cannot be after end date"
+msgstr "A data de início não pode ser depois da data de término"
+
+msgid "Start time is required"
+msgstr "O horário de início é obrigatório"
+
+msgid "Submit"
+msgstr "Enviar"
+
+msgid "Submit button label"
+msgstr "Texto do botão de envio"
+
+msgid "Success message"
+msgstr "Mensagem de sucesso"
+
+msgid "Switching to {0} will remove {1} field(s) that don't exist on {0}. This can't be undone."
+msgstr "Mudar para {0} vai remover {1} campo(s) que não existem em {0}. Isso não pode ser desfeito."
+
+msgid "Sync successful!"
+msgstr "Sincronização bem-sucedida!"
+
+msgid "Table MultiSelect requires a Table with at least one Link field"
+msgstr "Table MultiSelect exige uma Table com pelo menos um campo Link"
+
+msgid "Target Doctype must be one of: {0}"
+msgstr "O Doctype de destino deve ser um de: {0}"
+
+msgid "Template deleted successfully"
+msgstr "Modelo excluído com sucesso"
+
+msgid "Thank you!"
+msgstr "Obrigado!"
+
+msgid "There are no activities to display here. Go ahead and make some changes."
+msgstr "Não há atividades para exibir aqui. Faça algumas mudanças."
+
+msgid "These fields aren't shown to users. Default values are used when the form is submitted."
+msgstr "Esses campos não são mostrados aos usuários. Valores padrão são usados quando o formulário é enviado."
+
+msgid "This form isn’t published yet. Turn on Publish to make the link and embeds live."
+msgstr "Este formulário ainda não está publicado. Ative Publicar para deixar o link e as incorporações ativos."
+
+msgid "This run has no linked record to re-enrich."
+msgstr "Esta execução não tem um registro vinculado para reenriquecer."
+
+msgid "Title and route are required"
+msgstr "Título e rota são obrigatórios"
+
+msgid "Too many redirects while fetching recording"
+msgstr "Muitos redirecionamentos ao buscar a gravação"
+
+msgid "Unassign conditions are invalid"
+msgstr "As condições de desatribuição são inválidas"
+
+msgid "Unnamed field"
+msgstr "Campo sem nome"
+
+msgid "Unpublish"
+msgstr "Despublicar"
+
+msgid "Use \"{0}\""
+msgstr "Usar \"{0}\""
+
+msgid "Use custom value"
+msgstr "Usar valor personalizado"
+
+msgid "User with email {0} already exists"
+msgstr "Já existe um usuário com o e-mail {0}"
+
+msgid "User with email {0} already invited"
+msgstr "Usuário com o e-mail {0} já foi convidado"
+
+msgid "Value already exists"
+msgstr "O valor já existe"
+
+msgid "View Customer"
+msgstr "Ver Cliente"
+
+msgid "Visible if"
+msgstr "Visível se"
+
+msgid "We're unable to connect your call right now. Please try again later."
+msgstr "Não conseguimos conectar sua chamada agora. Tente novamente mais tarde."
+
+msgid "You are not permitted to create {0}."
+msgstr "Você não tem permissão para criar {0}."
+
+msgid "You can get your access key from "
+msgstr "Você pode obter sua chave de acesso em "
+
+msgid "Your account is not configured with a phone number. Please contact your administrator."
+msgstr "Sua conta não está configurada com um número de telefone. Entre em contato com o administrador."
+
+msgid "item"
+msgstr "item"
+
+msgid "items"
+msgstr "itens"
+
+msgid "product"
+msgstr "produto"
+
+msgid "products"
+msgstr "produtos"
+
+msgid "{0} can't be collected by a form"
+msgstr "{0} não pode ser coletado por um formulário"
+
+msgid "{0} can't be set as a hidden field"
+msgstr "{0} não pode ser definido como campo oculto"
+
+msgid "{0} can't be used as a layout break"
+msgstr "{0} não pode ser usado como quebra de layout"
+
+msgid "{0} field(s) removed. Not available on {1}."
+msgstr "{0} campo(s) removido(s). Não disponível(is) em {1}."
+
+msgid "{0} has been granted {1} access"
+msgstr "{0} recebeu acesso de {1}"
+
+msgid "{0} has no field {1}"
+msgstr "{0} não tem o campo {1}"
+
+msgid "{0} isn't a linkable field on a CRM form."
+msgstr "{0} não é um campo vinculável em um formulário do CRM."
+
+msgid "{0} moved to hidden required fields. Set a default value."
+msgstr "{0} movido para campos obrigatórios ocultos. Defina um valor padrão."
+
+msgid "{0} not yet synced"
+msgstr "{0} ainda não sincronizado"
+
+msgid "{0} routing"
+msgstr "roteamento de {0}"
+
+msgid "Qualification"
+msgstr "Qualificação"
+
+msgid "Demo/Making"
+msgstr "Demonstração"
+
+msgid "Proposal/Quotation"
+msgstr "Proposta/Orçamento"
+
+msgid "Negotiation"
+msgstr "Negociação"
+
+msgid "Ready to Close"
+msgstr "Pronto para Fechar"
+
+msgid "Junk"
+msgstr "Descartado"
+
+msgid "Unqualified"
+msgstr "Não Qualificado"
+
+msgid "Qualified"
+msgstr "Qualificado"
+
+msgid "Nurture"
+msgstr "Em Nutrição"
+
+msgid "Contacted"
+msgstr "Contatado"

@@ -392,6 +392,9 @@
         @afterSave="(data) => emit('afterSave', data)"
       />
     </div>
+    <div v-else-if="title == 'Budget'" class="h-full flex flex-col px-3 sm:px-10">
+      <BudgetArea :doctype="doctype" :docname="docname" />
+    </div>
     <EmptyState
       v-else
       :title="emptyText"
@@ -452,6 +455,7 @@ import NoteArea from '@/components/Activities/NoteArea.vue'
 import TaskArea from '@/components/Activities/TaskArea.vue'
 import AttachmentArea from '@/components/Activities/AttachmentArea.vue'
 import DataFields from '@/components/Activities/DataFields.vue'
+import BudgetArea from '@/components/Activities/BudgetArea.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import ActivityIcon from '@/components/Icons/ActivityIcon.vue'
 import EmailIcon from '@/components/Icons/EmailIcon.vue'

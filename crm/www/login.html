@@ -1,0 +1,487 @@
+{% extends "templates/web.html" %}
+
+{% macro email_login_body() -%}
+{% if not disable_user_pass_login or (ldap_settings and ldap_settings.enabled) %}
+<div class="page-card-body">
+	<div class="form-group">
+		<label class="form-label sr-only" for="login_email">{{ login_label or _("Email")}}</label>
+		<div class="email-field">
+			<input type="text" id="login_email" class="form-control"
+				placeholder="{% if login_name_placeholder %}{{ login_name_placeholder  }}{% else %}{{ _('seu@email.com') }}{% endif %}"
+				required autofocus autocomplete="username">
+
+			<svg class="field-icon email-icon" width="16" height="16" viewBox="0 0 16 16" fill="none"
+				xmlns="http://www.w3.org/2000/svg">
+				<use class="es-lock" href="#es-line-email"></use>
+			</svg>
+		</div>
+	</div>
+
+	<div class="form-group">
+		<label class="form-label sr-only" for="login_password">{{ _("Password") }}</label>
+		<div class="password-field">
+			<input type="password" id="login_password" class="form-control" placeholder="•••••"
+				autocomplete="current-password" required>
+
+			<svg class="field-icon password-icon" width="16" height="16" viewBox="0 0 16 16" fill="none"
+				xmlns="http://www.w3.org/2000/svg">
+					<use class="es-lock" href="#es-line-lock"></use>
+			</svg>
+			<span toggle="#login_password" class="toggle-password text-muted">{{ _('Show') }}</span>
+		</div>
+	</div>
+
+	{% if not disable_user_pass_login %}
+	<p class="forgot-password-message">
+		<a href="#forgot">{{ _("Esqueci minha senha") }}</a>
+	</p>
+	{% endif %}
+</div>
+{% endif %}
+<div class="page-card-actions">
+	{% if not disable_user_pass_login %}
+	<button class="btn btn-sm btn-primary btn-block btn-login" type="submit">
+		{{ _("Entrar") }}</button>
+	{% endif %}
+	{% if ldap_settings and ldap_settings.enabled %}
+	<button class="btn btn-sm {{ "btn-primary" if disable_user_pass_login else "btn-default" }} btn-block btn-login btn-ldap-login">
+		{{ _("Login with LDAP") }}</button>
+	{% endif %}
+</div>
+{% endmacro %}
+
+{% block head_include %}
+{{ include_style('login.bundle.css') }}
+<style>
+	:root {
+		--stratcompany-navy: #042d3c;
+		--stratcompany-navy-light: #0f4655;
+		--stratcompany-sage: #8aa1a9;
+	}
+
+	body {
+		background: var(--stratcompany-navy);
+	}
+
+	.web-footer, #navbar { display: none !important; }
+
+	.stratcompany-login-shell {
+		display: flex;
+		min-height: 100vh;
+		width: 100%;
+	}
+
+	/* Brand panel */
+	.stratcompany-brand-panel {
+		display: none;
+		position: relative;
+		flex: 1 1 50%;
+		background: linear-gradient(160deg, var(--stratcompany-navy) 0%, var(--stratcompany-navy-light) 100%);
+		color: #fff;
+		padding: 4rem 4rem;
+		flex-direction: column;
+		justify-content: center;
+		overflow: hidden;
+	}
+
+	@media (min-width: 992px) {
+		.stratcompany-brand-panel { display: flex; }
+	}
+
+	.stratcompany-brand-panel::before {
+		content: '';
+		position: absolute;
+		width: 620px;
+		height: 620px;
+		border-radius: 50%;
+		border: 1px solid rgba(138, 161, 169, 0.25);
+		top: -180px;
+		right: -220px;
+		animation: stratcompany-ring-spin 60s linear infinite;
+	}
+
+	.stratcompany-brand-panel::after {
+		content: '';
+		position: absolute;
+		width: 420px;
+		height: 420px;
+		border-radius: 50%;
+		border: 1px solid rgba(138, 161, 169, 0.18);
+		bottom: -160px;
+		left: -140px;
+		animation: stratcompany-ring-spin 80s linear infinite reverse;
+	}
+
+	@keyframes stratcompany-ring-spin {
+		from { transform: rotate(0deg); }
+		to { transform: rotate(360deg); }
+	}
+
+	.stratcompany-brand-inner {
+		position: relative;
+		z-index: 1;
+		max-width: 480px;
+		opacity: 0;
+		transform: translateY(16px);
+		animation: stratcompany-fade-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
+	}
+
+	.stratcompany-brand-logo {
+		height: 32px;
+		margin-bottom: 3rem;
+		filter: brightness(0) invert(1);
+	}
+
+	.stratcompany-brand-inner h1 {
+		font-size: 2.1rem;
+		line-height: 1.25;
+		font-weight: 600;
+		margin-bottom: 1rem;
+		color: #fff;
+	}
+
+	.stratcompany-brand-inner p {
+		font-size: 1rem;
+		line-height: 1.6;
+		color: rgba(255, 255, 255, 0.75);
+		margin-bottom: 2.5rem;
+	}
+
+	.stratcompany-steps {
+		display: flex;
+		flex-direction: column;
+		gap: 1.1rem;
+	}
+
+	.stratcompany-step {
+		display: flex;
+		align-items: center;
+		gap: 0.85rem;
+		opacity: 0;
+		transform: translateX(-10px);
+		animation: stratcompany-fade-right 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+	}
+
+	.stratcompany-step:nth-child(1) { animation-delay: 0.35s; }
+	.stratcompany-step:nth-child(2) { animation-delay: 0.5s; }
+	.stratcompany-step:nth-child(3) { animation-delay: 0.65s; }
+
+	.stratcompany-step-icon {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 36px;
+		height: 36px;
+		border-radius: 10px;
+		background: rgba(138, 161, 169, 0.18);
+		border: 1px solid rgba(138, 161, 169, 0.35);
+		flex-shrink: 0;
+	}
+
+	.stratcompany-step-icon svg { width: 18px; height: 18px; stroke: var(--stratcompany-sage); }
+
+	.stratcompany-step-text {
+		font-size: 0.92rem;
+		color: rgba(255, 255, 255, 0.88);
+	}
+
+	.stratcompany-step-text strong {
+		color: #fff;
+		font-weight: 600;
+	}
+
+	/* Form panel */
+	.stratcompany-form-panel {
+		flex: 1 1 50%;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		background: #ffffff;
+		padding: 2rem 1.5rem;
+	}
+
+	.stratcompany-login-shell .for-login,
+	.stratcompany-login-shell .for-signup,
+	.stratcompany-login-shell .for-forgot,
+	.stratcompany-login-shell .for-email-login,
+	.stratcompany-login-shell .for-login-with-email-link {
+		width: 100%;
+		max-width: 360px;
+		opacity: 0;
+		transform: translateY(14px);
+		animation: stratcompany-fade-up 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.2s forwards;
+	}
+
+	.stratcompany-login-shell .page-card {
+		box-shadow: none;
+		border: none;
+		padding: 0;
+		margin: 0;
+		width: 100%;
+		max-width: none;
+	}
+
+	.stratcompany-login-shell .page-card-head { padding: 0 0 2rem 0; text-align: left; }
+	.stratcompany-login-shell .page-card-head .app-logo { height: 28px; margin-bottom: 1.75rem; }
+	.stratcompany-login-shell .page-card-head h4 {
+		font-size: 1.4rem;
+		font-weight: 600;
+		color: var(--stratcompany-navy);
+	}
+
+	.stratcompany-login-shell .form-control {
+		border-radius: 8px;
+		border: 1px solid #dde3e5;
+		padding: 0.65rem 0.9rem;
+	}
+
+	.stratcompany-login-shell .form-control:focus {
+		border-color: var(--stratcompany-sage);
+		box-shadow: 0 0 0 3px rgba(138, 161, 169, 0.2);
+	}
+
+	.stratcompany-login-shell .btn-login,
+	.stratcompany-login-shell .btn-primary {
+		background: var(--stratcompany-navy);
+		border-color: var(--stratcompany-navy);
+		border-radius: 8px;
+		padding: 0.65rem 0.9rem;
+		font-weight: 600;
+		transition: transform 0.15s ease, background 0.15s ease;
+	}
+
+	.stratcompany-login-shell .btn-login:hover,
+	.stratcompany-login-shell .btn-primary:hover {
+		background: var(--stratcompany-navy-light);
+		transform: translateY(-1px);
+	}
+
+	.stratcompany-login-shell .forgot-password-message a,
+	.stratcompany-login-shell .sign-up-message a {
+		color: var(--stratcompany-navy-light);
+	}
+
+	@keyframes stratcompany-fade-up {
+		from { opacity: 0; transform: translateY(16px); }
+		to { opacity: 1; transform: translateY(0); }
+	}
+
+	@keyframes stratcompany-fade-right {
+		from { opacity: 0; transform: translateX(-10px); }
+		to { opacity: 1; transform: translateX(0); }
+	}
+</style>
+{% endblock %}
+
+{% macro logo_section(title=null) %}
+<div class="page-card-head">
+	<img class="app-logo" src="{{ crm_logo or logo }}">
+	{% if title %}
+	<h4>{{ _(title)}}</h4>
+	{% else %}
+	<h4>{{ _('Entrar') }}</h4>
+	{% endif %}
+</div>
+{% endmacro %}
+
+{% block page_content %}
+<!-- {{ for_test }} -->
+<div class="stratcompany-login-shell">
+	<div class="stratcompany-brand-panel">
+		<div class="stratcompany-brand-inner">
+			<img class="stratcompany-brand-logo" src="{{ crm_logo or logo }}">
+			<h1>{{ _('Sua operação jurídica em um só lugar') }}</h1>
+			<p>{{ _('Leads, negócios, honorários e atendimento organizados num único painel — feito para escritórios de advocacia.') }}</p>
+			<div class="stratcompany-steps">
+				<div class="stratcompany-step">
+					<div class="stratcompany-step-icon">
+						<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+					</div>
+					<div class="stratcompany-step-text"><strong>{{ _('Captação') }}</strong> — {{ _('novos contatos organizados automaticamente') }}</div>
+				</div>
+				<div class="stratcompany-step">
+					<div class="stratcompany-step-icon">
+						<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+					</div>
+					<div class="stratcompany-step-text"><strong>{{ _('Atendimento') }}</strong> — {{ _('conversas e tarefas num só lugar') }}</div>
+				</div>
+				<div class="stratcompany-step">
+					<div class="stratcompany-step-icon">
+						<svg viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+					</div>
+					<div class="stratcompany-step-text"><strong>{{ _('Gestão') }}</strong> — {{ _('honorários e resultados acompanhados de perto') }}</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="stratcompany-form-panel">
+		<noscript>
+			<div class="text-center my-5">
+				<h4>{{ _("Javascript is disabled on your browser") }}</h4>
+				<p class="text-muted">
+					{{ _("You need to enable JavaScript for your app to work.") }}<br>{{ _("To enable it follow the instructions in the following link: {0}").format("<a href='https://enable-javascript.com/'>enable-javascript.com</a></p>") }}
+			</div>
+		</noscript>
+		<section class='for-login'>
+			{{ logo_section() }}
+			<div class="login-content page-card">
+				<form class="form-signin form-login" role="form">
+					{%- if social_login or login_with_email_link -%}
+					<div class="page-card-body">
+						<form class="form-signin form-login" role="form">
+							{{ email_login_body() }}
+						</form>
+						<div class="social-logins text-center">
+							{% if not disable_user_pass_login or (ldap_settings and ldap_settings.enabled) %}
+							<p class="text-muted login-divider">{{ _("or") }}</p>
+							{% endif %}
+							<div class="social-login-buttons">
+								{% for provider in provider_logins %}
+								<div class="login-button-wrapper">
+									<a href="{{ provider.auth_url }}"
+										class="btn btn-block btn-default btn-sm btn-login-option btn-{{ provider.name }}">
+										{% if provider.icon %}
+											{{ provider.icon }}
+										{% endif %}
+										{{ _("Login with {0}").format(provider.provider_name) }}</a>
+								</div>
+								{% endfor %}
+							</div>
+
+							{% if login_with_frappe_cloud_url %}
+							<div class="social-login-buttons">
+								<div class="login-button-wrapper">
+									<a href="{{ login_with_frappe_cloud_url }}"
+										class="btn btn-block btn-default btn-sm btn-login-option btn-login-with-frappe-cloud">
+										{{ _("Login with Frappe Cloud") }}</a>
+								</div>
+							</div>
+							{% endif %}
+
+							{% if login_with_email_link %}
+							<div class="login-with-email-link social-login-buttons">
+								<div class="login-button-wrapper">
+									<a href="#login-with-email-link"
+										class="btn btn-block btn-default btn-sm btn-login-option btn-login-with-email-link">
+										{{ _("Login with Email Link") }}</a>
+								</div>
+							</div>
+							{% endif %}
+						</div>
+					</div>
+					{% else %}
+						{{ email_login_body() }}
+					{%- endif -%}
+				</form>
+			</div>
+			{%- if not disable_signup and not disable_user_pass_login -%}
+			<div class="text-center sign-up-message">
+				{{ _("Don't have an account?") }}
+				<a href="#signup">{{ _("Sign up") }}</a>
+			</div>
+			{%- endif -%}
+		</section>
+
+		{%- if social_login -%}
+		<section class='for-email-login'>
+			{{ logo_section() }}
+			<div class="login-content page-card">
+				<form class="form-signin form-login" role="form">
+				{{ email_login_body() }}
+				</form>
+			</div>
+			{%- if not disable_signup and not disable_user_pass_login -%}
+			<div class="text-center sign-up-message">
+				{{ _("Don't have an account?") }}
+				<a href="#signup">{{ _("Sign up") }}</a>
+			</div>
+			{%- endif -%}
+		</section>
+		{%- endif -%}
+		<section class='for-signup {{ "signup-disabled" if disable_signup else "" }}'>
+			{{ logo_section(_('Create a {0} Account').format(app_name or _("Frappe"))) }}
+			<div class="login-content page-card">
+				{%- if not disable_signup -%}
+				{{ signup_form_template }}
+				{%- else -%}
+				<div class='page-card-head mb-2'>
+					<span class='indicator gray'>{{_("Signup Disabled")}}</span>
+					<p class="text-muted text-normal sign-up-message mt-1 mb-8">{{_("Signups have been disabled for this website.")}}</p>
+					<div><a href='/' class='btn btn-primary btn-md'>{{ _("Home") }}</a></div>
+				</div>
+				{%- endif -%}
+			</div>
+
+		</section>
+
+		<section class='for-forgot'>
+			{{ logo_section('Forgot Password') }}
+			<div class="login-content page-card">
+				<form class="form-signin form-forgot hide" role="form">
+					<div class="page-card-body">
+						<div class="email-field">
+							<input type="email" id="forgot_email" class="form-control"
+								placeholder="{{ _('Email Address') }}" required autofocus autocomplete="username">
+							<svg class="field-icon email-icon" width="20" height="20" viewBox="0 0 20 20" fill="none"
+								xmlns="http://www.w3.org/2000/svg">
+								<path
+									d="M2.5 7.65149V15.0757C2.5 15.4374 2.64367 15.7842 2.8994 16.04C3.15513 16.2957 3.50198 16.4394 3.86364 16.4394H16.1364C16.498 16.4394 16.8449 16.2957 17.1006 16.04C17.3563 15.7842 17.5 15.4374 17.5 15.0757V7.65149"
+									stroke="#74808B" stroke-miterlimit="10" stroke-linecap="square" />
+								<path
+									d="M17.5 7.57572V5.53026C17.5 5.1686 17.3563 4.82176 17.1006 4.56603C16.8449 4.31029 16.498 4.16663 16.1364 4.16663H3.86364C3.50198 4.16663 3.15513 4.31029 2.8994 4.56603C2.64367 4.82176 2.5 5.1686 2.5 5.53026V7.57572L10 10.8333L17.5 7.57572Z"
+									stroke="#74808B" stroke-miterlimit="10" stroke-linecap="square" />
+							</svg>
+
+						</div>
+					</div>
+					<div class="page-card-actions">
+						<button class="btn btn-sm btn-primary btn-block btn-forgot"
+							type="submit">{{ _("Reset Password") }}</button>
+						<p class="text-center sign-up-message">
+							<a href="#login">{{ _("Back to Login") }}</a>
+						</p>
+					</div>
+
+				</form>
+			</div>
+		</section>
+
+		<section class='for-login-with-email-link'>
+				{{ logo_section(_('Login with Email Link')) }}
+			<div class="login-content page-card">
+				<form class="form-signin form-login-with-email-link hide" role="form">
+					<div class="page-card-body">
+						<div class="email-field">
+							<input type="email" id="login_with_email_link_email" class="form-control"
+								placeholder="{{ _('Email Address') }}" required autofocus autocomplete="username">
+							<svg class="field-icon email-icon" width="20" height="20" viewBox="0 0 20 20" fill="none"
+								xmlns="http://www.w3.org/2000/svg">
+								<path
+									d="M2.5 7.65149V15.0757C2.5 15.4374 2.64367 15.7842 2.8994 16.04C3.15513 16.2957 3.50198 16.4394 3.86364 16.4394H16.1364C16.498 16.4394 16.8449 16.2957 17.1006 16.04C17.3563 15.7842 17.5 15.4374 17.5 15.0757V7.65149"
+									stroke="#74808B" stroke-miterlimit="10" stroke-linecap="square" />
+								<path
+									d="M17.5 7.57572V5.53026C17.5 5.1686 17.3563 4.82176 17.1006 4.56603C16.8449 4.31029 16.498 4.16663 16.1364 4.16663H3.86364C3.50198 4.16663 3.15513 4.31029 2.8994 4.56603C2.64367 4.82176 2.5 5.1686 2.5 5.53026V7.57572L10 10.8333L17.5 7.57572Z"
+									stroke="#74808B" stroke-miterlimit="10" stroke-linecap="square" />
+							</svg>
+						</div>
+					</div>
+					<div class="page-card-actions">
+						<button class="btn btn-sm btn-primary btn-block btn-login-with-email-link"
+							type="submit">{{ _("Send login link") }}</button>
+						<p class="text-center sign-up-message">
+							<a href="#login">{{ _("Back to Login") }}</a>
+						</p>
+					</div>
+				</form>
+			</div>
+		</section>
+	</div>
+</div>
+{% endblock %}
+
+{% block script %}
+<script>{% include "templates/includes/login/login.js" %}</script>
+{% endblock %}
+
+{% block sidebar %}{% endblock %}

@@ -8,7 +8,7 @@
        column falls through to the white page canvas. The token cannot be
        overridden on the Sidebar element itself — `bg-surface-sidebar` is emitted
        after `bg-surface-gray-1` in the utilities layer and would win. -->
-  <div class="stratcompany-sidebar relative flex h-full bg-[#8aa1a9]">
+  <div class="stratcompany-sidebar relative flex h-full bg-[var(--stratcompany-accent)]">
     <Sidebar
       v-model:collapsed="isSidebarCollapsed"
       :disable-collapse="mobile"
@@ -22,32 +22,6 @@
              active row's shadow. Widen the scroll box to the sidebar edges and
              pad the content back in so the shadow has room. -->
         <div class="-mx-2 mt-2 flex flex-1 flex-col gap-1 overflow-y-auto px-2">
-          <SidebarItem
-            id="notifications-btn"
-            :label="__('Notifications')"
-            :to="mobile ? { name: 'Notifications' } : undefined"
-            :active="mobile && activeItem === 'Notifications'"
-            @click="onNotificationsClick"
-          >
-            <template #prefix>
-              <span class="relative grid size-4 place-items-center">
-                <NotificationsIcon class="size-4 text-ink-gray-7" />
-                <span
-                  v-if="isCollapsed && unreadNotificationsCount"
-                  class="absolute -right-1 -top-1 size-1.5 rounded-full bg-surface-gray-9 ring-1 ring-[var(--surface-gray-1)]"
-                />
-              </span>
-            </template>
-            <template #suffix>
-              <Badge
-                v-if="unreadNotificationsCount"
-                class="mr-2"
-                :label="unreadNotificationsCount"
-                variant="subtle"
-              />
-            </template>
-          </SidebarItem>
-
           <CollapsibleSection
             v-if="isCrmSection"
             v-for="section in allViews"
@@ -120,6 +94,74 @@
               </Tooltip>
             </SidebarItem>
           </nav>
+
+          <div v-if="isVisaoGeralSection" class="flex flex-col gap-1">
+            <div class="mb-1 mt-4 flex items-center justify-between px-1">
+              <SidebarLabel class="select-none">{{ __('Arquivos') }}</SidebarLabel>
+              <div class="flex items-center gap-0.5">
+                <a
+                  :href="vscodeUri"
+                  class="rounded p-1 hover:bg-surface-gray-2"
+                  :title="__('Abrir no VS Code')"
+                >
+                  <span class="lucide-code size-3.5" aria-hidden="true" />
+                </a>
+                <button
+                  type="button"
+                  class="rounded p-1 hover:bg-surface-gray-2"
+                  :title="__('Nova Pasta')"
+                  @click="startExplorerRootFolder"
+                >
+                  <span class="lucide-folder-plus size-3.5" aria-hidden="true" />
+                </button>
+                <FileUploader :uploadArgs="{ folder: 'Home' }" @success="loadExplorerRoot">
+                  <template #default="{ openFileSelector }">
+                    <button
+                      type="button"
+                      class="rounded p-1 hover:bg-surface-gray-2"
+                      :title="__('Enviar Arquivo')"
+                      @click="openFileSelector"
+                    >
+                      <span class="lucide-upload size-3.5" aria-hidden="true" />
+                    </button>
+                  </template>
+                </FileUploader>
+              </div>
+            </div>
+
+            <div
+              v-if="creatingExplorerRootFolder"
+              class="flex items-center gap-1.5 py-1 pl-2"
+            >
+              <span class="lucide-folder size-4 shrink-0" aria-hidden="true" />
+              <input
+                ref="explorerRootFolderInputRef"
+                v-model="explorerRootFolderName"
+                type="text"
+                class="form-input w-32 text-p-sm"
+                :placeholder="__('Nome da pasta')"
+                @keydown.enter="confirmExplorerRootFolder"
+                @keydown.esc="creatingExplorerRootFolder = false"
+                @blur="confirmExplorerRootFolder"
+              />
+            </div>
+
+            <div v-if="loadingExplorerRoot" class="px-2 py-1 text-p-sm">
+              {{ __('Carregando...') }}
+            </div>
+            <FileTreeNode
+              v-for="node in explorerRootNodes"
+              :key="node.name"
+              :node="node"
+              :depth="0"
+            />
+            <div
+              v-if="!loadingExplorerRoot && !explorerRootNodes.length && !creatingExplorerRootFolder"
+              class="px-2 py-1 text-p-sm italic opacity-80"
+            >
+              {{ __('Nenhum arquivo ainda') }}
+            </div>
+          </div>
         </div>
 
         <div v-if="!mobile" class="mt-auto flex flex-col gap-1 pt-2">
@@ -168,7 +210,6 @@
         </div>
       </div>
     </Sidebar>
-    <Notifications v-if="!mobile" />
   </div>
 
   <template v-if="!mobile">
@@ -193,12 +234,15 @@
 
 <script setup>
 import BrushCleaningIcon from '~icons/lucide/brush-cleaning'
+import AccountsIcon from '~icons/lucide/building-2'
+import TeamIcon from '~icons/lucide/users'
 import TargetIcon from '~icons/lucide/target'
 import ReportIcon from '~icons/lucide/bar-chart-3'
 import CalculatorIcon from '~icons/lucide/calculator'
 import HeartPulseIcon from '~icons/lucide/heart-pulse'
 import EstimatorIcon from '~icons/lucide/ruler'
 import InstagramIcon from '@/components/Icons/InstagramIcon.vue'
+import WhatsAppIcon from '@/components/Icons/WhatsAppIcon.vue'
 import CRMLogo from '@/components/Icons/CRMLogo.vue'
 import InviteIcon from '@/components/Icons/InviteIcon.vue'
 import ConvertIcon from '@/components/Icons/ConvertIcon.vue'
@@ -220,15 +264,9 @@ import TaskIcon from '@/components/Icons/TaskIcon.vue'
 import CalendarIcon from '@/components/Icons/CalendarIcon.vue'
 import PhoneIcon from '@/components/Icons/PhoneIcon.vue'
 import CollapseSidebar from '@/components/Icons/CollapseSidebar.vue'
-import NotificationsIcon from '@/components/Icons/NotificationsIcon.vue'
 import HelpIcon from '@/components/Icons/HelpIcon.vue'
-import Notifications from '@/components/Notifications.vue'
 import Settings from '@/components/Settings/Settings.vue'
 import { viewsStore } from '@/stores/views'
-import {
-  unreadNotificationsCount,
-  notificationsStore,
-} from '@/stores/notifications'
 import { usersStore } from '@/stores/users'
 import { sessionStore } from '@/stores/session'
 import {
@@ -238,7 +276,8 @@ import {
 } from '@/composables/settings'
 import { showChangePasswordModal } from '@/composables/modals'
 import { useBroadcast } from '@/composables/useBroadcast.js'
-import { call, Sidebar, SidebarItem, SidebarLabel, Tooltip } from 'frappe-ui'
+import { call, Sidebar, SidebarItem, SidebarLabel, Tooltip, FileUploader, toast } from 'frappe-ui'
+import FileTreeNode from '@/components/FileTreeNode.vue'
 import {
   SignupBanner,
   TrialBanner,
@@ -252,7 +291,7 @@ import {
 import router from '@/router'
 import { useStorage } from '@vueuse/core'
 import { useDemoData } from '@/composables/demoData'
-import { ref, reactive, computed, markRaw, onMounted, watch } from 'vue'
+import { ref, reactive, computed, markRaw, onMounted, watch, nextTick } from 'vue'
 import { useRoute } from 'vue-router'
 
 const props = defineProps({
@@ -262,7 +301,6 @@ const props = defineProps({
 const route = useRoute()
 
 const { getPinnedViews, getPublicViews } = viewsStore()
-const { toggle: toggleNotificationPanel } = notificationsStore()
 const { capture } = useTelemetry()
 const { clearDemoData, isDemoDataCreated } = useDemoData()
 const { send } = useBroadcast()
@@ -292,6 +330,9 @@ const CRM_ROUTE_NAMES = [
   'Organization',
   'Call Logs',
   'Calendar',
+  'Contas',
+  'WhatsApp',
+  'Equipe',
 ]
 const isCrmSection = computed(() => CRM_ROUTE_NAMES.includes(route.name))
 
@@ -347,6 +388,64 @@ const financeiroLinks = [
   },
 ]
 
+// Visão Geral: a VS Code-style file explorer lives directly in the sidebar
+// rail instead of the main content area — same pattern as the Financeiro
+// sub-nav above, just backed by Frappe's own File/Folder API instead of a
+// static link list.
+const isVisaoGeralSection = computed(() => route.name === 'Dashboard')
+
+// Opens the local MazyOS project folder in VS Code via its custom URI
+// scheme — only meaningful on this machine/dev setup, not something a
+// resold client CRM would carry over.
+const vscodeUri = 'vscode://file/C:/Users/THIAGO/Desktop/MazyOS'
+
+const explorerRootNodes = ref([])
+const loadingExplorerRoot = ref(false)
+const creatingExplorerRootFolder = ref(false)
+const explorerRootFolderName = ref('')
+const explorerRootFolderInputRef = ref(null)
+
+async function loadExplorerRoot() {
+  loadingExplorerRoot.value = true
+  try {
+    const res = await call('frappe.core.api.file.get_files_in_folder', { folder: 'Home' })
+    explorerRootNodes.value = (res?.files || []).slice().sort((a, b) => {
+      if (a.is_folder !== b.is_folder) return a.is_folder ? -1 : 1
+      return a.file_name.localeCompare(b.file_name)
+    })
+  } finally {
+    loadingExplorerRoot.value = false
+  }
+}
+
+async function startExplorerRootFolder() {
+  creatingExplorerRootFolder.value = true
+  explorerRootFolderName.value = ''
+  await nextTick()
+  explorerRootFolderInputRef.value?.focus()
+}
+
+async function confirmExplorerRootFolder() {
+  if (!creatingExplorerRootFolder.value) return
+  const name = explorerRootFolderName.value.trim()
+  creatingExplorerRootFolder.value = false
+  if (!name) return
+  try {
+    await call('frappe.core.api.file.create_new_folder', { file_name: name, folder: 'Home' })
+    await loadExplorerRoot()
+  } catch (e) {
+    toast.error(e.messages?.[0] || __('Falha ao criar pasta'))
+  }
+}
+
+watch(
+  isVisaoGeralSection,
+  (active) => {
+    if (active && !explorerRootNodes.value.length) loadExplorerRoot()
+  },
+  { immediate: true },
+)
+
 const links = [
   {
     label: 'Leads',
@@ -364,14 +463,19 @@ const links = [
     to: 'Contacts',
   },
   {
-    label: 'Organizations',
-    icon: OrganizationsIcon,
-    to: 'Organizations',
+    label: 'WhatsApp',
+    icon: WhatsAppIcon,
+    to: 'WhatsApp',
   },
   {
-    label: 'Notes',
-    icon: NoteIcon,
-    to: 'Notes',
+    label: 'Contas',
+    icon: AccountsIcon,
+    to: 'Contas',
+  },
+  {
+    label: 'Equipe',
+    icon: TeamIcon,
+    to: 'Equipe',
   },
   {
     label: 'Tasks',
@@ -383,11 +487,6 @@ const links = [
     icon: CalendarIcon,
     to: 'Calendar',
     condition: () => !props.mobile,
-  },
-  {
-    label: 'Call Logs',
-    icon: PhoneIcon,
-    to: 'Call Logs',
   },
 ]
 
@@ -503,14 +602,6 @@ watch(
   () => [route.name, route.query.view],
   () => (activeItem.value = currentRouteKey()),
 )
-
-function onNotificationsClick(event) {
-  if (props.mobile) {
-    selectItem(event, 'Notifications')
-  } else {
-    toggleNotificationPanel()
-  }
-}
 
 function toggleHelpModal() {
   showHelpModal.value = minimize.value ? true : !showHelpModal.value
