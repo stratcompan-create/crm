@@ -5,6 +5,11 @@
     </template>
     <template #right-header>
       <Button
+        :label="__('Gerar PDF das metas')"
+        :loading="exporting"
+        @click="exportPdf"
+      />
+      <Button
         v-if="goals.isDirty"
         variant="solid"
         :label="__('Salvar')"
@@ -60,13 +65,33 @@
 </template>
 <script setup>
 import LayoutHeader from '@/components/LayoutHeader.vue'
-import { FormControl, createDocumentResource, toast } from 'frappe-ui'
+import { Button, FormControl, call, createDocumentResource, toast } from 'frappe-ui'
+import { ref } from 'vue'
 
 const goals = createDocumentResource({
   doctype: 'CRM Financial Goals',
   name: 'CRM Financial Goals',
   auto: true,
 })
+
+const exporting = ref(false)
+
+async function exportPdf() {
+  if (goals.isDirty) {
+    toast.error(__('Salve as metas antes de gerar o PDF'))
+    return
+  }
+  exporting.value = true
+  try {
+    const res = await call('crm.api.financeiro.export_goals_pdf')
+    window.open(res.file_url, '_blank')
+    toast.success(__('PDF salvo em Arquivos › Financeiro'))
+  } catch (e) {
+    toast.error(e?.messages?.[0] || __('Não foi possível gerar o PDF'))
+  } finally {
+    exporting.value = false
+  }
+}
 
 function save() {
   goals.save.submit(null, {

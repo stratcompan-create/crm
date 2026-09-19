@@ -129,7 +129,7 @@
 </template>
 
 <script setup>
-import { Badge, Button, Dialog, Dropdown, FormControl, call, toast } from 'frappe-ui'
+import { Badge, Button, Dialog, Dropdown, FormControl, call, createResource, toast } from 'frappe-ui'
 import ProposalEditor from '@/components/Activities/ProposalEditor.vue'
 import { useDocument } from '@/data/document'
 import { computed, reactive, ref } from 'vue'
@@ -221,11 +221,47 @@ async function sendDocument() {
   }
 }
 
-const generateOptions = [
-  { label: __('Orçamento'), onClick: () => generate('orcamento') },
-  { label: __('Proposta Comercial'), onClick: () => generate('proposta') },
-  { label: __('Contrato'), onClick: () => generate('contrato') },
-]
+const driveStatus = createResource({ url: 'crm.api.gdrive.get_status', auto: true })
+
+const generateOptions = computed(() => {
+  const base = [
+    { label: __('Orçamento'), onClick: () => generate('orcamento') },
+    { label: __('Proposta Comercial'), onClick: () => generate('proposta') },
+    { label: __('Contrato'), onClick: () => generate('contrato') },
+  ]
+  if (!driveStatus.data?.conectado) return base
+  return [
+    { group: __('Baixar PDF'), items: base },
+    {
+      group: __('Salvar no Google Drive'),
+      items: [
+        { label: __('Orçamento'), onClick: () => saveToDrive('orcamento') },
+        { label: __('Proposta Comercial'), onClick: () => saveToDrive('proposta') },
+        { label: __('Contrato'), onClick: () => saveToDrive('contrato') },
+      ],
+    },
+  ]
+})
+
+async function saveToDrive(docType) {
+  if (document.isDirty) {
+    toast.error(__('Salve o orçamento antes de salvar o documento'))
+    return
+  }
+  if (docType === 'proposta' && proposalRef.value?.isDirty) {
+    toast.error(__('Salve o conteúdo da proposta antes de salvar o documento'))
+    return
+  }
+  try {
+    const res = await call('crm.api.gdrive.save_deal_document', {
+      deal: props.docname,
+      doc_type: docType,
+    })
+    toast.success(__('Salvo no Google Drive: {0}', [res.arquivo]))
+  } catch (e) {
+    toast.error(e?.messages?.[0] || __('Não foi possível salvar no Google Drive'))
+  }
+}
 
 function generate(docType) {
   if (document.isDirty) {

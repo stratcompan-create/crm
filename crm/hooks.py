@@ -170,6 +170,9 @@ override_doctype_class = {
 # Hook on document methods and events
 
 doc_events = {
+	"File": {
+		"after_insert": ["crm.api.gdrive.on_file_insert"],
+	},
 	"Contact": {
 		"validate": ["crm.api.contact.validate"],
 	},

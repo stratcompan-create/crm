@@ -69,6 +69,7 @@ import PreferencesSettings from '@/components/Settings/PreferencesSettings.vue'
 import WhatsAppSettings from '@/components/Settings/WhatsAppSettings.vue'
 import ERPNextSettings from '@/components/Settings/ERPNextSettings.vue'
 import InstagramSettings from '@/components/Settings/InstagramSettings.vue'
+import GoogleDriveSettings from '@/components/Settings/GoogleDriveSettings.vue'
 import InstagramIcon from '@/components/Icons/InstagramIcon.vue'
 import LeadSyncSourcePage from '@/components/Settings/LeadSyncing/LeadSyncSourcePage.vue'
 import DefaultsSettings from '@/components/Settings/DefaultsSettings.vue'
@@ -248,6 +249,12 @@ const tabs = computed(() => {
           label: __('Instagram'),
           icon: markRaw(InstagramIcon),
           component: markRaw(InstagramSettings),
+          condition: () => isManager(),
+        },
+        {
+          label: __('Google Drive'),
+          icon: 'hard-drive',
+          component: markRaw(GoogleDriveSettings),
           condition: () => isManager(),
         },
         {

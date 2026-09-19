@@ -229,3 +229,79 @@ def mark_overdue():
 	for doctype in ("CRM Honorario", "CRM Despesa"):
 		for name in frappe.get_all(doctype, filters={"status": "Pendente", "data_vencimento": ["<", today]}, pluck="name"):
 			frappe.db.set_value(doctype, name, "status", "Atrasado", update_modified=False)
+
+
+@frappe.whitelist(methods=["POST"])
+def export_goals_pdf():
+	"""PDF com as metas financeiras e o quanto já foi atingido. Guarda em Arquivos > Financeiro
+	(e, com o Google Drive conectado e o envio automático ligado, a cópia vai sozinha para o Drive)."""
+	import glob
+	import os
+
+	from frappe.utils.pdf import get_pdf
+
+	from crm.api.prospeccao import _ensure_folder
+	from crm.api.proposta import _valid_color, _fmt_currency
+
+	_managers_only()
+	settings = frappe.get_single("FCRM Settings")
+	color = _valid_color(settings.get("brand_color"), "#042d3c")
+	accent = _valid_color(settings.get("brand_accent"), "#8aa1a9")
+	today = getdate(nowdate())
+	q_start = getdate(f"{today.year}-{3 * ((today.month - 1) // 3) + 1:02d}-01")
+
+	health = get_financial_health()
+	mrr = get_mrr()
+	received_q = flt(
+		frappe.db.get_value("CRM Honorario", {"status": "Pago", "data_pagamento": [">=", q_start]}, "sum(valor)")
+	)
+	linhas = [
+		(_("Receita do trimestre"), received_q, flt(health.get("meta_trimestral")), False),
+		(_("Despesas pagas no mês"), flt(health.get("expenses_month")), flt(health.get("teto_despesa")), True),
+		(_("Receita recorrente mensal (MRR)"), flt(mrr.get("mrr")), flt(mrr.get("meta_mrr")), False),
+	]
+
+	def barra(atual, meta, invertida):
+		if not meta:
+			return "<td class='r' colspan='2' style='color:#999'>" + _("Meta não definida") + "</td>"
+		pct = round(atual / meta * 100)
+		largura = min(100, max(0, pct))
+		cor = "#c0392b" if (invertida and pct > 100) else color
+		return (
+			f"<td style='width:38%'><table style='width:100%;border-collapse:collapse'><tr>"
+			f"<td style='background:{cor};width:{largura}%;height:9px;padding:0'></td>"
+			f"<td style='background:#e6eaeb;height:9px;padding:0'></td></tr></table></td>"
+			f"<td class='r'>{pct}%</td>"
+		)
+
+	rows = "".join(
+		f"<tr><td>{frappe.utils.escape_html(t)}</td><td class='r'>{_fmt_currency(a)}</td>"
+		f"<td class='r'>{_fmt_currency(m) if m else '—'}</td>{barra(a, m, inv)}</tr>"
+		for t, a, m, inv in linhas
+	)
+	html = f"""<html><head><meta charset="utf-8"><style>
+		body {{ font-family: Arial, Helvetica, sans-serif; color:#1a1a1a; padding:32px; }}
+		h1 {{ color:{color}; font-size:24px; margin:0 0 4px 0; }}
+		.sub {{ color:#666; font-size:12px; margin-bottom:24px; }}
+		table.t {{ width:100%; border-collapse:collapse; }}
+		table.t th {{ text-align:left; font-size:11px; text-transform:uppercase; color:#666; border-bottom:2px solid {accent}; padding:8px 4px; }}
+		table.t td {{ padding:12px 4px; border-bottom:1px solid #eee; font-size:13px; }}
+		.r {{ text-align:right; }}
+	</style></head><body>
+		<h1>{_("Metas financeiras")}</h1>
+		<div class="sub">{frappe.utils.escape_html(settings.get("brand_name") or "")} · {today.strftime("%d/%m/%Y")}</div>
+		<table class="t"><tr><th>{_("Indicador")}</th><th class="r">{_("Realizado")}</th><th class="r">{_("Meta / teto")}</th><th>{_("Progresso")}</th><th class="r">%</th></tr>{rows}</table>
+	</body></html>"""
+
+	pdf = get_pdf(html)
+	folder = _ensure_folder("Financeiro")
+	base = f"Metas financeiras - {today.isoformat()}"
+	for old in frappe.get_all("File", filters={"folder": folder, "file_name": ["like", f"{base}%"]}, pluck="name"):
+		frappe.delete_doc("File", old, ignore_permissions=True, force=True)
+	for stale in glob.glob(frappe.get_site_path("private", "files", f"{base}*.pdf")):
+		os.remove(stale)
+	file_doc = frappe.get_doc(
+		{"doctype": "File", "file_name": f"{base}.pdf", "folder": folder, "is_private": 1, "content": pdf}
+	)
+	file_doc.insert(ignore_permissions=True)
+	return {"file_url": file_doc.file_url, "file_name": file_doc.file_name}

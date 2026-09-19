@@ -1,0 +1,32 @@
+{
+	"actions": [],
+	"creation": "2026-09-20 00:00:00.000000",
+	"doctype": "DocType",
+	"engine": "InnoDB",
+	"field_order": ["conectado", "email", "refresh_token", "pasta_nome", "pasta_id", "pastas", "envio_automatico"],
+	"fields": [
+		{"fieldname": "conectado", "fieldtype": "Check", "label": "Conectado", "read_only": 1},
+		{"fieldname": "email", "fieldtype": "Data", "label": "Conta do Google", "read_only": 1},
+		{"fieldname": "refresh_token", "fieldtype": "Password", "label": "Token de acesso", "hidden": 1},
+		{"fieldname": "pasta_nome", "fieldtype": "Data", "label": "Nome da pasta no Drive"},
+		{"fieldname": "pasta_id", "fieldtype": "Data", "label": "ID da pasta", "hidden": 1},
+		{"fieldname": "pastas", "fieldtype": "Long Text", "label": "Subpastas", "hidden": 1},
+		{"default": "1", "fieldname": "envio_automatico", "fieldtype": "Check", "label": "Copiar automaticamente para o Drive"}
+	],
+	"index_web_pages_for_search": 1,
+	"issingle": 1,
+	"links": [],
+	"modified": "2026-09-20 00:00:00.000000",
+	"modified_by": "Administrator",
+	"module": "FCRM",
+	"name": "CRM Google Drive",
+	"owner": "Administrator",
+	"permissions": [
+		{"create": 1, "delete": 1, "read": 1, "write": 1, "role": "System Manager"},
+		{"read": 1, "write": 1, "role": "Sales Manager"}
+	],
+	"row_format": "Dynamic",
+	"sort_field": "modified",
+	"sort_order": "DESC",
+	"states": []
+}
