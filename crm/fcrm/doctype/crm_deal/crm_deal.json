@@ -84,7 +84,8 @@
   "lost_notes",
   "budget_tab",
   "budget_items",
-  "budget_discount"
+  "budget_discount",
+  "proposal_data"
  ],
  "fields": [
   {
@@ -427,7 +428,7 @@
   },
   {
    "default": "1",
-   "description": "The rate used to convert the deal\u2019s currency to your crm's base currency (set in CRM Settings). It is set once when the currency is first added and doesn't change automatically.",
+   "description": "The rate used to convert the deal’s currency to your crm's base currency (set in CRM Settings). It is set once when the currency is first added and doesn't change automatically.",
    "fieldname": "exchange_rate",
    "fieldtype": "Float",
    "label": "Exchange Rate"
@@ -535,6 +536,12 @@
    "fieldname": "budget_discount",
    "fieldtype": "Currency",
    "label": "Budget Discount"
+  },
+  {
+   "fieldname": "proposal_data",
+   "fieldtype": "Long Text",
+   "label": "Conteúdo da proposta",
+   "hidden": 1
   }
  ],
  "grid_page_length": 50,

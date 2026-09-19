@@ -65,6 +65,58 @@
       </div>
       <div class="h-px border-t border-outline-elevation-2" />
 
+      <div class="flex items-center justify-between gap-8">
+        <div class="flex flex-col">
+          <div class="text-p-base-medium text-ink-gray-7 truncate">
+            {{ __('Cor principal da marca') }}
+          </div>
+          <div class="text-p-sm text-ink-gray-5">
+            {{ __('Usada nos PDFs de orçamento, proposta comercial e contrato.') }}
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <input
+            type="color"
+            :value="settings.doc.brand_color || '#042d3c'"
+            class="h-8 w-12 cursor-pointer rounded border border-outline-gray-2 bg-transparent"
+            @input="settings.doc.brand_color = $event.target.value"
+          />
+          <Button
+            v-if="settings.doc.brand_color"
+            variant="ghost"
+            :label="__('Restaurar')"
+            @click="settings.doc.brand_color = ''"
+          />
+        </div>
+      </div>
+      <div class="h-px border-t border-outline-elevation-2" />
+
+      <div class="flex items-center justify-between gap-8">
+        <div class="flex flex-col">
+          <div class="text-p-base-medium text-ink-gray-7 truncate">
+            {{ __('Cor de destaque da marca') }}
+          </div>
+          <div class="text-p-sm text-ink-gray-5">
+            {{ __('Usada nos detalhes e linhas dos PDFs.') }}
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <input
+            type="color"
+            :value="settings.doc.brand_accent || '#8aa1a9'"
+            class="h-8 w-12 cursor-pointer rounded border border-outline-gray-2 bg-transparent"
+            @input="settings.doc.brand_accent = $event.target.value"
+          />
+          <Button
+            v-if="settings.doc.brand_accent"
+            variant="ghost"
+            :label="__('Restaurar')"
+            @click="settings.doc.brand_accent = ''"
+          />
+        </div>
+      </div>
+      <div class="h-px border-t border-outline-elevation-2" />
+
       <!-- logo -->
       <div class="flex flex-col justify-between gap-4">
         <div class="flex items-center flex-1 gap-5">
@@ -140,7 +192,7 @@
 <script setup>
 import ImageIcon from '~icons/lucide/image'
 import ImageUploader from '@/components/Controls/ImageUploader.vue'
-import { FormControl } from 'frappe-ui'
+import { Button, FormControl } from 'frappe-ui'
 import { getSettings } from '@/stores/settings'
 import { showSettings } from '@/composables/settings'
 

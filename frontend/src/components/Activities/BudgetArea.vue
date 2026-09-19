@@ -82,12 +82,17 @@
       </div>
     </div>
   </div>
+
+  <ProposalEditor v-if="doctype === 'CRM Deal'" ref="proposalRef" :deal="docname" />
 </template>
 
 <script setup>
 import { Badge, Button, Dropdown, FormControl, toast } from 'frappe-ui'
+import ProposalEditor from '@/components/Activities/ProposalEditor.vue'
 import { useDocument } from '@/data/document'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+
+const proposalRef = ref(null)
 
 const props = defineProps({
   doctype: { type: String, required: true },
@@ -146,6 +151,10 @@ const generateOptions = [
 function generate(docType) {
   if (document.isDirty) {
     toast.error(__('Salve o orçamento antes de gerar o documento'))
+    return
+  }
+  if (docType === 'proposta' && proposalRef.value?.isDirty) {
+    toast.error(__('Salve o conteúdo da proposta antes de gerar o documento'))
     return
   }
   const params = new URLSearchParams({ deal: props.docname, doc_type: docType })

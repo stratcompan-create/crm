@@ -3,6 +3,9 @@ from frappe import _
 from frappe.utils import get_datetime
 from frappe.utils.pdf import get_pdf
 
+from crm.api import proposta
+from crm.api.proposta import _valid_color
+
 DOC_TITLES = {
 	"orcamento": "Orçamento",
 	"proposta": "Proposta Comercial",
@@ -41,18 +44,28 @@ def generate_document(deal: str, doc_type: str = "orcamento"):
 
 	client_name = _get_client_name(deal_doc)
 
-	html = _build_html(
-		doc_type=doc_type,
-		brand_name=settings.get("brand_name") or "",
-		client_name=client_name,
-		deal_name=deal_doc.name,
-		items=items,
-		subtotal=subtotal,
-		discount=discount,
-		total=total,
-	)
+	color = _valid_color(settings.get("brand_color"), "#042d3c")
 
-	pdf_content = get_pdf(html)
+	if doc_type == "proposta":
+		data = proposta.get_proposal(deal)
+		logo = ""
+		if deal_doc.get("organization"):
+			logo = frappe.db.get_value("CRM Organization", deal_doc.organization, "organization_logo") or ""
+		html = proposta.render_proposal_html(deal_doc, settings, items, total, client_name, data, logo)
+		pdf_content = proposta.render_pdf(html)
+	else:
+		html = _build_html(
+			doc_type=doc_type,
+			brand_name=settings.get("brand_name") or "",
+			client_name=client_name,
+			deal_name=deal_doc.name,
+			items=items,
+			subtotal=subtotal,
+			discount=discount,
+			total=total,
+			color=color,
+		)
+		pdf_content = get_pdf(html)
 
 	frappe.response["filename"] = f"{DOC_TITLES[doc_type]} - {deal_doc.name}.pdf"
 	frappe.response["filecontent"] = pdf_content
@@ -84,7 +97,7 @@ def _fmt_currency(value):
 	return f"R$ {formatted}"
 
 
-def _build_html(doc_type, brand_name, client_name, deal_name, items, subtotal, discount, total):
+def _build_html(doc_type, brand_name, client_name, deal_name, items, subtotal, discount, total, color="#042d3c"):
 	title = DOC_TITLES[doc_type]
 	today = get_datetime().strftime("%d/%m/%Y")
 
@@ -129,7 +142,7 @@ def _build_html(doc_type, brand_name, client_name, deal_name, items, subtotal, d
 		.header {{ width: 100%; margin-bottom: 32px; }}
 		.header td {{ padding: 0; border: none; vertical-align: top; }}
 		.brand {{ font-size: 14px; color: #666; text-align: right; }}
-		h1 {{ font-size: 24px; margin: 0 0 4px 0; color: #042d3c; }}
+		h1 {{ font-size: 24px; margin: 0 0 4px 0; color: {color}; }}
 		.meta {{ font-size: 12px; color: #666; margin-bottom: 24px; }}
 		table.items {{ width: 100%; border-collapse: collapse; margin-top: 16px; }}
 		th {{ text-align: left; font-size: 11px; text-transform: uppercase; color: #666; border-bottom: 1px solid #ccc; padding: 8px 4px; }}
@@ -137,7 +150,7 @@ def _build_html(doc_type, brand_name, client_name, deal_name, items, subtotal, d
 		table.totals {{ width: 280px; margin-left: auto; margin-top: 16px; font-size: 13px; border-collapse: collapse; }}
 		table.totals td {{ border: none; padding: 4px 0; }}
 		table.totals td:last-child {{ text-align: right; }}
-		table.totals .total td {{ font-weight: bold; font-size: 16px; border-top: 1px solid #ccc; padding-top: 10px; color: #042d3c; }}
+		table.totals .total td {{ font-weight: bold; font-size: 16px; border-top: 1px solid #ccc; padding-top: 10px; color: {color}; }}
 		.clauses {{ margin-top: 40px; }}
 	</style>
 	</head>

@@ -10037,3 +10037,144 @@ msgstr "Uso do Teto de Despesa Mensal"
 
 msgid "As despesas pagas neste mês passaram do teto de despesa mensal definido nas Metas."
 msgstr "As despesas pagas neste mês passaram do teto de despesa mensal definido nas Metas."
+
+msgid "WhatsApp Settings"
+msgstr "Configurações do WhatsApp"
+
+msgid "API Url"
+msgstr "URL da API"
+
+msgid "API Version"
+msgstr "Versão da API"
+
+msgid "Webhook Secret"
+msgstr "Segredo do webhook"
+
+msgid "Default Account"
+msgstr "Conta padrão"
+
+msgid "The primary WhatsApp account used for sending outgoing messages and receiving incoming messages. When creating a new outgoing message, this account is auto-selected. Incoming webhook messages that cannot be matched to a specific phone number fall back to this account."
+msgstr "A conta principal do WhatsApp, usada para enviar e receber mensagens. Ao criar uma nova mensagem, esta conta é escolhida automaticamente. Mensagens recebidas que não correspondem a nenhum número específico usam esta conta."
+
+msgid "WhatsApp Account"
+msgstr "Conta do WhatsApp"
+
+msgid "Account name"
+msgstr "Nome da conta"
+
+msgid "App ID"
+msgstr "ID do aplicativo"
+
+msgid "Business ID"
+msgstr "ID da empresa"
+
+msgid "Phone ID"
+msgstr "ID do telefone"
+
+msgid "Access token"
+msgstr "Token de acesso"
+
+msgid "Read Receipts"
+msgstr "Confirmações de leitura"
+
+msgid "Auto Send Read Receipts"
+msgstr "Enviar confirmação de leitura automaticamente"
+
+msgid "Append Actions"
+msgstr "Ações adicionais"
+
+msgid "Auto-create documents in linked DocTypes when messages are received or sent"
+msgstr "Cria documentos automaticamente nos tipos vinculados quando mensagens são recebidas ou enviadas"
+
+msgid "Active"
+msgstr "Ativa"
+
+msgid "Inactive"
+msgstr "Inativa"
+
+msgid "Recipient"
+msgstr "Destinatário"
+
+msgid "Attach File"
+msgstr "Anexar arquivo"
+
+msgid "Is Template"
+msgstr "É modelo"
+
+msgid "WhatsApp Template"
+msgstr "Modelo do WhatsApp"
+
+msgid "Reference DocType"
+msgstr "Tipo de documento de referência"
+
+msgid "Reference Document"
+msgstr "Documento de referência"
+
+msgid "Template Body Parameters"
+msgstr "Parâmetros do corpo do modelo"
+
+msgid "Template Header Parameters"
+msgstr "Parâmetros do cabeçalho do modelo"
+
+msgid "Interactive Buttons"
+msgstr "Botões interativos"
+
+msgid "Buttons"
+msgstr "Botões"
+
+msgid "Interactive List"
+msgstr "Lista interativa"
+
+msgid "List Items"
+msgstr "Itens da lista"
+
+msgid "Delivery Info"
+msgstr "Informações de entrega"
+
+msgid "Message ID"
+msgstr "ID da mensagem"
+
+msgid "Conversation ID"
+msgstr "ID da conversa"
+
+msgid "Context Message ID"
+msgstr "ID da mensagem de contexto"
+
+msgid "Reply to Message"
+msgstr "Resposta à mensagem"
+
+msgid "Reaction"
+msgstr "Reação"
+
+msgid "Media ID"
+msgstr "ID da mídia"
+
+msgid "Media URL"
+msgstr "URL da mídia"
+
+msgid "MIME Type"
+msgstr "Tipo MIME"
+
+msgid "Errors"
+msgstr "Erros"
+
+msgid "Error Code"
+msgstr "Código do erro"
+
+msgid "Error Message"
+msgstr "Mensagem de erro"
+
+msgid "Amended From"
+msgstr "Corrigido de"
+
+msgid "API Items"
+msgstr "Itens da API"
+
+msgid "Delivered"
+msgstr "Entregue"
+
+msgid "Cor principal da marca"
+msgstr "Cor principal da marca"
+
+msgid "Cor de destaque da marca"
+msgstr "Cor de destaque da marca"
