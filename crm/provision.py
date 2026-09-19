@@ -96,6 +96,8 @@ def provision_client(
 		frappe.db.set_single_value("FCRM Settings", "currency", currency)
 
 	frappe.db.set_single_value("FCRM Settings", "brand_name", brand_name)
+	frappe.db.set_single_value("System Settings", "app_name", brand_name)
+	frappe.db.set_single_value("Website Settings", "app_name", brand_name)
 	if website_url:
 		frappe.db.set_single_value("FCRM Settings", "website_url", website_url)
 	if logo_path:

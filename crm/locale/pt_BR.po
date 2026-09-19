@@ -10178,3 +10178,6 @@ msgstr "Cor principal da marca"
 
 msgid "Cor de destaque da marca"
 msgstr "Cor de destaque da marca"
+
+msgid "Você foi convidado para o {0}"
+msgstr "Você foi convidado para o {0}"
