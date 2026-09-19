@@ -10025,3 +10025,15 @@ msgstr "Recebida"
 
 msgid "Sent"
 msgstr "Enviada"
+
+msgid "Despesas pagas no mês"
+msgstr "Despesas pagas no mês"
+
+msgid "Despesas a pagar"
+msgstr "Despesas a pagar"
+
+msgid "Uso do Teto de Despesa Mensal"
+msgstr "Uso do Teto de Despesa Mensal"
+
+msgid "As despesas pagas neste mês passaram do teto de despesa mensal definido nas Metas."
+msgstr "As despesas pagas neste mês passaram do teto de despesa mensal definido nas Metas."

@@ -51,6 +51,42 @@
       <div class="mt-1 text-right text-p-sm text-ink-gray-5">{{ goalProgress }}%</div>
     </div>
 
+    <!-- Despesas -->
+    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+      <div class="rounded-lg border border-outline-gray-2 p-5">
+        <div class="text-p-sm text-ink-gray-6">{{ __('Despesas pagas no mês') }}</div>
+        <div class="mt-1 text-2xl font-semibold text-ink-gray-9">
+          {{ formatCurrency(health.data?.expenses_month) }}
+        </div>
+      </div>
+      <div class="rounded-lg border border-outline-gray-2 p-5">
+        <div class="text-p-sm text-ink-gray-6">{{ __('Despesas a pagar') }}</div>
+        <div class="mt-1 text-2xl font-semibold text-ink-gray-9">
+          {{ formatCurrency(health.data?.expenses_pending) }}
+        </div>
+      </div>
+    </div>
+
+    <!-- Teto de despesa mensal -->
+    <div v-if="health.data?.teto_despesa" class="rounded-lg border border-outline-gray-2 p-5">
+      <div class="mb-2 flex items-center justify-between">
+        <div class="text-p-sm text-ink-gray-6">{{ __('Uso do Teto de Despesa Mensal') }}</div>
+        <div class="text-p-sm text-ink-gray-6">
+          {{ formatCurrency(health.data?.expenses_month) }} / {{ formatCurrency(health.data?.teto_despesa) }}
+        </div>
+      </div>
+      <div class="h-2.5 w-full overflow-hidden rounded-full bg-surface-gray-2">
+        <div
+          class="h-full rounded-full transition-all duration-700 ease-out"
+          :class="overTeto ? 'bg-red-6' : 'bg-blue-6'"
+          :style="{ width: tetoProgress + '%' }"
+        />
+      </div>
+      <div class="mt-1 text-right text-p-sm" :class="overTeto ? 'text-ink-red-6' : 'text-ink-gray-5'">
+        {{ tetoPercent }}%
+      </div>
+    </div>
+
     <!-- Negocios ganhos x perdidos -->
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div class="rounded-lg border border-outline-gray-2 p-5">
@@ -96,6 +132,14 @@ const goalProgress = computed(() => {
   return Math.min(100, Math.round((received / meta) * 100))
 })
 
+const tetoPercent = computed(() => {
+  const teto = health.data?.teto_despesa || 0
+  if (!teto) return 0
+  return Math.round(((health.data?.expenses_month || 0) / teto) * 100)
+})
+const tetoProgress = computed(() => Math.min(100, tetoPercent.value))
+const overTeto = computed(() => tetoPercent.value > 100)
+
 // Simple health read: comparing what actually came in against what was lost
 // along the way — not a precise accounting statement, just a quick signal.
 const verdict = computed(() => {
@@ -108,6 +152,14 @@ const verdict = computed(() => {
       description: __('Cadastre Honorários e Negócios pra a calculadora ter o que analisar.'),
       class: 'border-outline-gray-2 bg-surface-gray-1 text-ink-gray-7',
       icon: AlertIcon,
+    }
+  }
+  if (overTeto.value) {
+    return {
+      title: __('Atenção'),
+      description: __('As despesas pagas neste mês passaram do teto de despesa mensal definido nas Metas.'),
+      class: 'border-outline-gray-2 bg-surface-red-2 text-ink-red-6',
+      icon: XIcon,
     }
   }
   if (received >= lost) {
