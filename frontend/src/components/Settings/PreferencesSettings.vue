@@ -11,27 +11,6 @@
     <template #content>
       <div>
         <div class="flex items-center justify-between">
-          <div class="flex gap-2 items-center">
-            <div class="text-base-semibold text-ink-gray-9">
-              {{ __('Appearance') }}
-            </div>
-          </div>
-        </div>
-        <div class="flex flex-col gap-4 my-6">
-          <div class="flex flex-col gap-1">
-            <span class="text-base-medium text-ink-gray-8">
-              {{ __('Theme') }}
-            </span>
-            <span class="text-p-sm text-ink-gray-6">
-              {{ __('Switch between light, dark, or system theme') }}
-            </span>
-          </div>
-          <ThemeSwitcher
-            :logo="brand.logo || CRMLogo"
-            :name="brand.name || 'CRM'"
-          />
-        </div>
-        <div class="flex items-center justify-between">
           <div class="flex gap-2 items-center h-7">
             <div class="text-base-semibold text-ink-gray-9">
               {{ __('Language & Time') }}

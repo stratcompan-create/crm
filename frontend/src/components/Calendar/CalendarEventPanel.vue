@@ -92,7 +92,7 @@
                   notification.before == 1
                     ? notification.interval.slice(0, -1)
                     : notification.interval,
-                  notification.type == 'Email' ? ', as email' : '',
+                  notification.type == 'Email' ? __(', as email') : '',
                 ])
               }}
             </div>

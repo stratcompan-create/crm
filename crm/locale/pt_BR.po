@@ -9941,3 +9941,87 @@ msgstr "Descrição da empresa obtida pelo Enriquecimento de Domínio."
 
 msgid "Company logo discovered by Domain Enrichment."
 msgstr "Logo da empresa obtida pelo Enriquecimento de Domínio."
+
+msgid "{0} {1} before{2}"
+msgstr "{0} {1} antes{2}"
+
+msgid ", as email"
+msgstr ", por e-mail"
+
+msgid "This field is required by the record and can't be made optional. Remove it to move it to hidden fields."
+msgstr "Este campo é obrigatório para o registro e não pode ser opcional. Remova-o para movê-lo para os campos ocultos."
+
+msgid "Frappe expression referencing other fields as doc.<fieldname>, e.g. eval:doc.country == 'India'. Leave blank for no condition."
+msgstr "Expressão que usa outros campos como doc.<nome_do_campo>, por exemplo eval:doc.country == 'Brasil'. Deixe em branco para não ter condição."
+
+msgid "contact-sales"
+msgstr "fale-conosco"
+
+msgid "End time must be after start time for: {0}"
+msgstr "O horário final deve ser depois do inicial em: {0}"
+
+msgid "You do not have enough permissions to access this CRM. Please contact your administrator if you believe this is an error."
+msgstr "Você não tem permissão para acessar este CRM. Fale com o administrador se acha que isso é um erro."
+
+msgid " and "
+msgstr " e "
+
+msgid "You have no new notifications"
+msgstr "Você não tem novas notificações"
+
+msgid "No Upcoming Events"
+msgstr "Nenhum evento próximo"
+
+msgid "You have no events scheduled"
+msgstr "Você não tem eventos agendados"
+
+msgid "Document"
+msgstr "Documento"
+
+msgid "Search by keyword"
+msgstr "Buscar por palavra-chave"
+
+msgid "Random"
+msgstr "Aleatório"
+
+msgid "Previous"
+msgstr "Anterior"
+
+msgid "Next"
+msgstr "Próximo"
+
+msgid "Add and manage your lead sources here."
+msgstr "Adicione e gerencie aqui as suas origens de leads."
+
+msgid "<p>Dear {{ lead_name }},</p>\n\n<p>This is a reminder for the payment of {{ grand_total }}.</p>\n\n<p>Thanks,</p>\n<p>Frappé</p>"
+msgstr "<p>Olá {{ lead_name }},</p>\n\n<p>Este é um lembrete sobre o pagamento de {{ grand_total }}.</p>\n\n<p>Atenciosamente,</p>\n<p>Equipe</p>"
+
+msgid "Dear {{ lead_name }}, \n\nThis is a reminder for the payment of {{ grand_total }}. \n\nThanks, \nFrappé"
+msgstr "Olá {{ lead_name }}, \n\nEste é um lembrete sobre o pagamento de {{ grand_total }}. \n\nAtenciosamente, \nEquipe"
+
+msgid "As condições desta SLA foram criadas no painel interno e não são compatíveis com esta tela. Recrie-as aqui para gerenciá-las."
+msgstr "As condições desta SLA foram criadas no painel interno e não são compatíveis com esta tela. Recrie-as aqui para gerenciá-las."
+
+msgid "You do not have permission to access this CRM"
+msgstr "Você não tem permissão para acessar este CRM"
+
+msgid "Please enter valid exotel Account SID, API key & API token: {response.reason}"
+msgstr "Informe um SID de conta, chave e token de API da Exotel válidos: {response.reason}"
+
+msgid "This lead has no linked Instagram conversation"
+msgstr "Este lead não tem conversa do Instagram vinculada"
+
+msgid "Instagram integration is disabled in CRM Instagram Settings"
+msgstr "A integração com o Instagram está desativada nas configurações do Instagram"
+
+msgid "Failed to send Instagram message: {0}"
+msgstr "Falha ao enviar a mensagem do Instagram: {0}"
+
+msgid "Timestamp"
+msgstr "Data e hora"
+
+msgid "Received"
+msgstr "Recebida"
+
+msgid "Sent"
+msgstr "Enviada"

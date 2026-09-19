@@ -10,7 +10,7 @@
        after `bg-surface-gray-1` in the utilities layer and would win. -->
   <div v-if="showSidebarColumn" class="stratcompany-sidebar relative flex h-full bg-white">
     <Sidebar
-      v-model:collapsed="isSidebarCollapsed"
+      v-model:collapsed="sidebarCollapsedModel"
       :disable-collapse="mobile"
       :width="mobile ? '260px' : undefined"
       class="border-r border-outline-gray-1"
@@ -189,6 +189,7 @@
             </template>
           </SidebarItem>
           <SidebarItem
+            v-if="!isVisaoGeralSection"
             :label="isCollapsed ? __('Expand') : __('Collapse')"
             @click="isSidebarCollapsed = !isSidebarCollapsed"
           >
@@ -312,7 +313,14 @@ const isSidebarCollapsed = useStorage('isSidebarCollapsed', false)
 
 // The mobile drawer pins the sidebar open, so it is never visually collapsed
 // even when the stored rail state says otherwise.
-const isCollapsed = computed(() => isSidebarCollapsed.value && !props.mobile)
+// Na Visão Geral a barra lateral é o explorador de arquivos: fica sempre aberta.
+const sidebarCollapsedModel = computed({
+  get: () => isSidebarCollapsed.value && route.name !== 'Dashboard',
+  set: (v) => {
+    if (route.name !== 'Dashboard') isSidebarCollapsed.value = v
+  },
+})
+const isCollapsed = computed(() => sidebarCollapsedModel.value && !props.mobile)
 
 const isFCSite = ref(window.is_fc_site)
 const isDemoSite = ref(window.is_demo_site)

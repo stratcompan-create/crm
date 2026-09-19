@@ -93,7 +93,7 @@
           :rows="10"
           :placeholder="
             __(
-              '<p>Dear {{ lead_name }},</p>\n\n<p>This is a reminder for the payment of {{ grand_total }}.</p>\n\n<p>Thanks,</p>\n<p>Frappé</p>',
+              '<p>Olá {{ lead_name }},</p>\n\n<p>Este é um lembrete sobre o pagamento de {{ grand_total }}.</p>\n\n<p>Atenciosamente,</p>\n<p>Equipe</p>',
             )
           "
         />

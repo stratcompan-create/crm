@@ -15,6 +15,7 @@ import json
 
 import frappe
 import requests
+from frappe import _
 
 GRAPH_API_VERSION = "v21.0"
 
@@ -121,11 +122,11 @@ def send_reply(lead: str, message: str):
 	"""Send a text reply to the Instagram user linked to this lead."""
 	sender_id = frappe.db.get_value("CRM Lead", lead, "instagram_sender_id")
 	if not sender_id:
-		frappe.throw("This lead has no linked Instagram conversation")
+		frappe.throw(_("This lead has no linked Instagram conversation"))
 
 	settings = _get_settings()
 	if not settings.enabled:
-		frappe.throw("Instagram integration is disabled in CRM Instagram Settings")
+		frappe.throw(_("Instagram integration is disabled in CRM Instagram Settings"))
 
 	url = f"https://graph.facebook.com/{GRAPH_API_VERSION}/{settings.instagram_business_account_id}/messages"
 	response = requests.post(
@@ -136,7 +137,7 @@ def send_reply(lead: str, message: str):
 	)
 
 	if not response.ok:
-		frappe.throw(f"Failed to send Instagram message: {response.text}")
+		frappe.throw(_("Failed to send Instagram message: {0}").format(response.text))
 
 	frappe.get_doc(
 		{

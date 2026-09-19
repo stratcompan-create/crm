@@ -114,7 +114,7 @@
               class="size-10 cursor-pointer rounded-md text-ink-gray-4"
               @click="() => openFileInAnotherTab(whatsapp.attach)"
             />
-            <div class="text-ink-gray-5">Document</div>
+            <div class="text-ink-gray-5">{{ __('Document') }}</div>
           </div>
           <div
             v-else-if="whatsapp.content_type == 'audio'"
