@@ -808,7 +808,7 @@ function hiddenSelectOptions(h) {
   }
   opts = opts.slice()
   if (h.default && !opts.includes(h.default)) opts.unshift(h.default)
-  return opts.map((o) => ({ label: o, value: o }))
+  return opts.map((o) => ({ label: __(o), value: o }))
 }
 
 // cache of Link option lists (e.g. CRM Lead Status names) for hidden Link fields
@@ -1145,7 +1145,7 @@ function optionList(f) {
   return (f.options || '').split('\n').filter(Boolean)
 }
 function selectOptions(f) {
-  const opts = optionList(f).map((o) => ({ label: o, value: o }))
+  const opts = optionList(f).map((o) => ({ label: __(o), value: o }))
   return [{ label: __('Select an option'), value: '' }, ...opts]
 }
 // preview dropdown for a Link field — the target doctype's records, fetched lazily

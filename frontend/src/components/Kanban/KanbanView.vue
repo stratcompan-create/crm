@@ -50,7 +50,7 @@
                   </div>
                 </template>
               </Popover>
-              <div class="text-ink-gray-9">{{ column.column.name }}</div>
+              <div class="text-ink-gray-9">{{ __(column.column.name) }}</div>
             </div>
             <div class="flex">
               <Dropdown :options="actions(column)">
@@ -74,16 +74,25 @@
               :list="column.data"
               group="fields"
               item-key="name"
-              class="flex flex-col gap-3.5 flex-1"
+              class="flex flex-col gap-3.5 flex-1 min-h-24"
               :delay="isTouchScreenDevice() ? 200 : 0"
+              :force-fallback="true"
+              :fallback-tolerance="4"
+              :touch-start-threshold="6"
+              :animation="150"
+              ghost-class="kanban-ghost"
+              chosen-class="kanban-chosen"
               :data-column="column.column.name"
-              @end="updateColumn"
+              @start="onDragStart"
+              @end="(e) => { onDragEnd(); updateColumn(e) }"
             >
               <template #item="{ element: fields }">
                 <component
                   :is="options.getRoute ? 'router-link' : 'div'"
-                  class="pt-3 px-3.5 pb-2.5 rounded-lg border bg-surface-base text-base flex flex-col text-ink-gray-9"
+                  class="kanban-card pt-3 px-3.5 pb-2.5 rounded-lg border bg-surface-base text-base flex flex-col text-ink-gray-9"
+                  draggable="false"
                   :data-name="fields.name"
+                  @click.capture="guardClick"
                   v-bind="{
                     to: options.getRoute ? options.getRoute(fields) : undefined,
                     onClick: options.onClick
@@ -181,7 +190,7 @@ import IndicatorIcon from '@/components/Icons/IndicatorIcon.vue'
 import { isTouchScreenDevice, colors, parseColor } from '@/utils'
 import Draggable from 'vuedraggable'
 import { Combobox, Dropdown, Popover } from 'frappe-ui'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 
 defineProps({
   options: {
@@ -195,6 +204,25 @@ defineProps({
 })
 
 const emit = defineEmits(['update', 'loadMore'])
+
+// A drag ends with a mouseup/touchend that the browser can turn into a click
+// on the card link; swallow it so dropping a card never opens the lead.
+const justDragged = ref(false)
+
+function onDragStart() {
+  justDragged.value = true
+}
+
+function onDragEnd() {
+  setTimeout(() => (justDragged.value = false), 250)
+}
+
+function guardClick(e) {
+  if (justDragged.value) {
+    e.preventDefault()
+    e.stopPropagation()
+  }
+}
 
 const kanban = defineModel({ type: Object })
 
@@ -275,3 +303,17 @@ function updateColumn(d, fetchNewColumns = false) {
   emit('update', data)
 }
 </script>
+
+<style>
+.kanban-card {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.kanban-chosen {
+  cursor: grabbing;
+}
+.kanban-ghost {
+  opacity: 0.4;
+}
+</style>

@@ -60,6 +60,11 @@ const routes = [
     component: () => import('@/pages/WhatsAppMessages.vue'),
   },
   {
+    path: '/prospeccao',
+    name: 'Prospeccao',
+    component: () => import('@/pages/Prospeccao.vue'),
+  },
+  {
     path: '/meu-site',
     name: 'MeuSite',
     component: () => import('@/pages/MeuSite.vue'),
@@ -69,6 +74,17 @@ const routes = [
     path: '/financeiro/view/:viewType?',
     name: 'Financeiro',
     component: () => import('@/pages/Financeiro.vue'),
+  },
+  {
+    alias: '/financeiro/despesas',
+    path: '/financeiro/despesas/view/:viewType?',
+    name: 'Financeiro Despesas',
+    component: () => import('@/pages/FinanceiroDespesas.vue'),
+  },
+  {
+    path: '/financeiro/recorrencia',
+    name: 'Financeiro Recorrencia',
+    component: () => import('@/pages/FinanceiroRecorrencia.vue'),
   },
   {
     path: '/financeiro/metas',

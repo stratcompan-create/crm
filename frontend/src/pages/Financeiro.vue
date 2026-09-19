@@ -120,7 +120,7 @@ const honorarioCallbacks = {
 function createHonorario() {
   showModal({
     doctype: 'CRM Honorario',
-    title: 'Honorário',
+    title: __('Honorário'),
     callbacks: honorarioCallbacks,
   })
 }
@@ -129,7 +129,7 @@ function editHonorario(name) {
   showModal({
     name,
     doctype: 'CRM Honorario',
-    title: 'Honorário',
+    title: __('Honorário'),
     callbacks: honorarioCallbacks,
   })
 }

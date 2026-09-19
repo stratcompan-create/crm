@@ -191,6 +191,81 @@ def _get_communication_status(doc: Communication) -> str | None:
 	return None
 
 
+AUTOMATED_SENDER_PARTS = (
+	"noreply",
+	"no-reply",
+	"no_reply",
+	"donotreply",
+	"do-not-reply",
+	"notification",
+	"notifications",
+	"mailer-daemon",
+	"postmaster",
+	"newsletter",
+	"marketing",
+	"feedback",
+	"alerts",
+	"alert",
+	"updates",
+	"digest",
+	"edm.",
+	"bounce",
+	"mailer",
+)
+
+AUTOMATED_SENDER_DOMAINS = (
+	"tiktok.com",
+	"google.com",
+	"accounts.google.com",
+	"canva.com",
+	"github.com",
+	"linkedin.com",
+	"facebookmail.com",
+	"instagram.com",
+	"mail.instagram.com",
+	"meta.com",
+	"whatsapp.com",
+	"youtube.com",
+	"microsoft.com",
+	"hostinger.com",
+	"notion.so",
+	"zoom.us",
+	"stripe.com",
+	"mercadopago.com",
+	"mercadolivre.com",
+	"amazon.com",
+	"apple.com",
+)
+
+UNSUBSCRIBE_MARKERS = (
+	"unsubscribe",
+	"cancelar inscri",
+	"cancelar a inscri",
+	"descadastr",
+	"cancelar recebimento",
+	"gerenciar preferências",
+	"manage your email preferences",
+	"view in browser",
+	"ver no navegador",
+)
+
+
+def is_automated_sender(sender: str | None, content: str | None = None) -> bool:
+	"""True para e-mails automáticos (notificações, newsletters, no-reply) que não devem virar lead."""
+	sender = (sender or "").strip().lower()
+	if "@" not in sender:
+		return True
+
+	local, domain = sender.rsplit("@", 1)
+	if any(part in local for part in AUTOMATED_SENDER_PARTS):
+		return True
+	if any(domain == d or domain.endswith("." + d) for d in AUTOMATED_SENDER_DOMAINS):
+		return True
+
+	text = (content or "").lower()
+	return any(marker in text for marker in UNSUBSCRIBE_MARKERS)
+
+
 def create_lead_from_incoming_email(doc: Communication, method: str | None = None):
 	if doc.doctype != "Communication":
 		return
@@ -211,6 +286,9 @@ def create_lead_from_incoming_email(doc: Communication, method: str | None = Non
 		return
 
 	if frappe.db.exists("CRM Lead", {"email": doc.sender}):
+		return
+
+	if is_automated_sender(doc.sender, doc.content):
 		return
 
 	lead = frappe.new_doc("CRM Lead")
@@ -288,3 +366,9 @@ def on_communication_update(doc: Communication, method: str | None = None):
 		values,
 		update_modified=False,
 	)
+
+
+def redirect_to_crm_on_login(login_manager=None):
+	user = getattr(login_manager, "user", None) or frappe.session.user
+	if frappe.db.get_value("User", user, "user_type") == "System User":
+		frappe.local.response["home_page"] = "/crm"

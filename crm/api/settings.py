@@ -33,9 +33,11 @@ def create_email_account(data: dict):
 			email_doc.api_key = data.get("api_key")
 			email_doc.api_secret = data.get("api_secret")
 			email_doc.frappe_mail_site = data.get("frappe_mail_site")
-			email_doc.append_to = "CRM Lead"
 		else:
-			email_doc.append("imap_folder", {"append_to": "CRM Lead", "folder_name": "INBOX"})
+			# Sem append_to: o Frappe criaria um lead para TODO e-mail recebido (newsletters,
+			# notificações...). A criação de lead fica por conta de
+			# crm.utils.create_lead_from_incoming_email, que filtra remetentes automáticos.
+			email_doc.append("imap_folder", {"folder_name": "INBOX"})
 			email_doc.password = data.get("password")
 			# validate whether the credentials are correct
 			email_doc.get_incoming_server()

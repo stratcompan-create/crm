@@ -250,7 +250,7 @@ function getValueComponent(f) {
     return h(FormControl, {
       type: 'select',
       options: _options.map((o) => ({
-        label: o,
+        label: __(o),
         value: o,
       })),
       modelValue: newValue.value,

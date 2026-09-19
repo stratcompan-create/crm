@@ -8,14 +8,20 @@ from frappe.translate import get_messages_for_boot, get_translated_doctypes
 from frappe.utils import cint, get_system_timezone
 from frappe.utils.telemetry import capture
 
+from crm.provision import get_profile, profile_messages
+
 no_cache = 1
 
 
 def get_context():
 	from crm.api import check_app_permission
 
+	if frappe.session.user == "Guest":
+		frappe.local.flags.redirect_location = "/login?redirect-to=/crm"
+		raise frappe.Redirect
+
 	if not check_app_permission():
-		frappe.throw(_("You do not have permission to access Frappe CRM"), frappe.PermissionError)
+		frappe.throw(_("You do not have permission to access this CRM"), frappe.PermissionError)
 
 	redirect_to_set_password()
 
@@ -67,6 +73,7 @@ def get_boot():
 	return frappe._dict(
 		{
 			"frappe_version": frappe.__version__,
+			"crm_brand": get_brand(),
 			"default_route": get_default_route(),
 			"site_name": frappe.local.site,
 			"socketio_port": frappe.conf.socketio_port,
@@ -78,7 +85,8 @@ def get_boot():
 			"demo_data_created": frappe.db.get_default("crm_demo_data_created") == "1",
 			"is_fc_site": is_fc_site(),
 			"translated_doctypes": get_translated_doctypes(),
-			"translated_messages": get_messages_for_boot(),
+			"translated_messages": get_boot_messages(),
+			"crm_profile": get_profile(),
 			"timezone": {
 				"system": get_system_timezone(),
 				"user": frappe.db.get_value("User", frappe.session.user, "time_zone")
@@ -87,6 +95,19 @@ def get_boot():
 			"state_options": get_state_options(),
 		}
 	)
+
+
+def get_boot_messages() -> dict:
+	return {**get_messages_for_boot(), **profile_messages()}
+
+
+def get_brand() -> dict:
+	settings = frappe.db.get_singles_dict("FCRM Settings") or {}
+	return {
+		"name": settings.get("brand_name") or "",
+		"logo": settings.get("brand_logo") or "",
+		"favicon": settings.get("favicon") or "",
+	}
 
 
 def get_state_options() -> dict[str, list[str]]:

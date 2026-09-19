@@ -69,6 +69,8 @@
 <script setup>
 import Autocomplete from '@/components/frappe-ui/Autocomplete.vue'
 import { isTranslatable } from '@/utils'
+
+const STATUS_DOCTYPES = ['CRM Lead Status', 'CRM Deal Status', 'CRM Communication Status']
 import { watchDebounced } from '@vueuse/core'
 import { createResource } from 'frappe-ui'
 import { useAttrs, computed, ref } from 'vue'
@@ -90,7 +92,7 @@ const value = computed({
   get: () => {
     let v = valuePropPassed.value ? attrs.value : props.modelValue
 
-    if (isTranslatable(props.doctype)) return __(v)
+    if (shouldTranslate()) return __(v)
     return v
   },
   set: (val) => {
@@ -100,6 +102,10 @@ const value = computed({
     )
   },
 })
+
+function shouldTranslate() {
+  return isTranslatable(props.doctype) || STATUS_DOCTYPES.includes(props.doctype)
+}
 
 const autocomplete = ref(null)
 const text = ref('')
@@ -141,7 +147,9 @@ const options = createResource({
   transform: (data) => {
     let allData = data.map((option) => {
       return {
-        label: option.label || option.value,
+        label: shouldTranslate()
+          ? __(option.label || option.value)
+          : option.label || option.value,
         value: option.value,
         description: stripHtml(option.description),
       }

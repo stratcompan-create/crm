@@ -48,7 +48,6 @@
 <script setup>
 import BrandLogo from '@/components/BrandLogo.vue'
 import FrappeCloudIcon from '@/components/Icons/FrappeCloudIcon.vue'
-import AppsIcon from '@/components/Icons/AppsIcon.vue'
 import { sessionStore } from '@/stores/session'
 import { usersStore } from '@/stores/users'
 import { getSettings } from '@/stores/settings'
@@ -68,13 +67,6 @@ const { getUser } = usersStore()
 
 const user = computed(() => getUser() || {})
 
-const apps = createResource({
-  url: 'frappe.apps.get_apps',
-  cache: 'apps',
-  auto: true,
-  transform: (data) => [deskApp(), ...crmSiblingApps(data)],
-})
-
 const dropdownItems = computed(() => {
   if (!settings.value?.dropdown_items) return []
 
@@ -89,7 +81,7 @@ const dropdownItems = computed(() => {
   ]
 
   items.forEach((item) => {
-    if (item.hidden) return
+    if (item.hidden || item.name1 === 'app_selector') return
     if (item.type !== 'Separator') {
       _dropdownItems[_dropdownItems.length - 1].items.push(
         dropdownItemObj(item),
@@ -128,12 +120,6 @@ function dropdownItemObj(item) {
 
 function getStandardItem(item) {
   switch (item.name1) {
-    case 'app_selector':
-      return {
-        icon: markRaw(AppsIcon),
-        label: __(item.label),
-        submenu: appMenuItems(),
-      }
     case 'settings':
       return {
         icon: item.icon,
@@ -161,35 +147,5 @@ function getStandardItem(item) {
         onClick: () => logout.submit(),
       }
   }
-}
-
-function appMenuItems() {
-  return (apps.data || []).map((app) => ({
-    label: app.title,
-    onClick: () => (window.location.href = app.route),
-    slots: {
-      prefix: () => h('img', { class: 'size-5 rounded', src: app.logo }),
-    },
-  }))
-}
-
-function deskApp() {
-  return {
-    name: 'frappe',
-    logo: '/assets/frappe/images/framework.png',
-    title: __('Desk'),
-    route: '/desk',
-  }
-}
-
-function crmSiblingApps(data) {
-  return data
-    .filter((app) => app.name !== 'crm')
-    .map((app) => ({
-      name: app.name,
-      logo: app.logo,
-      title: __(app.title),
-      route: app.route,
-    }))
 }
 </script>

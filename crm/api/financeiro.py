@@ -3,11 +3,21 @@
 
 import frappe
 from frappe import _
+from frappe.utils import add_days, add_months, flt, getdate, nowdate
+
+MONTHLY_TYPE = "Consultivo Mensal"
+
+MANAGER_ROLES = ("System Manager", "Sales Manager")
+
+
+def _managers_only():
+	frappe.only_for(MANAGER_ROLES)
 
 
 @frappe.whitelist()
 def get_report_summary():
 	"""Soma o valor dos Honorários agrupado por status (Pago, Pendente, Atrasado)."""
+	_managers_only()
 	rows = frappe.db.get_all(
 		"CRM Honorario",
 		fields=["status", "sum(valor) as total"],
@@ -26,6 +36,7 @@ def get_report_summary():
 @frappe.whitelist()
 def get_monthly_series(months: int = 6):
 	"""Total recebido (Pago) por mes, para os ultimos N meses."""
+	_managers_only()
 	months = int(months)
 	rows = frappe.db.sql(
 		"""
@@ -47,6 +58,7 @@ def get_monthly_series(months: int = 6):
 
 @frappe.whitelist()
 def get_financial_health():
+	_managers_only()
 	"""Compara receita real (honorarios pagos) com receita perdida (negocios
 	perdidos), e traz o teto de despesa/metas cadastrados para referencia."""
 	received = frappe.db.get_value(
@@ -91,4 +103,129 @@ def get_financial_health():
 		"meta_trimestral": goals.get("meta_trimestral") or 0,
 		"teto_despesa": goals.get("teto_despesa") or 0,
 		"meta_mrr": goals.get("meta_mrr") or 0,
+		"expenses_month": flt(frappe.db.sql(
+			"""select sum(valor) from `tabCRM Despesa`
+			where status = 'Pago' and date_format(data_pagamento, '%%Y-%%m') = date_format(curdate(), '%%Y-%%m')"""
+		)[0][0]),
+		"expenses_pending": flt(frappe.db.get_value("CRM Despesa", {"status": ["in", ["Pendente", "Atrasado"]]}, "sum(valor)")),
 	}
+
+
+def _client_label(deal: str) -> str:
+	row = frappe.db.get_value("CRM Deal", deal, ["organization", "first_name", "last_name"], as_dict=True) or {}
+	return row.get("organization") or " ".join(filter(None, [row.get("first_name"), row.get("last_name")])) or deal
+
+
+@frappe.whitelist()
+def get_mrr():
+	"""Receita recorrente mensal: última mensalidade de cada cliente ainda ativa."""
+	_managers_only()
+	today = getdate(nowdate())
+	rows = frappe.get_all(
+		"CRM Honorario",
+		filters={"tipo_honorario": MONTHLY_TYPE},
+		fields=["name", "deal", "valor", "status", "data_vencimento"],
+		order_by="data_vencimento desc",
+	)
+	latest = {}
+	for row in rows:
+		latest.setdefault(row.deal, row)
+	active = [r for r in latest.values() if r.data_vencimento and r.data_vencimento >= add_days(today, -45)]
+
+	late, upcoming = [], []
+	for r in rows:
+		if not r.data_vencimento:
+			continue
+		if r.status == "Atrasado" or (r.status == "Pendente" and r.data_vencimento < today):
+			late.append({"cliente": _client_label(r.deal), "valor": r.valor, "vencimento": r.data_vencimento, "dias": (today - r.data_vencimento).days, "name": r.name})
+		elif r.status == "Pendente" and today <= r.data_vencimento <= add_days(today, 30):
+			upcoming.append({"cliente": _client_label(r.deal), "valor": r.valor, "vencimento": r.data_vencimento, "dias": (r.data_vencimento - today).days, "name": r.name})
+
+	series = frappe.db.sql(
+		"""select date_format(data_vencimento, '%%Y-%%m') as month, sum(valor) as total
+		from `tabCRM Honorario` where tipo_honorario = %s and data_vencimento is not null
+		group by month order by month desc limit 6""",
+		(MONTHLY_TYPE,),
+		as_dict=True,
+	)
+	series.reverse()
+
+	goals = frappe.db.get_singles_dict("CRM Financial Goals") or {}
+	return {
+		"mrr": sum(flt(r.valor) for r in active),
+		"clientes": len(active),
+		"meta_mrr": flt(goals.get("meta_mrr")),
+		"atrasadas": sorted(late, key=lambda x: -x["dias"])[:20],
+		"proximas": sorted(upcoming, key=lambda x: x["dias"])[:20],
+		"series": series,
+	}
+
+
+@frappe.whitelist()
+def get_cashflow(months: int = 6):
+	"""Entradas (receitas pagas) x saídas (despesas pagas) por mês, mais o previsto (pendente)."""
+	_managers_only()
+	months = int(months)
+	start = getdate(add_months(nowdate().rsplit("-", 1)[0] + "-01", -(months - 1)))
+	end_month = add_months(nowdate().rsplit("-", 1)[0] + "-01", 2)
+
+	def by_month(doctype, status_in, date_field):
+		rows = frappe.db.sql(
+			f"""select date_format({date_field}, '%%Y-%%m') as month, sum(valor) as total
+			from `tab{doctype}` where status in %s and {date_field} is not null and {date_field} >= %s
+			group by month""",
+			(status_in, start),
+			as_dict=True,
+		)
+		return {r.month: flt(r.total) for r in rows}
+
+	entradas = by_month("CRM Honorario", ("Pago",), "data_pagamento")
+	saidas = by_month("CRM Despesa", ("Pago",), "data_pagamento")
+	prev_e = by_month("CRM Honorario", ("Pendente", "Atrasado"), "data_vencimento")
+	prev_s = by_month("CRM Despesa", ("Pendente", "Atrasado"), "data_vencimento")
+
+	out, cursor, acumulado = [], start, 0
+	while cursor <= getdate(end_month):
+		key = cursor.strftime("%Y-%m")
+		e, s = entradas.get(key, 0), saidas.get(key, 0)
+		acumulado += e - s
+		out.append({
+			"month": key,
+			"entradas": e,
+			"saidas": s,
+			"saldo": e - s,
+			"acumulado": acumulado,
+			"prev_entradas": prev_e.get(key, 0),
+			"prev_saidas": prev_s.get(key, 0),
+		})
+		cursor = getdate(add_months(cursor, 1))
+	return out
+
+
+@frappe.whitelist()
+def get_revenue_breakdown():
+	"""Receita por cliente e por serviço (pago + a receber)."""
+	_managers_only()
+	rows = frappe.get_all("CRM Honorario", fields=["deal", "servico", "valor", "status"])
+	clients, services = {}, {}
+	for r in rows:
+		bucket = "pago" if r.status == "Pago" else "pendente"
+		c = clients.setdefault(r.deal, {"cliente": None, "pago": 0, "pendente": 0})
+		c[bucket] += flt(r.valor)
+		s = services.setdefault(r.servico or "Não informado", {"servico": r.servico or "Não informado", "pago": 0, "pendente": 0})
+		s[bucket] += flt(r.valor)
+	for deal, c in clients.items():
+		c["cliente"] = _client_label(deal)
+	by_total = lambda x: -(x["pago"] + x["pendente"])
+	return {
+		"clientes": sorted(clients.values(), key=by_total)[:10],
+		"servicos": sorted(services.values(), key=by_total),
+	}
+
+
+def mark_overdue():
+	"""Diário: receitas e despesas pendentes vencidas viram 'Atrasado' sozinhas."""
+	today = nowdate()
+	for doctype in ("CRM Honorario", "CRM Despesa"):
+		for name in frappe.get_all(doctype, filters={"status": "Pendente", "data_vencimento": ["<", today]}, pluck="name"):
+			frappe.db.set_value(doctype, name, "status", "Atrasado", update_modified=False)

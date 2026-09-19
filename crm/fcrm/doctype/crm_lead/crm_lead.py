@@ -508,7 +508,9 @@ class CRMLead(Document):
 			"_assign",
 			"image",
 		]
-		return {"columns": columns, "rows": rows}
+		from crm.provision import drop_hidden_fields
+
+		return drop_hidden_fields("CRM Lead", {"columns": columns, "rows": rows})
 
 	@staticmethod
 	def default_kanban_settings():

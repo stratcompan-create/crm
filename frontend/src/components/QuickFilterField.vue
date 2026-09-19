@@ -11,7 +11,7 @@
     v-model="filter.value"
     class="form-control cursor-pointer [&_select]:cursor-pointer"
     type="select"
-    :options="filter.options"
+    :options="translatedOptions"
     :placeholder="filter.label"
     @update:modelValue="updateFilter(filter, $event)"
   />
@@ -42,7 +42,7 @@
 import Link from '@/components/Controls/Link.vue'
 import { FormControl, DatePicker, DateTimePicker } from 'frappe-ui'
 import { useDebounceFn } from '@vueuse/core'
-import { reactive, watch } from 'vue'
+import { reactive, watch, computed } from 'vue'
 
 const props = defineProps({
   filter: { type: Object, required: true },
@@ -51,6 +51,14 @@ const props = defineProps({
 const filter = reactive(props.filter)
 
 const emit = defineEmits(['applyQuickFilter'])
+
+const translatedOptions = computed(() =>
+  (filter.options || []).map((o) =>
+    typeof o === 'string'
+      ? { label: __(o), value: o }
+      : { ...o, label: __(o.label ?? o.value) },
+  ),
+)
 
 watch(
   () => props.filter,

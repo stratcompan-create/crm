@@ -8,7 +8,7 @@
        column falls through to the white page canvas. The token cannot be
        overridden on the Sidebar element itself — `bg-surface-sidebar` is emitted
        after `bg-surface-gray-1` in the utilities layer and would win. -->
-  <div class="stratcompany-sidebar relative flex h-full bg-[var(--stratcompany-accent)]">
+  <div v-if="showSidebarColumn" class="stratcompany-sidebar relative flex h-full bg-white">
     <Sidebar
       v-model:collapsed="isSidebarCollapsed"
       :disable-collapse="mobile"
@@ -100,6 +100,7 @@
               <SidebarLabel class="select-none">{{ __('Arquivos') }}</SidebarLabel>
               <div class="flex items-center gap-0.5">
                 <a
+                  v-if="isAgency"
                   :href="vscodeUri"
                   class="rounded p-1 hover:bg-surface-gray-2"
                   :title="__('Abrir no VS Code')"
@@ -188,15 +189,6 @@
             </template>
           </SidebarItem>
           <SidebarItem
-            v-if="isOnboardingStepsCompleted"
-            :label="__('Help')"
-            @click="toggleHelpModal"
-          >
-            <template #prefix>
-              <HelpIcon class="size-4 text-ink-gray-7" />
-            </template>
-          </SidebarItem>
-          <SidebarItem
             :label="isCollapsed ? __('Expand') : __('Collapse')"
             @click="isSidebarCollapsed = !isSidebarCollapsed"
           >
@@ -237,8 +229,11 @@ import BrushCleaningIcon from '~icons/lucide/brush-cleaning'
 import AccountsIcon from '~icons/lucide/building-2'
 import TeamIcon from '~icons/lucide/users'
 import TargetIcon from '~icons/lucide/target'
+import ProspectIcon from '~icons/lucide/radar'
 import ReportIcon from '~icons/lucide/bar-chart-3'
 import CalculatorIcon from '~icons/lucide/calculator'
+import ReceiptIcon from '~icons/lucide/receipt'
+import RepeatIcon from '~icons/lucide/repeat'
 import HeartPulseIcon from '~icons/lucide/heart-pulse'
 import EstimatorIcon from '~icons/lucide/ruler'
 import InstagramIcon from '@/components/Icons/InstagramIcon.vue'
@@ -264,7 +259,6 @@ import TaskIcon from '@/components/Icons/TaskIcon.vue'
 import CalendarIcon from '@/components/Icons/CalendarIcon.vue'
 import PhoneIcon from '@/components/Icons/PhoneIcon.vue'
 import CollapseSidebar from '@/components/Icons/CollapseSidebar.vue'
-import HelpIcon from '@/components/Icons/HelpIcon.vue'
 import Settings from '@/components/Settings/Settings.vue'
 import { viewsStore } from '@/stores/views'
 import { usersStore } from '@/stores/users'
@@ -300,6 +294,15 @@ const props = defineProps({
 
 const route = useRoute()
 
+// Meu Site and Instagram are full-page, single-destination views (like
+// Dashboard/Financeiro used to be) with no contextual nav list of their
+// own, so this column would otherwise render as an empty white strip
+// next to them.
+const HIDDEN_SIDEBAR_ROUTES = ['MeuSite', 'Instagram']
+const showSidebarColumn = computed(
+  () => !HIDDEN_SIDEBAR_ROUTES.includes(route.name),
+)
+
 const { getPinnedViews, getPublicViews } = viewsStore()
 const { capture } = useTelemetry()
 const { clearDemoData, isDemoDataCreated } = useDemoData()
@@ -333,6 +336,7 @@ const CRM_ROUTE_NAMES = [
   'Contas',
   'WhatsApp',
   'Equipe',
+  'Prospeccao',
 ]
 const isCrmSection = computed(() => CRM_ROUTE_NAMES.includes(route.name))
 
@@ -340,6 +344,8 @@ const isCrmSection = computed(() => CRM_ROUTE_NAMES.includes(route.name))
 // and whatever else lands under it) instead of the CRM saved-views list.
 const FINANCEIRO_ROUTE_NAMES = [
   'Financeiro',
+  'Financeiro Despesas',
+  'Financeiro Recorrencia',
   'Financeiro Metas',
   'Financeiro Relatorios',
   'Financeiro Saude',
@@ -355,6 +361,18 @@ const financeiroLinks = [
     icon: MoneyIcon,
     key: 'Financeiro',
     to: { name: 'Financeiro' },
+  },
+  {
+    label: 'Despesas',
+    icon: ReceiptIcon,
+    key: 'Financeiro Despesas',
+    to: { name: 'Financeiro Despesas' },
+  },
+  {
+    label: 'Recorrência',
+    icon: RepeatIcon,
+    key: 'Financeiro Recorrencia',
+    to: { name: 'Financeiro Recorrencia' },
   },
   {
     label: 'Metas',
@@ -446,11 +464,20 @@ watch(
   { immediate: true },
 )
 
+// Coisas que só fazem sentido para a agência (CRM de advogado não mostra).
+const isAgency = computed(() => (window.crm_profile || 'agencia') === 'agencia')
+
 const links = [
   {
     label: 'Leads',
     icon: LeadsIcon,
     to: 'Leads',
+  },
+  {
+    label: 'Prospecção',
+    icon: ProspectIcon,
+    to: 'Prospeccao',
+    condition: () => isManager() && isAgency.value,
   },
   {
     label: 'Deals',
@@ -471,6 +498,7 @@ const links = [
     label: 'Contas',
     icon: AccountsIcon,
     to: 'Contas',
+    condition: () => isAgency.value,
   },
   {
     label: 'Equipe',
@@ -603,10 +631,6 @@ watch(
   () => (activeItem.value = currentRouteKey()),
 )
 
-function toggleHelpModal() {
-  showHelpModal.value = minimize.value ? true : !showHelpModal.value
-  minimize.value = !showHelpModal.value
-}
 
 // onboarding
 const { user } = sessionStore()

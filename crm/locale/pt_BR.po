@@ -3953,7 +3953,7 @@ msgstr "Setores"
 #: crm/fcrm/doctype/crm_lead/crm_lead.json
 #: crm/fcrm/doctype/crm_organization/crm_organization.json
 msgid "Industry"
-msgstr "Setor de Atuação"
+msgstr "Área de Atuação"
 
 #. Option for the 'Status' (Select) field in DocType 'CRM Call Log'
 #: crm/fcrm/doctype/crm_call_log/crm_call_log.json
@@ -9773,3 +9773,171 @@ msgstr "Em Nutrição"
 
 msgid "Contacted"
 msgstr "Contatado"
+
+msgid "Replied"
+msgstr "Respondido"
+
+msgid "Passive"
+msgstr "Passivo"
+
+msgid "Overdue"
+msgstr "Atrasado"
+
+msgid "Connect ERPNext to CRM"
+msgstr "Conectar ERPNext ao CRM"
+
+msgid "How many people will use this CRM?"
+msgstr "Quantas pessoas vão usar este CRM?"
+
+msgid "Welcome"
+msgstr "Bem-vindo"
+
+msgid "Are you sure you want to delete \"{0}\" view?"
+msgstr "Tem certeza que deseja excluir a visualização \"{0}\"?"
+
+msgid "Edit deal's mandatory fields layout"
+msgstr "Editar layout dos campos obrigatórios do negócio"
+
+msgid "File \"{0}\" was skipped because of invalid file type"
+msgstr "O arquivo \"{0}\" foi ignorado por tipo de arquivo inválido"
+
+msgid "File \"{0}\" was skipped because size exceeds {1} MB"
+msgstr "O arquivo \"{0}\" foi ignorado porque o tamanho excede {1} MB"
+
+msgid "Guests can't see {0} records yet. Open to grant access."
+msgstr "Convidados ainda não podem ver registros de {0}. Abra para conceder acesso."
+
+msgid "Hi John, \n\nCan you please provide more details on this..."
+msgstr "Olá João,\n\nVocê pode fornecer mais detalhes sobre isso..."
+
+msgid "Lost Notes are required when Lost Reason is \"Other\""
+msgstr "Observações são obrigatórias quando o Motivo de Perda é \"Outro\""
+
+msgid "Use \"{0}\""
+msgstr "Usar \"{0}\""
+
+msgid "No Assignment Rules Found"
+msgstr "Nenhuma Regra de Atribuição Encontrada"
+
+msgid "Lead Form"
+msgstr "Formulário de Lead"
+
+msgid "Type something..."
+msgstr "Digite algo..."
+
+msgid "No SLA Policies Found"
+msgstr "Nenhuma Política de SLA Encontrada"
+
+msgid "CRM Instagram Settings"
+msgstr "Configurações do Instagram"
+
+msgid "Instagram Business Account ID"
+msgstr "ID da Conta Comercial do Instagram"
+
+msgid "From the Instagram professional account connected to your Meta App."
+msgstr "Da conta profissional do Instagram conectada ao seu app da Meta."
+
+msgid "Any string you choose. Must match exactly what you enter in the Meta App's webhook configuration."
+msgstr "Qualquer texto que você escolher. Deve ser exatamente igual ao que você informar na configuração de webhook do app da Meta."
+
+msgid "Credentials"
+msgstr "Credenciais"
+
+msgid "App Secret"
+msgstr "Segredo do App"
+
+msgid "Used to verify that incoming webhook requests really come from Meta."
+msgstr "Usado para verificar que as requisições de webhook recebidas realmente vêm da Meta."
+
+msgid "Instagram Sender ID"
+msgstr "ID do Remetente no Instagram"
+
+msgid "Direction"
+msgstr "Direção"
+
+msgid "Set automatically when a lead is created from an Instagram DM. Used to route replies back to the right conversation."
+msgstr "Definido automaticamente quando um lead é criado a partir de uma DM do Instagram. Usado para direcionar as respostas à conversa correta."
+
+msgid "CRM Instagram Message"
+msgstr "Mensagem do Instagram"
+
+msgid "CRM Client Account"
+msgstr "Conta de Cliente"
+
+msgid "CRM Budget Item"
+msgstr "Item do Orçamento"
+
+msgid "CRM Honorario"
+msgstr "Honorário"
+
+msgid "CRM Financial Goals"
+msgstr "Metas Financeiras"
+
+msgid "Budget"
+msgstr "Orçamento"
+
+msgid "Budget Items"
+msgstr "Itens do Orçamento"
+
+msgid "Budget Discount"
+msgstr "Desconto do Orçamento"
+
+msgid "Existing Customer"
+msgstr "Cliente Existente"
+
+msgid "Reference"
+msgstr "Indicação"
+
+msgid "Advertisement"
+msgstr "Anúncio"
+
+msgid "Cold Calling"
+msgstr "Prospecção Ativa"
+
+msgid "Exhibition"
+msgstr "Evento / Feira"
+
+msgid "Supplier Reference"
+msgstr "Indicação de Parceiro"
+
+msgid "Mass Mailing"
+msgstr "E-mail em Massa"
+
+msgid "Customer's Vendor"
+msgstr "Indicação de Cliente"
+
+msgid "Campaign"
+msgstr "Campanha"
+
+msgid "Walk In"
+msgstr "Visita Presencial"
+
+msgid "Pricing"
+msgstr "Preço"
+
+msgid "Competition"
+msgstr "Concorrência"
+
+msgid "Budget Constraints"
+msgstr "Restrição de Orçamento"
+
+msgid "Missing Features"
+msgstr "Funcionalidades Ausentes"
+
+msgid "Long Sales Cycle"
+msgstr "Ciclo de Vendas Longo"
+
+msgid "No Decision-Maker"
+msgstr "Sem Poder de Decisão"
+
+msgid "Unresponsive Prospect"
+msgstr "Prospect Sem Resposta"
+
+msgid "Poor Fit"
+msgstr "Baixa Aderência"
+
+msgid "Company description discovered by Domain Enrichment."
+msgstr "Descrição da empresa obtida pelo Enriquecimento de Domínio."
+
+msgid "Company logo discovered by Domain Enrichment."
+msgstr "Logo da empresa obtida pelo Enriquecimento de Domínio."

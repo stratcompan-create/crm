@@ -3,6 +3,15 @@
     <template #left-header>
       <div class="text-lg font-semibold text-ink-gray-9">{{ __('Equipe') }}</div>
     </template>
+    <template #right-header>
+      <Button
+        v-if="isManager()"
+        variant="solid"
+        :label="__('Adicionar Membro')"
+        icon-left="lucide-user-plus"
+        @click="addMember"
+      />
+    </template>
   </LayoutHeader>
 
   <div class="flex-1 overflow-y-auto p-5">
@@ -58,10 +67,11 @@
 <script setup>
 import LayoutHeader from '@/components/LayoutHeader.vue'
 import { usersStore } from '@/stores/users'
-import { Avatar, Badge, call } from 'frappe-ui'
+import { Avatar, Badge, Button, call } from 'frappe-ui'
+import { showSettings, activeSettingsPage } from '@/composables/settings'
 import { ref, computed, onMounted } from 'vue'
 
-const { crmUsers, users } = usersStore()
+const { crmUsers, users, isManager } = usersStore()
 
 const loading = ref(true)
 const allTasks = ref([])
@@ -81,6 +91,14 @@ const tasksByUser = computed(() => {
 function openTaskCount(member) {
   const tasks = tasksByUser.value[member.name] || []
   return tasks.filter((t) => !['Done', 'Canceled'].includes(t.status)).length
+}
+
+function addMember() {
+  // Reuses the CRM's own invite flow (Configurações > Convidar Usuário),
+  // which already lets the owner pick the member's role (Vendedor/Gestor/
+  // Admin) - the same access-limit control they asked for, for free.
+  activeSettingsPage.value = __('Invite User')
+  showSettings.value = true
 }
 
 const ROLE_LABELS = {

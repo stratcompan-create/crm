@@ -7,7 +7,7 @@
     >
       <span
         v-if="node.is_folder"
-        class="lucide-chevron-right size-3.5 shrink-0 text-ink-gray-5 transition-transform duration-150 ease-in-out"
+        class="lucide-chevron-right size-3.5 shrink-0 text-[var(--stratcompany-explorer)] transition-transform duration-150 ease-in-out"
         :class="{ 'rotate-90': expanded }"
         aria-hidden="true"
       />
@@ -15,13 +15,13 @@
 
       <span
         v-if="node.is_folder"
-        class="size-4 shrink-0"
+        class="size-4 shrink-0 text-[var(--stratcompany-explorer)]"
         :class="expanded ? 'lucide-folder-open' : 'lucide-folder'"
         aria-hidden="true"
       />
-      <span v-else class="lucide-file size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
+      <span v-else class="lucide-file size-4 shrink-0 text-[var(--stratcompany-explorer)]" aria-hidden="true" />
 
-      <span class="truncate text-p-sm text-ink-gray-8">{{ node.file_name }}</span>
+      <span class="truncate text-p-sm font-medium text-[var(--stratcompany-explorer)]">{{ node.file_name }}</span>
 
       <Button
         v-if="node.is_folder"
@@ -42,7 +42,7 @@
         class="flex items-center gap-1.5 py-1"
         :style="{ paddingLeft: (depth + 1) * 18 + 30 + 'px' }"
       >
-        <span class="lucide-folder size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
+        <span class="lucide-folder size-4 shrink-0 text-[var(--stratcompany-explorer)]" aria-hidden="true" />
         <input
           ref="newFolderInputRef"
           v-model="newFolderName"

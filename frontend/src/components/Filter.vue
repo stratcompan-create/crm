@@ -437,7 +437,7 @@ function getValueControl(f) {
     return h(Combobox, {
       trigger: 'button',
       options: _options.map((o) => ({
-        label: o,
+        label: __(o),
         value: o,
       })),
       modelValue: f.value,

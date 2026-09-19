@@ -1,5 +1,5 @@
 app_name = "crm"
-app_title = "Frappe CRM"
+app_title = "CRM"
 app_publisher = "Frappe Technologies Pvt. Ltd."
 app_description = "Kick-ass Open Source CRM"
 app_email = "shariq@frappe.io"
@@ -64,12 +64,19 @@ doctype_js = {
 # ----------
 
 # application home page (will override Website Settings)
-# home_page = "login"
+home_page = "crm"
 
 # website user home page (by Role)
 # role_home_page = {
 # "Role": "home_page"
 # }
+
+website_redirects = [
+	{"source": "/me", "target": "/crm"},
+	{"source": "/update-profile", "target": "/crm"},
+]
+
+on_login = "crm.utils.redirect_to_crm_on_login"
 
 website_route_rules = [
 	{"from_route": "/crm/<path:app_path>", "to_route": "crm"},
@@ -225,6 +232,7 @@ scheduler_events = {
 	"all": ["crm.api.event.trigger_offset_event_notifications"],
 	"hourly": ["crm.api.event.trigger_hourly_event_notifications"],
 	"daily": [
+		"crm.api.financeiro.mark_overdue",
 		"crm.api.event.trigger_daily_event_notifications",
 		"crm.fcrm.doctype.crm_invitation.crm_invitation.expire_invitations",
 		"crm.fcrm.doctype.crm_view_settings.crm_view_settings.clear_old_versions",

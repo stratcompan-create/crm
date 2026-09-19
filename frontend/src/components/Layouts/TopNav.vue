@@ -31,6 +31,7 @@
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import router from '@/router'
+import { usersStore } from '@/stores/users'
 
 const route = useRoute()
 
@@ -52,15 +53,29 @@ const CRM_ROUTE_NAMES = [
   'Contas',
   'WhatsApp',
   'Equipe',
+  'Prospeccao',
 ]
 
-const sections = [
+const { isManager } = usersStore()
+
+const allSections = [
   { key: 'overview', label: 'Visão Geral', route: 'Dashboard' },
   { key: 'meusite', label: 'Meu Site', route: 'MeuSite' },
   { key: 'instagram', label: 'Instagram', route: 'Instagram' },
   { key: 'financeiro', label: 'Financeiro', route: 'Financeiro' },
   { key: 'crm', label: 'CRM', route: 'Leads' },
 ]
+
+const sections = computed(() =>
+  allSections.filter((s) => {
+    if (s.key !== 'financeiro') return true
+    try {
+      return isManager()
+    } catch (e) {
+      return false
+    }
+  }),
+)
 
 const activeKey = computed(() => {
   const name = route.name
@@ -69,6 +84,8 @@ const activeKey = computed(() => {
   if (name === 'Instagram') return 'instagram'
   if (
     name === 'Financeiro' ||
+    name === 'Financeiro Despesas' ||
+    name === 'Financeiro Recorrencia' ||
     name === 'Financeiro Metas' ||
     name === 'Financeiro Relatorios' ||
     name === 'Financeiro Saude' ||

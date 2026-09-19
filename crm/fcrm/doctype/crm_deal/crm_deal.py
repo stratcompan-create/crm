@@ -5,6 +5,7 @@ import frappe
 from frappe import _
 from frappe.desk.form.assign_to import _add as assign
 from frappe.model.document import Document
+from frappe.utils import flt
 
 from crm.api.exchange_rate import get_exchange_rate
 from crm.fcrm.doctype.crm_service_level_agreement.utils import get_sla
@@ -100,6 +101,7 @@ class CRMDeal(Document):
 		self.validate_forecasting_fields()
 		self.validate_lost_reason()
 		self.update_exchange_rate()
+		self.sync_budget_value()
 		if self.organization and (self.is_new() or self.has_value_changed("organization")):
 			self.copy_enrichment_from_organization()
 
@@ -116,6 +118,58 @@ class CRMDeal(Document):
 
 	def before_save(self):
 		self.apply_sla()
+
+	def sync_budget_value(self):
+		"""O orçamento do negócio é a fonte do valor: salvar itens atualiza o valor do negócio."""
+		items = self.get("budget_items") or []
+		if not items:
+			return
+		subtotal = sum(flt(i.qty) * flt(i.unit_price) for i in items)
+		total = subtotal - flt(self.get("budget_discount"))
+		if total > 0:
+			self.deal_value = total
+
+	def on_update(self):
+		self.create_receita_when_won()
+
+	def create_receita_when_won(self):
+		"""Negócio ganho gera automaticamente a receita (cobrança pendente) no Financeiro."""
+		if not self.has_value_changed("status"):
+			return
+		if frappe.db.get_value("CRM Deal Status", self.status, "type") != "Won":
+			return
+		if frappe.db.exists("CRM Honorario", {"deal": self.name}):
+			return
+		valor = flt(self.deal_value) or flt(self.net_total) or flt(self.expected_deal_value)
+		if valor <= 0:
+			return
+		tipos = (frappe.get_meta("CRM Honorario").get_field("tipo_honorario").options or "").split("\n")
+		frappe.get_doc(
+			{
+				"doctype": "CRM Honorario",
+				"deal": self.name,
+				"status": "Pendente",
+				"tipo_honorario": tipos[0] if tipos and tipos[0] else None,
+				"servico": self._guess_service(),
+				"valor": valor,
+				"data_vencimento": frappe.utils.add_days(frappe.utils.nowdate(), 30),
+			}
+		).insert(ignore_permissions=True)
+
+	def _guess_service(self):
+		"""Deduz o serviço pelo texto dos itens do orçamento (só usa opções que existem no campo)."""
+		options = (frappe.get_meta("CRM Honorario").get_field("servico").options or "").split("\n")
+		text = " ".join((i.description or "") for i in (self.get("budget_items") or [])).lower()
+		hints = {
+			"Tráfego Pago": ("tráfego", "trafego", "anúncio", "anuncio", "ads"),
+			"Sites": ("site", "landing"),
+			"Audiovisual": ("audiovisual", "vídeo", "video", "filmagem", "edição", "edicao"),
+			"CRM Jurídico": ("crm",),
+		}
+		for service, words in hints.items():
+			if service in options and any(w in text for w in words):
+				return service
+		return None
 
 	def validate_status(self):
 		if self.is_new() and not self.status:
@@ -363,7 +417,9 @@ class CRMDeal(Document):
 			"modified",
 			"_assign",
 		]
-		return {"columns": columns, "rows": rows}
+		from crm.provision import drop_hidden_fields
+
+		return drop_hidden_fields("CRM Deal", {"columns": columns, "rows": rows})
 
 	@staticmethod
 	def default_kanban_settings():

@@ -12,56 +12,40 @@
   --surface-gray-8: #8aa1a9; /* active */
 }
 
-/* Stratcompany brand accent — the sage color used across the sidebar,
-   TopNav active tab and a few one-off buttons in light mode. In dark mode
-   the navy becomes the predominant color instead, per brand guidance. */
+/* Stratcompany brand accent — the sage color used for the active sidebar
+   item, TopNav active tab and a few one-off buttons in light mode. In dark
+   mode the navy becomes the predominant color instead, per brand guidance. */
 :root {
   --stratcompany-accent: #8aa1a9;
   --stratcompany-accent-glow: rgba(138, 161, 169, 0.65);
   --stratcompany-accent-glow-soft: rgba(138, 161, 169, 0.9);
-  --stratcompany-accent-ink: #042d3c;
-  /* Sidebar hover/active row background — must contrast with --stratcompany-accent-ink
-     in both themes, since that same ink color is used at rest directly on
-     --stratcompany-accent too. */
-  --stratcompany-accent-highlight: #ffffff;
+  --stratcompany-explorer: #8aa1a9;
 }
 [data-theme='dark'] {
   --stratcompany-accent: #042d3c;
   --stratcompany-accent-glow: rgba(4, 45, 60, 0.65);
   --stratcompany-accent-glow-soft: rgba(4, 45, 60, 0.9);
-  --stratcompany-accent-ink: #ffffff;
-  --stratcompany-accent-highlight: #0f4655;
+  /* the dark accent (#042d3c) would vanish on a dark surface, so use its lighter tint */
+  --stratcompany-explorer: #86aebf;
 }
 
-/* Stratcompany brand — sidebar. Scoped to .stratcompany-sidebar (the
-   AppSidebar root) so it never touches the same tokens used elsewhere in
-   the app (buttons, cards, etc. keep the default frappe-ui gray scale).
-   --surface-sidebar covers the <Sidebar> component's own background (it's
-   opaque in light mode and would otherwise cover the bg-[#8aa1a9] set on
-   this wrapper); --ink-gray-* covers every icon/label inside, since they
-   all read from text-ink-gray-N utilities which resolve these vars. */
+/* Stratcompany brand — sidebar. The rail itself stays plain white (the
+   app's normal surface/ink tokens already give readable dark-on-white text
+   at rest, so nothing is overridden there). Only the CURRENTLY ACTIVE item
+   gets the brand accent as its background — scoped to that one item's own
+   subtree via [data-state="active"] so it doesn't leak into sibling items
+   or into unrelated content sharing this sidebar (e.g. the Visão Geral file
+   explorer). White is the only sane text color once the background is the
+   accent, in both themes. */
 .stratcompany-sidebar {
-  --surface-sidebar: var(--stratcompany-accent);
-  /* SidebarItem hover uses --surface-gray-2, its active/current-page state
-     uses --surface-elevation-3 (see frappe-ui SidebarItem.vue) — both
-     default to dark shades in dark mode, which combined with the ink color
-     below would be unreadable. --stratcompany-accent-highlight picks a
-     shade that stays legible against --stratcompany-accent-ink in either
-     theme (white in light mode, a lighter navy in dark mode). */
-  --surface-gray-2: var(--stratcompany-accent-highlight);
-  --surface-elevation-3: var(--stratcompany-accent-highlight);
-  --ink-gray-1: var(--stratcompany-accent-ink);
-  --ink-gray-2: var(--stratcompany-accent-ink);
-  --ink-gray-3: var(--stratcompany-accent-ink);
-  --ink-gray-4: var(--stratcompany-accent-ink);
-  --ink-gray-5: var(--stratcompany-accent-ink);
-  --ink-gray-6: var(--stratcompany-accent-ink);
-  --ink-gray-7: var(--stratcompany-accent-ink);
-  --ink-gray-8: var(--stratcompany-accent-ink);
-  --ink-gray-9: var(--stratcompany-accent-ink);
-  --ink-gray-10: var(--stratcompany-accent-ink);
-  --ink-gray-11: var(--stratcompany-accent-ink);
-  --ink-gray-12: var(--stratcompany-accent-ink);
+  --surface-sidebar: #ffffff;
+}
+
+.stratcompany-sidebar [data-slot='sidebar-item'][data-state='active'] {
+  --surface-elevation-3: var(--stratcompany-accent);
+  --ink-gray-6: #ffffff;
+  --ink-gray-7: #ffffff;
+  --ink-gray-8: #ffffff;
 }
 
 @layer components {

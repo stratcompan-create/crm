@@ -366,67 +366,9 @@ def add_web_form_custom_fields():
 
 
 def add_default_industries():
-	industries = [
-		"Accounting",
-		"Advertising",
-		"Aerospace",
-		"Agriculture",
-		"Airline",
-		"Apparel & Accessories",
-		"Automotive",
-		"Banking",
-		"Biotechnology",
-		"Broadcasting",
-		"Brokerage",
-		"Chemical",
-		"Computer",
-		"Consulting",
-		"Consumer Products",
-		"Cosmetics",
-		"Defense",
-		"Department Stores",
-		"Education",
-		"Electronics",
-		"Energy",
-		"Entertainment & Leisure, Executive Search",
-		"Financial Services",
-		"Food",
-		"Beverage & Tobacco",
-		"Grocery",
-		"Health Care",
-		"Internet Publishing",
-		"Investment Banking",
-		"Legal",
-		"Manufacturing",
-		"Motion Picture & Video",
-		"Music",
-		"Newspaper Publishers",
-		"Online Auctions",
-		"Pension Funds",
-		"Pharmaceuticals",
-		"Private Equity",
-		"Publishing",
-		"Real Estate",
-		"Retail & Wholesale",
-		"Securities & Commodity Exchanges",
-		"Service",
-		"Soap & Detergent",
-		"Software",
-		"Sports",
-		"Technology",
-		"Telecommunications",
-		"Television",
-		"Transportation",
-		"Venture Capital",
-	]
+	from crm.provision import seed_legal_areas
 
-	for industry in industries:
-		if frappe.db.exists("CRM Industry", industry):
-			continue
-
-		doc = frappe.new_doc("CRM Industry")
-		doc.industry = industry
-		doc.insert()
+	seed_legal_areas()
 
 
 def add_default_lead_sources():

@@ -1,5 +1,13 @@
 import './index.css'
 
+// dayjs's locale is a single global registry shared by every import of the
+// package (frappe-ui's Calendar, DatePicker, and relative-time labels all
+// use the same dayjs instance) - setting it once here switches day names,
+// month names and AM/PM formatting to Portuguese everywhere at once.
+import 'dayjs/esm/locale/pt-br'
+import { dayjs } from 'frappe-ui'
+dayjs.locale('pt-br')
+
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
 import { createDialog } from './utils/dialogs'

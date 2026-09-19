@@ -1,0 +1,112 @@
+{
+	"actions": [],
+	"allow_rename": 0,
+	"autoname": "field:data",
+	"creation": "2026-09-18 00:00:00.000000",
+	"doctype": "DocType",
+	"engine": "InnoDB",
+	"field_order": [
+		"data",
+		"abordados",
+		"agendadas",
+		"realizadas",
+		"propostas",
+		"fechamentos",
+		"respostas",
+		"objecoes"
+	],
+	"fields": [
+		{
+			"fieldname": "data",
+			"fieldtype": "Date",
+			"in_list_view": 1,
+			"label": "Data",
+			"reqd": 1,
+			"unique": 1
+		},
+		{
+			"default": "0",
+			"fieldname": "abordados",
+			"fieldtype": "Int",
+			"in_list_view": 1,
+			"label": "Abordados"
+		},
+		{
+			"default": "0",
+			"fieldname": "agendadas",
+			"fieldtype": "Int",
+			"label": "Reuniões agendadas"
+		},
+		{
+			"default": "0",
+			"fieldname": "realizadas",
+			"fieldtype": "Int",
+			"label": "Reuniões realizadas"
+		},
+		{
+			"default": "0",
+			"fieldname": "propostas",
+			"fieldtype": "Int",
+			"label": "Propostas enviadas"
+		},
+		{
+			"default": "0",
+			"fieldname": "fechamentos",
+			"fieldtype": "Int",
+			"label": "Fechamentos"
+		},
+		{
+			"default": "{}",
+			"fieldname": "respostas",
+			"fieldtype": "Code",
+			"label": "Respostas positivas por canal",
+			"options": "JSON"
+		},
+		{
+			"default": "{}",
+			"fieldname": "objecoes",
+			"fieldtype": "Code",
+			"label": "Objeções",
+			"options": "JSON"
+		}
+	],
+	"index_web_pages_for_search": 1,
+	"links": [],
+	"modified": "2026-09-18 00:00:00.000000",
+	"modified_by": "Administrator",
+	"module": "FCRM",
+	"name": "CRM Prospecao Dia",
+	"naming_rule": "By fieldname",
+	"owner": "Administrator",
+	"permissions": [
+		{
+			"create": 1,
+			"delete": 1,
+			"email": 1,
+			"export": 1,
+			"print": 1,
+			"read": 1,
+			"report": 1,
+			"role": "System Manager",
+			"share": 1,
+			"write": 1
+		},
+		{
+			"create": 1,
+			"delete": 1,
+			"email": 1,
+			"export": 1,
+			"print": 1,
+			"read": 1,
+			"report": 1,
+			"role": "Sales Manager",
+			"share": 1,
+			"write": 1
+		}
+	],
+	"row_format": "Dynamic",
+	"sort_field": "modified",
+	"sort_order": "DESC",
+	"states": [],
+	"track_changes": 1
+}
