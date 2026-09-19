@@ -63,6 +63,38 @@ def _attach_logo(path: str) -> str:
 	return file_doc.file_url
 
 
+RESET_BODY = """<p>Olá {{ first_name }},</p>
+<p>Recebemos um pedido para criar uma nova senha de acesso. Clique no botão abaixo para escolher a nova senha:</p>
+<p style="margin: 15px 0px;"><a href="{{ link }}" rel="nofollow" class="btn btn-primary">Criar nova senha</a></p>
+<p>Se você não fez esse pedido, ignore este e-mail: nada será alterado.</p>
+<p>Se o botão não funcionar, copie e cole este endereço no navegador:<br><a href="{{ link }}">{{ link }}</a></p>"""
+
+WELCOME_BODY = """<p>Olá {{ first_name }},</p>
+<p>Uma conta foi criada para você em <a href="{{ site_url }}">{{ site_url }}</a>.</p>
+<p>Seu login é: <b>{{ user }}</b></p>
+<p>Clique no botão abaixo para concluir o cadastro e definir a sua senha:</p>
+<p style="margin: 15px 0px;"><a href="{{ link }}" rel="nofollow" class="btn btn-primary">Concluir cadastro</a></p>
+<p>Se o botão não funcionar, copie e cole este endereço no navegador:<br><a href="{{ link }}">{{ link }}</a></p>"""
+
+
+def ensure_email_templates():
+	"""E-mails de senha e de boas-vindas em português (os padrões do Frappe saem em inglês)."""
+	for name, subject, body in (
+		("Redefinição de senha", "Redefinição de senha", RESET_BODY),
+		("Boas-vindas ao CRM", "Bem-vindo! Conclua o seu cadastro", WELCOME_BODY),
+	):
+		if frappe.db.exists("Email Template", name):
+			doc = frappe.get_doc("Email Template", name)
+			doc.subject, doc.response, doc.use_html = subject, body, 1
+			doc.save(ignore_permissions=True)
+		else:
+			frappe.get_doc(
+				{"doctype": "Email Template", "name": name, "subject": subject, "response": body, "use_html": 1}
+			).insert(ignore_permissions=True)
+	frappe.db.set_single_value("System Settings", "reset_password_template", "Redefinição de senha")
+	frappe.db.set_single_value("System Settings", "welcome_email_template", "Boas-vindas ao CRM")
+
+
 def provision_client(
 	brand_name: str,
 	logo_path: str | None = None,
@@ -98,6 +130,7 @@ def provision_client(
 	frappe.db.set_single_value("FCRM Settings", "brand_name", brand_name)
 	frappe.db.set_single_value("System Settings", "app_name", brand_name)
 	frappe.db.set_single_value("Website Settings", "app_name", brand_name)
+	ensure_email_templates()
 	if website_url:
 		frappe.db.set_single_value("FCRM Settings", "website_url", website_url)
 	if logo_path:
