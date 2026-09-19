@@ -5,7 +5,7 @@
     </template>
     <template #right-header>
       <span class="mr-1 text-p-sm text-ink-gray-5">{{ saveState }}</span>
-      <Button :label="__('Baixar semana')" @click="downloadCsv">
+      <Button :label="__('Baixar semana')" :loading="downloading" @click="downloadCsv">
         <template #prefix><span class="lucide-download size-4" aria-hidden="true" /></template>
       </Button>
       <Button :label="__('Configurar')" @click="openConfig">
@@ -190,7 +190,7 @@
 
 <script setup>
 import LayoutHeader from '@/components/LayoutHeader.vue'
-import { Button, call, createResource } from 'frappe-ui'
+import { Button, call, createResource, toast } from 'frappe-ui'
 import { computed, reactive, ref } from 'vue'
 
 const stages = [
@@ -491,38 +491,26 @@ async function saveConfig() {
   showConfig.value = false
 }
 
-/* ---------- CSV (formato lido pela skill do relatório semanal) ---------- */
-function buildCsv() {
-  const keys = new Set([...Object.keys(days), ...Object.keys(auto)])
-  const list = [...keys].sort().filter((k) => {
-    const d = eff(k)
-    return COUNT_KEYS.some((c) => d[c]) || respTotal(d) || Object.keys(d.objecoes || {}).length
-  })
-  const clean = (t) => String(t).replace(/[,\n]/g, ' ')
-  let out = 'FUNIL DIARIO\nData,abordados,agendadas,realizadas,propostas,fechamentos\n'
-  for (const k of list) {
-    const d = eff(k)
-    out += `${k},${COUNT_KEYS.map((c) => d[c] || 0).join(',')}\n`
+/* ---------- relatório da semana: salva em Arquivos > Prospecção e baixa ---------- */
+const downloading = ref(false)
+async function downloadCsv() {
+  downloading.value = true
+  try {
+    const res = await call('crm.api.prospeccao.save_weekly_report', {
+      week_start: mondayOf(selDate.value),
+    })
+    const blob = new Blob([res.content], { type: 'text/csv;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = res.file_name
+    a.click()
+    URL.revokeObjectURL(url)
+    toast.success(`${__('Salvo em Arquivos')} › ${res.folder} › ${res.file_name}`)
+  } catch (e) {
+    toast.error(e?.messages?.[0] || __('Não foi possível gerar o relatório'))
+  } finally {
+    downloading.value = false
   }
-  out += '\nRESPOSTAS POSITIVAS POR FONTE\nData,Fonte,Quantidade\n'
-  for (const k of list) {
-    const r = eff(k).respostas || {}
-    for (const f of Object.keys(r).sort()) if (r[f] > 0) out += `${k},${clean(f)},${r[f]}\n`
-  }
-  out += '\nOBJECOES\nData,Tipo\n'
-  for (const k of list) {
-    const o = eff(k).objecoes || {}
-    for (const t of Object.keys(o).sort()) for (let i = 0; i < o[t]; i++) out += `${k},${clean(t)}\n`
-  }
-  return out
-}
-function downloadCsv() {
-  const blob = new Blob([buildCsv()], { type: 'text/csv;charset=utf-8' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = 'dashboard_strat.csv'
-  a.click()
-  URL.revokeObjectURL(url)
 }
 </script>

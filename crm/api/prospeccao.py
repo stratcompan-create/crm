@@ -1,7 +1,9 @@
 # Copyright (c) 2026, Stratcompany and contributors
 # For license information, please see license.txt
 
+import glob
 import json
+import os
 
 import frappe
 from frappe.utils import add_days, cint, getdate, nowdate
@@ -125,3 +127,112 @@ def save_config(meta_diaria=20, canais=None, objecoes=None):
 	if objecoes is not None:
 		frappe.db.set_single_value("CRM Prospecao Config", "objecoes", "\n".join(_lines("\n".join(objecoes) if isinstance(objecoes, list) else objecoes)))
 	return _config()
+
+
+def _week_bounds(ref=None):
+	ref = getdate(ref or nowdate())
+	monday = add_days(ref, -ref.weekday())
+	return getdate(monday), getdate(add_days(monday, 6))
+
+
+def _effective_days(start, end) -> dict:
+	"""Dia a dia: o que foi registrado ou o que o CRM já sabia sozinho (o maior)."""
+	canais = _config()["canais"]
+	rows = frappe.get_all(
+		"CRM Prospecao Dia",
+		filters={"data": ["between", [start, end]]},
+		fields=["data", *COUNT_FIELDS, "respostas", "objecoes"],
+	)
+	manual = {str(r.data): r for r in rows}
+	auto = _automatic(start)
+
+	out, day = {}, getdate(start)
+	while day <= getdate(end):
+		key = str(day)
+		m = manual.get(key)
+		a = auto.get(key, {})
+		respostas = dict(_json(m.respostas)) if m else {}
+		for canal, n in (a.get("respostas") or {}).items():
+			if canal in canais:
+				respostas[canal] = max(cint(respostas.get(canal)), n)
+		out[key] = {
+			**{field: cint(m.get(field)) if m else 0 for field in COUNT_FIELDS},
+			"respostas": respostas,
+			"objecoes": _json(m.objecoes) if m else {},
+		}
+		out[key]["fechamentos"] = max(out[key]["fechamentos"], cint(a.get("fechamentos")))
+		day = getdate(add_days(day, 1))
+	return out
+
+
+def _clean(text) -> str:
+	return str(text).replace(",", " ").replace("\n", " ")
+
+
+def _build_csv(days: dict) -> str:
+	"""Mesmo formato que a skill do relatório semanal lê (FUNIL DIARIO / RESPOSTAS / OBJECOES)."""
+	active = [
+		k
+		for k in sorted(days)
+		if any(days[k][f] for f in COUNT_FIELDS) or days[k]["respostas"] or days[k]["objecoes"]
+	]
+	out = "FUNIL DIARIO\nData,abordados,agendadas,realizadas,propostas,fechamentos\n"
+	for k in active:
+		out += k + "," + ",".join(str(days[k][f]) for f in COUNT_FIELDS) + "\n"
+	out += "\nRESPOSTAS POSITIVAS POR FONTE\nData,Fonte,Quantidade\n"
+	for k in active:
+		for canal in sorted(days[k]["respostas"]):
+			if days[k]["respostas"][canal] > 0:
+				out += f"{k},{_clean(canal)},{days[k]['respostas'][canal]}\n"
+	out += "\nOBJECOES\nData,Tipo\n"
+	for k in active:
+		for tipo in sorted(days[k]["objecoes"]):
+			out += "".join(f"{k},{_clean(tipo)}\n" for _ in range(cint(days[k]["objecoes"][tipo])))
+	return out
+
+
+def _ensure_folder(name: str) -> str:
+	path = f"Home/{name}"
+	if not frappe.db.exists("File", path):
+		frappe.get_doc(
+			{"doctype": "File", "file_name": name, "is_folder": 1, "folder": "Home"}
+		).insert(ignore_permissions=True)
+	return path
+
+
+@frappe.whitelist(methods=["POST"])
+def save_weekly_report(week_start=None):
+	"""Gera o CSV da semana (mais a anterior, para o comparativo) e guarda em Arquivos > Prospecção."""
+	_managers_only()
+	monday, sunday = _week_bounds(week_start)
+	previous_monday = getdate(add_days(monday, -7))
+	csv_text = _build_csv(_effective_days(previous_monday, sunday))
+
+	folder = _ensure_folder("Prospecção")
+	file_name = f"prospeccao_semana_{monday}_a_{sunday}.csv"
+	# Substitui o relatório da mesma semana (o Frappe põe um sufixo aleatório se o nome já existir).
+	base = file_name.rsplit(".", 1)[0]
+	for old in frappe.get_all("File", filters={"folder": folder, "file_name": ["like", f"{base}%"]}, pluck="name"):
+		frappe.delete_doc("File", old, ignore_permissions=True, force=True)
+	# o Frappe não apaga o arquivo físico junto com o registro; sobrando um com o mesmo nome,
+	# o novo ganharia um sufixo aleatório
+	for stale in glob.glob(frappe.get_site_path("private", "files", f"{base}*.csv")):
+		os.remove(stale)
+	# Criado direto (o helper save_file do Frappe grava duas vezes e acrescenta um sufixo ao nome)
+	file_doc = frappe.get_doc(
+		{
+			"doctype": "File",
+			"file_name": file_name,
+			"folder": folder,
+			"is_private": 1,
+			"content": csv_text.encode("utf-8"),
+		}
+	)
+	file_doc.insert(ignore_permissions=True)
+	return {
+		"file_name": file_name,
+		"file_url": file_doc.file_url,
+		"folder": "Prospecção",
+		"semana": [str(monday), str(sunday)],
+		"content": csv_text,
+	}
