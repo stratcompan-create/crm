@@ -1,3 +1,4 @@
+import re
 import functools
 
 import frappe
@@ -211,9 +212,17 @@ AUTOMATED_SENDER_PARTS = (
 	"edm.",
 	"bounce",
 	"mailer",
+	"nao-responda",
+	"naoresponda",
+	"nao_responda",
+	"naoresponder",
 )
 
+# endereços genéricos de empresas que mandam comunicados (não são pessoas)
+AUTOMATED_EXACT_LOCALS = ("team", "support", "billing", "news", "sales", "hello")
+
 AUTOMATED_SENDER_DOMAINS = (
+	"intercom-mail.com",
 	"tiktok.com",
 	"google.com",
 	"accounts.google.com",
@@ -250,6 +259,23 @@ UNSUBSCRIBE_MARKERS = (
 )
 
 
+_QUOTE_START = re.compile(
+	r"(em .{0,80}escreveu:|on .{0,80}wrote:|-{2,}\s*(mensagem original|original message)|"
+	r"^\s*de:\s.{0,120}\n\s*(enviad[oa]|sent):)",
+	re.IGNORECASE | re.MULTILINE | re.DOTALL,
+)
+
+
+def _without_quoted_reply(content: str) -> str:
+	"""Tira do e-mail a parte citada (resposta a uma mensagem anterior).
+
+	Quando um cliente responde a um e-mail enviado pelo CRM, o trecho citado traz o rodapé do
+	e-mail original (com "unsubscribe"), e isso não pode fazer a resposta parecer automática."""
+	text = re.sub(r"(?is)<blockquote.*?</blockquote>", " ", content or "")
+	match = _QUOTE_START.search(text)
+	return text[: match.start()] if match else text
+
+
 def is_automated_sender(sender: str | None, content: str | None = None) -> bool:
 	"""True para e-mails automáticos (notificações, newsletters, no-reply) que não devem virar lead."""
 	sender = (sender or "").strip().lower()
@@ -259,10 +285,12 @@ def is_automated_sender(sender: str | None, content: str | None = None) -> bool:
 	local, domain = sender.rsplit("@", 1)
 	if any(part in local for part in AUTOMATED_SENDER_PARTS):
 		return True
+	if local in AUTOMATED_EXACT_LOCALS:
+		return True
 	if any(domain == d or domain.endswith("." + d) for d in AUTOMATED_SENDER_DOMAINS):
 		return True
 
-	text = (content or "").lower()
+	text = _without_quoted_reply(content or "").lower()
 	return any(marker in text for marker in UNSUBSCRIBE_MARKERS)
 
 
