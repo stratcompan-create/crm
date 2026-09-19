@@ -444,7 +444,7 @@ def _css(color, accent):
 	body {{ font-family:'Poppins', Arial, sans-serif; color:#1f2d33; font-size:7pt; }}
 	table {{ border-collapse:collapse; }}
 	p {{ margin:0 0 2.2mm 0; }}
-	.page {{ width:297mm; height:209mm; position:relative; overflow:hidden; page-break-after:always; background:#f4f2ed; }}
+	.page {{ width:298mm; height:210.15mm; position:relative; overflow:hidden; page-break-after:always; background:#f4f2ed; }}
 	.hdr {{ position:absolute; top:9mm; left:16mm; width:265mm; font-size:5.6pt; letter-spacing:0.35em; color:#6b7c82; font-weight:600; }}
 	.hdr .r, .ftr .r {{ text-align:right; letter-spacing:0.2em; font-weight:400; }}
 	.dia {{ display:inline-block; width:2.4mm; height:2.4mm; border:0.3mm solid {accent}; margin-right:2.5mm; -webkit-transform:rotate(45deg); }}
@@ -515,10 +515,10 @@ def _css(color, accent):
 	table.items td {{ padding:1.8mm 1mm; border-bottom:0.2mm solid #e3e7e7; }}
 	.c {{ text-align:center; }} .r {{ text-align:right; }}
 	table.items th.c {{ text-align:center; }} table.items th.r {{ text-align:right; }}
-	.cover {{ width:297mm; height:209mm; position:relative; overflow:hidden; page-break-after:always; }}
-	.cover-bg {{ position:absolute; top:0; left:0; width:297mm; height:209mm; }}
-	.cover-mid {{ position:absolute; top:0; left:0; width:297mm; height:209mm; text-align:center; }}
-	.cover-mid table {{ width:297mm; height:209mm; }}
+	.cover {{ width:298mm; height:210.15mm; position:relative; overflow:hidden; page-break-after:always; }}
+	.cover-bg {{ position:absolute; top:0; left:0; width:298mm; height:210.15mm; }}
+	.cover-mid {{ position:absolute; top:0; left:0; width:298mm; height:210.15mm; text-align:center; }}
+	.cover-mid table {{ width:298mm; height:210.15mm; }}
 	.cover-name {{ font-family:'Lora', Georgia, serif; font-size:30pt; letter-spacing:0.03em; color:{_mix(accent, '#ffffff', 0.55)}; display:inline-block; border-bottom:0.6mm solid {_mix(accent, '#ffffff', 0.55)}; padding-bottom:1.2mm; }}
 	.cover-logo {{ max-height:38mm; max-width:120mm; margin-bottom:6mm; }}
 	.cover-k {{ font-size:6pt; letter-spacing:0.5em; color:{_mix(accent, '#000000', 0.05)}; font-weight:700; margin-top:9mm; }}
