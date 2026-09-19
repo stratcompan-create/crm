@@ -512,6 +512,7 @@ const links = [
     label: 'Equipe',
     icon: TeamIcon,
     to: 'Equipe',
+    condition: () => isManager(),
   },
   {
     label: 'Tasks',
