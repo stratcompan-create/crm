@@ -41,6 +41,29 @@
   --surface-sidebar: #ffffff;
 }
 
+/* Tema escuro: a barra lateral usa o azul petróleo da marca, com texto e ícones brancos. */
+[data-theme='dark'] .stratcompany-sidebar {
+  --surface-sidebar: #042d3c;
+  --ink-gray-9: #ffffff;
+  --ink-gray-8: #f1f5f7;
+  --ink-gray-7: #e0e8eb;
+  --ink-gray-6: #c9d6db;
+  --ink-gray-5: #a9bcc3;
+  --ink-gray-4: #8aa1a9;
+  --outline-gray-1: rgba(255, 255, 255, 0.12);
+  --outline-gray-2: rgba(255, 255, 255, 0.16);
+  --surface-gray-2: rgba(255, 255, 255, 0.08);
+  --surface-gray-3: rgba(255, 255, 255, 0.12);
+  --surface-elevation-2: rgba(255, 255, 255, 0.08);
+  background-color: #042d3c !important;
+  color: #ffffff;
+}
+
+/* No escuro o item ativo precisa de um tom mais claro que o fundo da barra */
+[data-theme='dark'] .stratcompany-sidebar [data-slot='sidebar-item'][data-state='active'] {
+  --surface-elevation-3: #0f4655;
+}
+
 .stratcompany-sidebar [data-slot='sidebar-item'][data-state='active'] {
   --surface-elevation-3: var(--stratcompany-accent);
   --ink-gray-6: #ffffff;

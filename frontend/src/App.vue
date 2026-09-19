@@ -24,8 +24,9 @@ const session = sessionStore()
 provide('session', session)
 
 const { setTheme } = useTheme()
-// O CRM usa só o tema claro (o escuro deixava o nome do escritório ilegível).
-setTheme('light')
+if (!localStorage.getItem('theme')) {
+  setTheme('light')
+}
 
 const MobileLayout = defineAsyncComponent(
   () => import('./components/Layouts/MobileLayout.vue'),
