@@ -19,13 +19,29 @@
           }}
         </div>
       </div>
-      <Button
-        variant="solid"
-        :label="__('Salvar proposta')"
-        :disabled="!isDirty"
-        :loading="saving"
-        @click="save"
-      />
+      <div class="flex gap-2">
+        <Dropdown :options="templateOptions" placement="right">
+          <Button :label="__('Modelos')">
+            <template #prefix>
+              <span class="lucide-layout-template size-4" aria-hidden="true" />
+            </template>
+          </Button>
+        </Dropdown>
+        <Button
+          variant="solid"
+          :label="__('Salvar proposta')"
+          :disabled="!isDirty"
+          :loading="saving"
+          @click="save"
+        />
+      </div>
+    </div>
+
+    <div
+      v-if="avisos.length"
+      class="mb-3 flex flex-col gap-1 rounded-lg border border-outline-amber-2 bg-surface-amber-2 p-3 text-p-sm text-ink-amber-3"
+    >
+      <div v-for="(aviso, i) in avisos" :key="i">⚠ {{ aviso }}</div>
     </div>
 
     <div v-if="loading" class="py-6 text-p-sm text-ink-gray-5">
@@ -123,7 +139,7 @@
 </template>
 
 <script setup>
-import { Badge, Button, FormControl, call, toast } from 'frappe-ui'
+import { Badge, Button, Dropdown, FormControl, call, toast } from 'frappe-ui'
 import { computed, onMounted, reactive, ref } from 'vue'
 
 const props = defineProps({
@@ -265,11 +281,18 @@ const SECTIONS = [
           { k: 'texto', label: __('Texto'), type: 'textarea', wide: true },
         ],
       },
-      { k: 'validade', label: __('Validade da proposta'), type: 'text' },
+      {
+        k: 'validade_dias',
+        label: __('Validade em dias (calcula a data limite e cria uma tarefa de acompanhamento)'),
+        type: 'number',
+      },
+      { k: 'validade', label: __('Texto da validade (usado se os dias ficarem vazios)'), type: 'text' },
     ],
   },
 ]
 
+const avisos = ref([])
+const templates = ref([])
 const data = reactive({})
 const open = reactive({})
 const loading = ref(true)
@@ -311,12 +334,14 @@ async function load() {
 async function save() {
   saving.value = true
   try {
-    await call('crm.api.proposta.save_proposal', {
+    const res = await call('crm.api.proposta.save_proposal', {
       deal: props.deal,
       data: JSON.stringify(data),
     })
     snapshot.value = JSON.stringify(data)
-    toast.success(__('Proposta salva'))
+    avisos.value = res?.avisos || []
+    if (avisos.value.length) toast.warning(avisos.value[0])
+    else toast.success(__('Proposta salva'))
   } catch (e) {
     toast.error(e?.messages?.[0] || __('Erro ao salvar'))
   } finally {
@@ -324,6 +349,64 @@ async function save() {
   }
 }
 
-onMounted(load)
+async function loadTemplates() {
+  templates.value = (await call('crm.api.proposta.list_templates')) || []
+}
+
+async function useTemplate(name) {
+  if (!window.confirm(__('Substituir o conteúdo atual pelo modelo "{0}"?', [name]))) return
+  const res = await call('crm.api.proposta.get_template', { nome: name })
+  Object.keys(data).forEach((k) => delete data[k])
+  Object.assign(data, res)
+  toast.success(__('Modelo aplicado. Revise e salve a proposta.'))
+}
+
+async function saveAsTemplate() {
+  const name = window.prompt(__('Nome do modelo'))
+  if (!name || !name.trim()) return
+  try {
+    await call('crm.api.proposta.save_template', {
+      nome: name.trim(),
+      data: JSON.stringify(data),
+    })
+    toast.success(__('Modelo salvo'))
+    await loadTemplates()
+  } catch (e) {
+    toast.error(e?.messages?.[0] || __('Erro ao salvar'))
+  }
+}
+
+async function removeTemplate(name) {
+  if (!window.confirm(__('Apagar o modelo "{0}"?', [name]))) return
+  await call('crm.api.proposta.delete_template', { nome: name })
+  toast.success(__('Modelo apagado'))
+  await loadTemplates()
+}
+
+const templateOptions = computed(() => {
+  const groups = []
+  if (templates.value.length) {
+    groups.push({
+      group: __('Começar de um modelo'),
+      items: templates.value.map((n) => ({ label: n, onClick: () => useTemplate(n) })),
+    })
+  }
+  groups.push({
+    group: __('Gerenciar'),
+    items: [
+      { label: __('Salvar como modelo…'), onClick: saveAsTemplate },
+      ...templates.value.map((n) => ({
+        label: __('Apagar modelo: {0}', [n]),
+        onClick: () => removeTemplate(n),
+      })),
+    ],
+  })
+  return groups
+})
+
+onMounted(() => {
+  load()
+  loadTemplates()
+})
 defineExpose({ isDirty })
 </script>

@@ -7,7 +7,7 @@ import subprocess
 
 import frappe
 from frappe import _
-from frappe.utils import escape_html, flt, get_datetime
+from frappe.utils import add_days, escape_html, flt, get_datetime, getdate, nowdate
 
 FONT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "public", "fonts")
 FONTS = [
@@ -62,7 +62,8 @@ def default_proposal() -> dict:
 		"investimento": {
 			"titulo": "Investimento", "destaque": "", "plano_rotulo": "", "plano_titulo": "", "plano_texto": "",
 			"valor_sufixo": "", "recomendado_titulo": "", "recomendado_texto": "",
-			"fases_titulo": "", "fases_texto": "", "condicoes": [dict(c) for c in CONDICOES_PADRAO], "validade": "",
+			"fases_titulo": "", "fases_texto": "", "condicoes": [dict(c) for c in CONDICOES_PADRAO],
+			"validade_dias": 0, "validade": "",
 		},
 	}
 
@@ -98,7 +99,13 @@ def save_proposal(deal: str, data):
 	if not isinstance(data, dict):
 		frappe.throw(_("Dados da proposta inválidos"))
 	frappe.db.set_value("CRM Deal", deal, "proposal_data", json.dumps(data, ensure_ascii=False))
-	return {"ok": True}
+	avisos = []
+	try:
+		ctx = deal_context(doc)
+		avisos = check_fit(ctx["settings"], ctx["items"], ctx["total"], ctx["client_name"], _merge(default_proposal(), data))
+	except Exception:
+		frappe.log_error(frappe.get_traceback(), "Falha ao conferir o tamanho da proposta")
+	return {"ok": True, "avisos": avisos}
 
 
 # ---------------------------------------------------------------- utilidades
@@ -523,26 +530,95 @@ def _css(color, accent):
 	"""
 
 
+def validity_text(d) -> str:
+	"""Texto da validade: calculado a partir de "dias de validade" ou, se vazio, o texto digitado."""
+	dias = int(flt(d.get("validade_dias")))
+	if dias > 0:
+		limite = add_days(nowdate(), dias)
+		return (
+			f"Valores válidos até {getdate(limite).strftime('%d/%m/%Y')} "
+			f"({dias} dias a partir da apresentação desta proposta)."
+		)
+	return d.get("validade") or ""
+
+
+def _build_sections(data, items, total):
+	"""Lista de (chave, html) das seções que têm conteúdo, na ordem do documento."""
+	sections = []
+	if _has(data["intro"], "titulo", "destaque", "texto", "cartoes", "numeros"):
+		sections.append(("intro", _sec_intro(data["intro"])))
+	if _has(data["diagnostico"], "titulo", "destaque", "numeros", "faixa_titulo", "faixa_texto", "cartoes", "conclusao"):
+		sections.append(("diagnostico", _sec_diag(data["diagnostico"])))
+	if _has(data["escopo"], "titulo", "destaque", "itens"):
+		sections.append(("escopo", _sec_escopo(data["escopo"])))
+	if _has(data["cronograma"], "titulo", "destaque", "etapas", "faixa_titulo", "faixa_texto", "nota"):
+		sections.append(("cronograma", _sec_crono(data["cronograma"])))
+	if _has(data["orcamento"], "titulo", "destaque", "cartoes", "faixa_titulo", "faixa_texto"):
+		sections.append(("orcamento", _sec_orc(data["orcamento"])))
+	if _has(data["ciclos"], "titulo", "destaque", "blocos", "citacao"):
+		sections.append(("ciclos", _sec_ciclos(data["ciclos"])))
+	if items or total:
+		inv = dict(data["investimento"])
+		inv["validade"] = validity_text(inv)
+		sections.append(("investimento", _sec_invest(inv, items, total)))
+	return sections
+
+
+SECTION_LABELS = {
+	"intro": "Introdução ao projeto",
+	"diagnostico": "Diagnóstico",
+	"escopo": "Escopo do projeto",
+	"cronograma": "Cronograma",
+	"orcamento": "Onde o investimento é aplicado",
+	"ciclos": "Visão de ciclos",
+	"investimento": "Investimento",
+}
+
+
+def check_fit(settings, items, total, client_name, data) -> list[str]:
+	"""Avisa quais seções não cabem em uma página (o excesso seria cortado no PDF).
+
+	Renderiza cada seção com altura livre; se o PDF ganhar páginas extras, a seção da
+	página anterior passou do limite."""
+	from pypdf import PdfReader
+
+	sections = _build_sections(data, items, total)
+	if not sections:
+		return []
+	color = _valid_color(settings.get("brand_color"), DEFAULT_COLOR)
+	accent = _valid_color(settings.get("brand_accent"), DEFAULT_ACCENT)
+	pages = "".join(
+		f'<div class="page m"><div class="body">{html}</div></div>' for _key, html in sections
+	)
+	css = _css(color, accent) + """
+	.page.m { height:auto; padding:22mm 0 19mm 16mm; overflow:visible; position:static; }
+	.page.m .body { position:static; }
+	"""
+	html = f'<html><head><meta charset="utf-8"><style>{css}</style></head><body>{pages}</body></html>'
+	reader = PdfReader(io.BytesIO(render_pdf(html)))
+	norm = lambda t: re.sub(r"\s+", "", (t or "")).upper()
+	starts = [norm(EYEBROWS.get(k, "")) for k, _h in sections]
+
+	problemas, atual = [], -1
+	for page in reader.pages:
+		text = norm(page.extract_text())
+		nxt = atual + 1
+		if nxt < len(sections) and starts[nxt] and text.startswith(starts[nxt]):
+			atual = nxt
+		elif atual >= 0 and sections[atual][0] not in problemas:
+			problemas.append(sections[atual][0])
+	return [
+		_("A seção “{0}” tem conteúdo demais para uma página. Reduza o texto ou o número de itens, senão parte dela será cortada no PDF.").format(_(SECTION_LABELS[k]))
+		for k in problemas
+	]
+
+
 def render_proposal_html(deal_doc, settings, items, total, client_name, data, logo_url=""):
 	color = _valid_color(settings.get("brand_color"), DEFAULT_COLOR)
 	accent = _valid_color(settings.get("brand_accent"), DEFAULT_ACCENT)
 	brand = settings.get("brand_name") or ""
 
-	sections = []
-	if _has(data["intro"], "titulo", "destaque", "texto", "cartoes", "numeros"):
-		sections.append(_sec_intro(data["intro"]))
-	if _has(data["diagnostico"], "titulo", "destaque", "numeros", "faixa_titulo", "faixa_texto", "cartoes", "conclusao"):
-		sections.append(_sec_diag(data["diagnostico"]))
-	if _has(data["escopo"], "titulo", "destaque", "itens"):
-		sections.append(_sec_escopo(data["escopo"]))
-	if _has(data["cronograma"], "titulo", "destaque", "etapas", "faixa_titulo", "faixa_texto", "nota"):
-		sections.append(_sec_crono(data["cronograma"]))
-	if _has(data["orcamento"], "titulo", "destaque", "cartoes", "faixa_titulo", "faixa_texto"):
-		sections.append(_sec_orc(data["orcamento"]))
-	if _has(data["ciclos"], "titulo", "destaque", "blocos", "citacao"):
-		sections.append(_sec_ciclos(data["ciclos"]))
-	if items or total:
-		sections.append(_sec_invest(data["investimento"], items, total))
+	sections = [html for _key, html in _build_sections(data, items, total)]
 
 	total_pages = len(sections) + 1
 	pages = "".join(_page(s, i + 2, total_pages, client_name, brand) for i, s in enumerate(sections))
@@ -580,3 +656,157 @@ def render_pdf(html: str) -> bytes:
 		frappe.log_error(proc.stderr.decode("utf-8", "ignore")[-2000:], "Falha ao gerar PDF da proposta")
 		frappe.throw(_("Não foi possível gerar o PDF da proposta"))
 	return proc.stdout
+
+
+# ---------------------------------------------------------------- contexto do negócio
+
+def deal_context(doc) -> dict:
+	from crm.api.budget import _get_client_name
+
+	items = doc.get("budget_items") or []
+	subtotal = sum(flt(i.qty) * flt(i.unit_price) for i in items)
+	return {
+		"settings": frappe.get_single("FCRM Settings"),
+		"items": items,
+		"total": subtotal - flt(doc.get("budget_discount")),
+		"client_name": _get_client_name(doc),
+	}
+
+
+# ---------------------------------------------------------------- modelos
+
+@frappe.whitelist()
+def list_templates() -> list:
+	return frappe.get_all("CRM Proposal Template", pluck="name", order_by="modified desc")
+
+
+@frappe.whitelist()
+def get_template(nome: str) -> dict:
+	frappe.has_permission("CRM Proposal Template", "read", throw=True)
+	saved = json.loads(frappe.db.get_value("CRM Proposal Template", nome, "dados") or "{}")
+	return _merge(default_proposal(), saved)
+
+
+@frappe.whitelist()
+def save_template(nome: str, data):
+	nome = (nome or "").strip()
+	if not nome:
+		frappe.throw(_("Informe um nome para o modelo"))
+	if isinstance(data, str):
+		data = json.loads(data)
+	payload = json.dumps(data, ensure_ascii=False)
+	if frappe.db.exists("CRM Proposal Template", nome):
+		doc = frappe.get_doc("CRM Proposal Template", nome)
+		doc.dados = payload
+		doc.save()
+	else:
+		frappe.get_doc({"doctype": "CRM Proposal Template", "nome": nome, "dados": payload}).insert()
+	return {"ok": True}
+
+
+@frappe.whitelist()
+def delete_template(nome: str):
+	frappe.delete_doc("CRM Proposal Template", nome)
+	return {"ok": True}
+
+
+# ---------------------------------------------------------------- acompanhamento
+
+def create_followup_task(doc, data, client_name):
+	"""Cria (ou atualiza) a tarefa de cobrar a resposta na data limite da proposta."""
+	dias = int(flt((data.get("investimento") or {}).get("validade_dias")))
+	if dias <= 0:
+		return
+	limite = add_days(nowdate(), dias)
+	title = _("Acompanhar proposta — {0}").format(client_name)
+	filters = {
+		"reference_doctype": "CRM Deal",
+		"reference_docname": doc.name,
+		"title": title,
+		"status": ["not in", ["Done", "Canceled"]],
+	}
+	existing = frappe.db.get_value("CRM Task", filters, "name")
+	if existing:
+		frappe.db.set_value("CRM Task", existing, "due_date", f"{limite} 09:00:00")
+		return
+	frappe.get_doc(
+		{
+			"doctype": "CRM Task",
+			"title": title,
+			"status": "Todo",
+			"priority": "Medium",
+			"assigned_to": doc.get("deal_owner") or frappe.session.user,
+			"reference_doctype": "CRM Deal",
+			"reference_docname": doc.name,
+			"due_date": f"{limite} 09:00:00",
+			"description": _("A proposta vence em {0}. Entre em contato para saber a resposta.").format(
+				getdate(limite).strftime("%d/%m/%Y")
+			),
+		}
+	).insert(ignore_permissions=True)
+
+
+# ---------------------------------------------------------------- envio por e-mail
+
+@frappe.whitelist()
+def get_send_defaults(deal: str) -> dict:
+	doc = frappe.get_doc("CRM Deal", deal)
+	doc.check_permission("read")
+	email, nome = "", ""
+	for c in doc.get("contacts") or []:
+		if c.get("is_primary") or not email:
+			email = frappe.db.get_value("CRM Contact", c.contact, "email_id") or email
+			nome = frappe.db.get_value("CRM Contact", c.contact, "first_name") or nome
+	email = email or doc.get("email") or ""
+	nome = nome or doc.get("first_name") or ""
+	brand = frappe.db.get_single_value("FCRM Settings", "brand_name") or ""
+	return {
+		"to": email,
+		"subject": _("Proposta comercial") + (f" — {brand}" if brand else ""),
+		"message": _("Olá{0},\n\nSegue em anexo o documento que preparei para você. Fico à disposição para tirar qualquer dúvida.\n\nAtenciosamente,\n{1}").format(
+			f" {nome}" if nome else "", brand
+		),
+	}
+
+
+@frappe.whitelist()
+def send_document(deal: str, doc_type: str, to: str, subject: str, message: str):
+	from frappe.core.doctype.communication.email import make
+
+	from crm.api.budget import DOC_TITLES, build_document
+
+	if not to or "@" not in to:
+		frappe.throw(_("Informe um e-mail válido para o destinatário"))
+	if not frappe.db.exists("Email Account", {"enable_outgoing": 1}):
+		frappe.throw(_("Configure o e-mail de envio em Configurações → E-mail antes de enviar."))
+
+	filename, content, doc = build_document(deal, doc_type)
+	base = filename[:-4]
+	versao = frappe.db.count(
+		"File", {"attached_to_doctype": "CRM Deal", "attached_to_name": deal, "file_name": ["like", f"{DOC_TITLES[doc_type]} v%"]}
+	) + 1
+	client = base.split(" - ", 1)[-1] if " - " in base else deal
+	file_doc = frappe.get_doc(
+		{
+			"doctype": "File",
+			"file_name": f"{DOC_TITLES[doc_type]} v{versao} - {client}.pdf",
+			"attached_to_doctype": "CRM Deal",
+			"attached_to_name": deal,
+			"is_private": 1,
+			"content": content,
+		}
+	)
+	file_doc.insert(ignore_permissions=True)
+
+	body = escape_html(message or "").replace("\n", "<br>")
+	make(
+		doctype="CRM Deal",
+		name=deal,
+		content=body,
+		subject=subject or DOC_TITLES[doc_type],
+		recipients=to,
+		communication_medium="Email",
+		send_email=True,
+		attachments=[file_doc.name],
+	)
+	return {"ok": True, "arquivo": file_doc.file_name}

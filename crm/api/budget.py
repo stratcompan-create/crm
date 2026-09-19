@@ -13,8 +13,7 @@ DOC_TITLES = {
 }
 
 
-@frappe.whitelist()
-def generate_document(deal: str, doc_type: str = "orcamento"):
+def build_document(deal: str, doc_type: str = "orcamento"):
 	"""Render the deal's budget items as a PDF, titled according to doc_type.
 
 	Kept intentionally generic: real per-office letterhead/branding pulls from
@@ -52,6 +51,7 @@ def generate_document(deal: str, doc_type: str = "orcamento"):
 		if deal_doc.get("organization"):
 			logo = frappe.db.get_value("CRM Organization", deal_doc.organization, "organization_logo") or ""
 		html = proposta.render_proposal_html(deal_doc, settings, items, total, client_name, data, logo)
+		proposta.create_followup_task(deal_doc, data, client_name)
 		pdf_content = proposta.render_pdf(html)
 	else:
 		html = _build_html(
@@ -67,7 +67,14 @@ def generate_document(deal: str, doc_type: str = "orcamento"):
 		)
 		pdf_content = get_pdf(html)
 
-	frappe.response["filename"] = f"{DOC_TITLES[doc_type]} - {deal_doc.name}.pdf"
+	return f"{DOC_TITLES[doc_type]} - {client_name}.pdf", pdf_content, deal_doc
+
+
+@frappe.whitelist()
+def generate_document(deal: str, doc_type: str = "orcamento"):
+	"""Baixa o documento (orçamento, proposta comercial ou contrato) em PDF."""
+	filename, pdf_content, _deal_doc = build_document(deal, doc_type)
+	frappe.response["filename"] = filename
 	frappe.response["filecontent"] = pdf_content
 	frappe.response["type"] = "download"
 

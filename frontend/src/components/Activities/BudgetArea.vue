@@ -19,6 +19,11 @@
           </template>
         </Button>
       </Dropdown>
+      <Button :label="__('Enviar por e-mail')" @click="openSend">
+        <template #prefix>
+          <span class="lucide-send size-4" aria-hidden="true" />
+        </template>
+      </Button>
       <Button
         variant="solid"
         :label="__('Salvar')"
@@ -84,13 +89,50 @@
   </div>
 
   <ProposalEditor v-if="doctype === 'CRM Deal'" ref="proposalRef" :deal="docname" />
+
+  <Dialog v-model="showSend" :options="{ title: __('Enviar documento por e-mail'), size: 'lg' }">
+    <template #body-content>
+      <div class="flex flex-col gap-3">
+        <div class="flex flex-col gap-1">
+          <span class="text-p-sm text-ink-gray-7">{{ __('Documento') }}</span>
+          <FormControl
+            v-model="send.doc_type"
+            type="select"
+            :options="[
+              { label: __('Proposta Comercial'), value: 'proposta' },
+              { label: __('Orçamento'), value: 'orcamento' },
+              { label: __('Contrato'), value: 'contrato' },
+            ]"
+          />
+        </div>
+        <div class="flex flex-col gap-1">
+          <span class="text-p-sm text-ink-gray-7">{{ __('Para') }}</span>
+          <FormControl v-model="send.to" type="text" placeholder="cliente@email.com" />
+        </div>
+        <div class="flex flex-col gap-1">
+          <span class="text-p-sm text-ink-gray-7">{{ __('Assunto') }}</span>
+          <FormControl v-model="send.subject" type="text" />
+        </div>
+        <div class="flex flex-col gap-1">
+          <span class="text-p-sm text-ink-gray-7">{{ __('Mensagem') }}</span>
+          <FormControl v-model="send.message" type="textarea" :rows="7" />
+        </div>
+        <p class="text-p-sm text-ink-gray-5">
+          {{ __('O PDF é anexado ao e-mail e guardado nos anexos do negócio, com o número da versão.') }}
+        </p>
+      </div>
+    </template>
+    <template #actions>
+      <Button variant="solid" :label="__('Enviar')" :loading="sending" @click="sendDocument" />
+    </template>
+  </Dialog>
 </template>
 
 <script setup>
-import { Badge, Button, Dropdown, FormControl, toast } from 'frappe-ui'
+import { Badge, Button, Dialog, Dropdown, FormControl, call, toast } from 'frappe-ui'
 import ProposalEditor from '@/components/Activities/ProposalEditor.vue'
 import { useDocument } from '@/data/document'
-import { computed, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 
 const proposalRef = ref(null)
 
@@ -140,6 +182,43 @@ function save() {
     onSuccess: () => toast.success(__('Orçamento salvo')),
     onError: (err) => toast.error(err.messages?.[0] || __('Erro ao salvar')),
   })
+}
+
+const showSend = ref(false)
+const sending = ref(false)
+const send = reactive({ doc_type: 'proposta', to: '', subject: '', message: '' })
+
+async function openSend() {
+  if (document.isDirty) {
+    toast.error(__('Salve o orçamento antes de enviar o documento'))
+    return
+  }
+  if (proposalRef.value?.isDirty) {
+    toast.error(__('Salve o conteúdo da proposta antes de enviar o documento'))
+    return
+  }
+  const res = await call('crm.api.proposta.get_send_defaults', { deal: props.docname })
+  Object.assign(send, res, { doc_type: 'proposta' })
+  showSend.value = true
+}
+
+async function sendDocument() {
+  sending.value = true
+  try {
+    const res = await call('crm.api.proposta.send_document', {
+      deal: props.docname,
+      doc_type: send.doc_type,
+      to: send.to,
+      subject: send.subject,
+      message: send.message,
+    })
+    showSend.value = false
+    toast.success(__('Enviado. Cópia guardada em: {0}', [res.arquivo]))
+  } catch (e) {
+    toast.error(e?.messages?.[0] || __('Não foi possível enviar'))
+  } finally {
+    sending.value = false
+  }
 }
 
 const generateOptions = [
