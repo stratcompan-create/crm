@@ -80,11 +80,20 @@ def _handle_incoming_event():
 			frappe.local.response.http_status_code = 403
 			return {"status": "error", "reason": "Invalid signature"}
 
-	payload = json.loads(raw_body or "{}")
+	try:
+		payload = json.loads((raw_body or b"{}").decode("utf-8", "replace"))
+	except ValueError:
+		return {"status": "ignored", "reason": "invalid json"}
 
 	for entry in payload.get("entry", []):
 		for event in entry.get("messaging", []):
-			_process_message_event(event)
+			try:
+				_process_message_event(event)
+			except Exception:
+				# a Meta reenvia o evento se recebe erro e chega a desligar a assinatura
+				# depois de muitas falhas; registramos aqui e respondemos 200
+				frappe.db.rollback()
+				frappe.log_error("Instagram: falha ao processar mensagem", frappe.get_traceback())
 
 	return {"status": "ok"}
 
@@ -105,6 +114,8 @@ def _process_message_event(event: dict):
 	# attachments-only, read receipts) for this first version.
 	if not sender_id or not text or message.get("is_echo"):
 		return
+	if sender_id == (_get_settings().instagram_business_account_id or ""):
+		return
 
 	lead_name = _get_or_create_lead(sender_id)
 
@@ -121,20 +132,51 @@ def _process_message_event(event: dict):
 	frappe.db.commit()
 
 
+def _fetch_sender_profile(sender_id: str) -> dict:
+	"""Nome e @ de quem escreveu. Se a Meta não devolver, o lead ainda é criado."""
+	token = _get_settings().get_password("access_token", raise_exception=False)
+	if not token:
+		return {}
+	try:
+		resp = requests.get(
+			f"{GRAPH_BASE}/{sender_id}",
+			params={"fields": "name,username", "access_token": token},
+			timeout=10,
+		)
+		if resp.ok:
+			return resp.json()
+	except requests.RequestException:
+		pass
+	return {}
+
+
 def _get_or_create_lead(sender_id: str) -> str:
 	existing = frappe.db.get_value("CRM Lead", {"instagram_sender_id": sender_id})
 	if existing:
 		return existing
 
+	profile = _fetch_sender_profile(sender_id)
+	full_name = (profile.get("name") or "").strip()
+	username = (profile.get("username") or "").strip()
+	if full_name:
+		first_name, _sep, last_name = full_name.partition(" ")
+	elif username:
+		first_name, last_name = username, ""
+	else:
+		first_name, last_name = "Instagram", sender_id[-6:]
+
 	lead = frappe.get_doc(
 		{
 			"doctype": "CRM Lead",
-			"lead_name": f"Instagram - {sender_id}",
+			"first_name": first_name,
+			"last_name": last_name,
 			"instagram_sender_id": sender_id,
 			"source": "Instagram",
 		}
 	)
 	lead.insert(ignore_permissions=True)
+	if username:
+		lead.add_comment("Comment", f"Instagram: @{username}")
 	frappe.db.commit()
 	return lead.name
 
