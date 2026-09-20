@@ -352,7 +352,10 @@ def _path_for_file(file_doc) -> list[str]:
 def on_file_insert(doc, method=None):
 	"""Copia sozinho para o Drive os arquivos gerados no CRM (se o envio automático estiver ligado)."""
 	try:
-		if doc.is_folder or not is_connected() or not cint(frappe.db.get_single_value(DOCTYPE, "envio_automatico")):
+		if doc.is_folder or not is_connected():
+			return
+		# get_single traz o padrão (ligado) mesmo quando a configuração ainda não foi salva
+		if not cint(_settings().envio_automatico):
 			return
 		if not (
 			(doc.attached_to_doctype or "").startswith("CRM ")
