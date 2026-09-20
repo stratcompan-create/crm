@@ -60,6 +60,7 @@ import ViewBreadcrumbs from '@/components/ViewBreadcrumbs.vue'
 import LayoutHeader from '@/components/LayoutHeader.vue'
 import ViewControls from '@/components/ViewControls.vue'
 import EmptyState from '@/components/ListViews/EmptyState.vue'
+import ListRows from '@/components/ListViews/ListRows.vue'
 import MoneyIcon from '@/components/Icons/MoneyIcon.vue'
 import { useDoctypeModal } from '@/composables/doctypeModal'
 import { getMeta } from '@/stores/meta'
@@ -69,13 +70,12 @@ import {
   ListView,
   ListHeader,
   ListHeaderItem,
-  ListRows,
   ListRowItem,
   ListFooter,
 } from 'frappe-ui'
 import { computed, ref } from 'vue'
 
-const { getFormattedCurrency } = getMeta('CRM Honorario')
+const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v) || 0)
 
 const honorarios = ref({})
 const loadMore = ref(1)
@@ -99,7 +99,7 @@ function parseRows(data, columns = []) {
       let fieldType = columns?.find((col) => (col.key || col.value) == fieldname)?.type
 
       if (fieldType === 'Currency') {
-        _row[fieldname] = getFormattedCurrency(fieldname, honorario)
+        _row[fieldname] = brl(honorario[fieldname])
       } else if (['Date', 'Datetime'].includes(fieldType) && !['modified', 'creation'].includes(fieldname)) {
         _row[fieldname] = formatDate(honorario[fieldname], '', true, fieldType == 'Datetime')
       } else if (['modified', 'creation'].includes(fieldname)) {

@@ -95,6 +95,18 @@ def ensure_email_templates():
 	frappe.db.set_single_value("System Settings", "welcome_email_template", "Boas-vindas ao CRM")
 
 
+def apply_regional_defaults():
+	"""Real (R$), país e formato de números do Brasil. Sem isso o Frappe cai no padrão americano
+	(dólar, 1,234.56) e os valores do Financeiro aparecem em US$."""
+	if frappe.db.exists("Currency", "BRL"):
+		frappe.db.set_value("Currency", "BRL", {"enabled": 1, "symbol": "R$"})
+	frappe.db.set_default("currency", "BRL")
+	frappe.db.set_single_value("System Settings", "country", "Brazil")
+	frappe.db.set_single_value("System Settings", "number_format", "#.###,##")
+	frappe.db.set_single_value("System Settings", "currency_precision", "2")
+	frappe.db.set_single_value("FCRM Settings", "currency", "BRL")
+
+
 def provision_client(
 	brand_name: str,
 	logo_path: str | None = None,
@@ -131,6 +143,7 @@ def provision_client(
 	frappe.db.set_single_value("System Settings", "app_name", brand_name)
 	frappe.db.set_single_value("Website Settings", "app_name", brand_name)
 	ensure_email_templates()
+	apply_regional_defaults()
 	if website_url:
 		frappe.db.set_single_value("FCRM Settings", "website_url", website_url)
 	if logo_path:

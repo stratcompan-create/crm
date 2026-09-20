@@ -66,6 +66,7 @@ import ViewBreadcrumbs from '@/components/ViewBreadcrumbs.vue'
 import LayoutHeader from '@/components/LayoutHeader.vue'
 import ViewControls from '@/components/ViewControls.vue'
 import EmptyState from '@/components/ListViews/EmptyState.vue'
+import ListRows from '@/components/ListViews/ListRows.vue'
 import AccountsIcon from '~icons/lucide/building-2'
 import { useDoctypeModal } from '@/composables/doctypeModal'
 import { timestampCell } from '@/composables/useTimelinePreferences'
@@ -73,7 +74,6 @@ import {
   ListView,
   ListHeader,
   ListHeaderItem,
-  ListRows,
   ListRowItem,
   ListFooter,
 } from 'frappe-ui'

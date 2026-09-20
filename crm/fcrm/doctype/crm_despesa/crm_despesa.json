@@ -55,7 +55,7 @@
 			"fieldtype": "Select",
 			"in_list_view": 1,
 			"label": "Categoria",
-			"options": "Freelancers\nFerramentas e Software\nTráfego Pago\nEquipamentos\nImpostos e Taxas\nCustas e Taxas\nOutros"
+			"options": "Ferramentas e Software\nEdição e Filmagem\nFreelancers\nTráfego Pago\nEquipamentos\nImpostos e Taxas\nCustas e Taxas\nContas Fixas\nOutros"
 		},
 		{
 			"fieldname": "valor",
