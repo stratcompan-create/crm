@@ -151,22 +151,25 @@ def _fetch_sender_profile(sender_id: str) -> dict:
 
 
 def _save_profile_photo(sender_id: str, url: str | None) -> str:
-	"""A foto que a Meta devolve é um link temporário: baixamos e guardamos no CRM."""
+	"""A foto que a Meta devolve é um link temporário. Guardamos uma miniatura dentro do próprio
+	lead (sem criar arquivo), para a caixa de entrada não misturar fotos de leads com os arquivos
+	da empresa."""
 	if not url:
 		return ""
 	try:
+		import base64
+		import io
+
+		from PIL import Image
+
 		resp = requests.get(url, timeout=10)
 		if not resp.ok or not resp.headers.get("Content-Type", "").startswith("image/") or len(resp.content) > 3_000_000:
 			return ""
-		ext = "png" if "png" in resp.headers.get("Content-Type", "") else "jpg"
-		name = f"instagram_{sender_id}.{ext}"
-		for old in frappe.get_all("File", filters={"file_name": name}, pluck="name"):
-			frappe.delete_doc("File", old, ignore_permissions=True, force=True)
-		file_doc = frappe.get_doc(
-			{"doctype": "File", "file_name": name, "is_private": 0, "content": resp.content}
-		)
-		file_doc.insert(ignore_permissions=True)
-		return file_doc.file_url
+		img = Image.open(io.BytesIO(resp.content)).convert("RGB")
+		img.thumbnail((96, 96))
+		buf = io.BytesIO()
+		img.save(buf, "JPEG", quality=80)
+		return "data:image/jpeg;base64," + base64.b64encode(buf.getvalue()).decode()
 	except Exception:
 		return ""
 
@@ -226,7 +229,12 @@ def get_conversations() -> list[dict]:
 	out, refreshed = [], 0
 	for lead in leads:
 		# leads antigos ainda sem foto/@: busca agora (poucos por vez, para não pesar)
-		if not lead.instagram_username and not lead.instagram_photo and refreshed < 5:
+		if (lead.instagram_photo or "").startswith("/files/"):
+			for f in frappe.get_all("File", filters={"file_url": lead.instagram_photo}, pluck="name"):
+				frappe.delete_doc("File", f, ignore_permissions=True, force=True)
+			frappe.db.set_value("CRM Lead", lead.name, "instagram_photo", "", update_modified=False)
+			lead.instagram_photo = ""
+		if not lead.instagram_photo and refreshed < 5:
 			refreshed += 1
 			profile = _fetch_sender_profile(lead.instagram_sender_id)
 			if profile:

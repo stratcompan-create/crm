@@ -12,7 +12,22 @@
     </template>
   </LayoutHeader>
 
-  <div class="flex min-h-0 flex-1">
+  <div v-if="isManager()" class="flex gap-1 border-b border-outline-gray-1 px-4 pt-1">
+    <button
+      v-for="t in tabs"
+      :key="t.key"
+      type="button"
+      class="-mb-px border-b-2 px-3 py-2 text-p-base"
+      :class="tab === t.key ? 'border-ink-gray-9 font-medium text-ink-gray-9' : 'border-transparent text-ink-gray-5'"
+      @click="tab = t.key"
+    >
+      {{ t.label }}
+    </button>
+  </div>
+
+  <InstagramMetrics v-if="tab === 'metricas' && isManager()" />
+
+  <div v-else class="flex min-h-0 flex-1">
     <!-- Conversas -->
     <div
       class="flex w-full flex-col border-r border-outline-gray-1 md:w-80 md:shrink-0"
@@ -127,12 +142,20 @@ import LayoutHeader from '@/components/LayoutHeader.vue'
 import ChatIcon from '@/components/Icons/InstagramIcon.vue'
 import SettingsIcon from '@/components/Icons/SettingsIcon.vue'
 import { timestampCell } from '@/composables/useTimelinePreferences'
+import InstagramMetrics from '@/components/InstagramMetrics.vue'
+import { usersStore } from '@/stores/users'
 import { showSettings, activeSettingsPage } from '@/composables/settings'
 import { Avatar, Button, ErrorMessage, FormControl, call, createResource } from 'frappe-ui'
 import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
+const { isManager } = usersStore()
+const tab = ref('mensagens')
+const tabs = [
+  { key: 'mensagens', label: __('Mensagens') },
+  { key: 'metricas', label: __('Métricas') },
+]
 const search = ref('')
 const selected = ref(null)
 const scroller = ref(null)
