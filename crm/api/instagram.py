@@ -140,7 +140,7 @@ def _fetch_sender_profile(sender_id: str) -> dict:
 	try:
 		resp = requests.get(
 			f"{GRAPH_BASE}/{sender_id}",
-			params={"fields": "name,username", "access_token": token},
+			params={"fields": "name,username,profile_pic", "access_token": token},
 			timeout=10,
 		)
 		if resp.ok:
@@ -148,6 +148,38 @@ def _fetch_sender_profile(sender_id: str) -> dict:
 	except requests.RequestException:
 		pass
 	return {}
+
+
+def _save_profile_photo(sender_id: str, url: str | None) -> str:
+	"""A foto que a Meta devolve é um link temporário: baixamos e guardamos no CRM."""
+	if not url:
+		return ""
+	try:
+		resp = requests.get(url, timeout=10)
+		if not resp.ok or not resp.headers.get("Content-Type", "").startswith("image/") or len(resp.content) > 3_000_000:
+			return ""
+		ext = "png" if "png" in resp.headers.get("Content-Type", "") else "jpg"
+		name = f"instagram_{sender_id}.{ext}"
+		for old in frappe.get_all("File", filters={"file_name": name}, pluck="name"):
+			frappe.delete_doc("File", old, ignore_permissions=True, force=True)
+		file_doc = frappe.get_doc(
+			{"doctype": "File", "file_name": name, "is_private": 0, "content": resp.content}
+		)
+		file_doc.insert(ignore_permissions=True)
+		return file_doc.file_url
+	except Exception:
+		return ""
+
+
+def _apply_profile(lead: str, sender_id: str, profile: dict):
+	values = {}
+	if profile.get("username"):
+		values["instagram_username"] = profile["username"].strip()
+	photo = _save_profile_photo(sender_id, profile.get("profile_pic"))
+	if photo:
+		values["instagram_photo"] = photo
+	if values:
+		frappe.db.set_value("CRM Lead", lead, values, update_modified=False)
 
 
 def _get_or_create_lead(sender_id: str) -> str:
@@ -175,10 +207,68 @@ def _get_or_create_lead(sender_id: str) -> str:
 		}
 	)
 	lead.insert(ignore_permissions=True)
-	if username:
-		lead.add_comment("Comment", f"Instagram: @{username}")
+	_apply_profile(lead.name, sender_id, profile)
 	frappe.db.commit()
 	return lead.name
+
+
+# ------------------------------------------------------------------ caixa de entrada
+
+@frappe.whitelist()
+def get_conversations() -> list[dict]:
+	"""Uma linha por lead que já conversou pelo Instagram, com a última mensagem."""
+	leads = frappe.get_list(
+		"CRM Lead",
+		filters={"instagram_sender_id": ["is", "set"]},
+		fields=["name", "first_name", "last_name", "instagram_sender_id", "instagram_username", "instagram_photo"],
+		limit_page_length=200,
+	)
+	out, refreshed = [], 0
+	for lead in leads:
+		# leads antigos ainda sem foto/@: busca agora (poucos por vez, para não pesar)
+		if not lead.instagram_username and not lead.instagram_photo and refreshed < 5:
+			refreshed += 1
+			profile = _fetch_sender_profile(lead.instagram_sender_id)
+			if profile:
+				_apply_profile(lead.name, lead.instagram_sender_id, profile)
+				frappe.db.commit()
+				lead.update(
+					frappe.db.get_value("CRM Lead", lead.name, ["instagram_username", "instagram_photo"], as_dict=True)
+				)
+		last = frappe.get_all(
+			"CRM Instagram Message",
+			filters={"lead": lead.name},
+			fields=["message", "direction", "timestamp"],
+			order_by="timestamp desc",
+			limit=1,
+		)
+		if not last:
+			continue
+		out.append(
+			{
+				"lead": lead.name,
+				"name": " ".join(filter(None, [lead.first_name, lead.last_name])),
+				"username": lead.instagram_username or "",
+				"photo": lead.instagram_photo or "",
+				"last_message": last[0].message,
+				"last_direction": last[0].direction,
+				"last_time": last[0].timestamp,
+			}
+		)
+	out.sort(key=lambda r: str(r["last_time"]), reverse=True)
+	return out
+
+
+@frappe.whitelist()
+def get_messages(lead: str) -> list[dict]:
+	frappe.has_permission("CRM Lead", "read", lead, throw=True)
+	return frappe.get_all(
+		"CRM Instagram Message",
+		filters={"lead": lead},
+		fields=["name", "direction", "message", "timestamp"],
+		order_by="timestamp asc",
+		limit_page_length=500,
+	)
 
 
 # ------------------------------------------------------------------ enviar
@@ -186,6 +276,7 @@ def _get_or_create_lead(sender_id: str) -> str:
 @frappe.whitelist()
 def send_reply(lead: str, message: str):
 	"""Send a text reply to the Instagram user linked to this lead."""
+	frappe.has_permission("CRM Lead", "write", lead, throw=True)
 	sender_id = frappe.db.get_value("CRM Lead", lead, "instagram_sender_id")
 	if not sender_id:
 		frappe.throw(_("This lead has no linked Instagram conversation"))

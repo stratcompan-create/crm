@@ -27,6 +27,8 @@
   "twitter",
   "facebook",
   "instagram_sender_id",
+  "instagram_username",
+  "instagram_photo",
   "territory",
   "industry",
   "job_title",
@@ -471,6 +473,21 @@
    "no_copy": 1,
    "read_only": 1,
    "description": "Set automatically when a lead is created from an Instagram DM. Used to route replies back to the right conversation."
+  },
+  {
+   "fieldname": "instagram_username",
+   "fieldtype": "Data",
+   "label": "Instagram (@)",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "instagram_photo",
+   "fieldtype": "Data",
+   "label": "Foto do Instagram",
+   "no_copy": 1,
+   "read_only": 1,
+   "hidden": 1
   }
  ],
  "grid_page_length": 50,

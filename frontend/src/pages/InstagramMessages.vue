@@ -1,199 +1,213 @@
 <template>
   <LayoutHeader>
     <template #left-header>
-      <ViewBreadcrumbs v-model="viewControls" routeName="Instagram" />
+      <div class="text-lg font-semibold text-ink-gray-9">{{ __('Instagram') }}</div>
     </template>
     <template #right-header>
-      <Button
-        :label="__('Configurações')"
-        @click="openInstagramSettings"
-      >
+      <Button :label="__('Configurações')" @click="openInstagramSettings">
         <template #prefix>
           <SettingsIcon class="size-4" />
         </template>
       </Button>
     </template>
   </LayoutHeader>
-  <ViewControls
-    ref="viewControls"
-    v-model="messages"
-    v-model:loadMore="loadMore"
-    v-model:resizeColumn="triggerResize"
-    v-model:updatedPageCount="updatedPageCount"
-    doctype="CRM Instagram Message"
-    :options="{ allowedViews: ['list'] }"
-  />
-  <ListView
-    v-if="messages.data && rows.length"
-    :columns="columns"
-    :rows="rows"
-    :options="{
-      showTooltip: false,
-      resizeColumn: true,
-      onRowClick: (row) => router.push({ name: 'Lead', params: { leadId: row.lead } }),
-      rowCount: messages.data.row_count,
-      totalCount: messages.data.total_count,
-    }"
-    row-key="name"
-  >
-    <ListHeader class="mx-3 sm:mx-5" @columnWidthUpdated="() => triggerResize++">
-      <ListHeaderItem v-for="column in columns" :key="column.key" :item="column" />
-    </ListHeader>
-    <ListRows
-      v-slot="{ column, item, row }"
-      class="mx-3 sm:mx-5"
-      :rows="rows"
-      doctype="CRM Instagram Message"
-    >
-      <div v-if="column.key === 'timestamp'" class="truncate text-base">
-        <Tooltip :text="item?.label">
-          <div>{{ item?.timeAgo }}</div>
-        </Tooltip>
-      </div>
-      <div
-        v-else-if="column.key === 'message'"
-        class="flex w-full items-center gap-2 overflow-hidden"
-      >
-        <ListRowItem :item="item" :align="column.align" class="min-w-0 flex-1 overflow-hidden" />
-        <Button
-          class="shrink-0"
-          variant="ghost"
-          size="sm"
-          :label="__('Responder')"
-          @click.stop="openReply(row)"
-        />
-      </div>
-      <ListRowItem
-        v-else-if="column.key === 'direction'"
-        :item="__(item)"
-        :align="column.align"
-        class="overflow-hidden"
-      />
-      <ListRowItem v-else :item="item" :align="column.align" class="overflow-hidden" />
-    </ListRows>
-    <ListFooter
-      class="border-t px-3 py-2 sm:px-5"
-      v-model="messages.data.page_length_count"
-      :options="{
-        rowCount: messages.data.row_count,
-        totalCount: messages.data.total_count,
-      }"
-      @loadMore="() => loadMore++"
-    />
-  </ListView>
-  <EmptyState v-else-if="messages.data && !rows.length" name="Instagram" :icon="ChatIcon" />
 
-  <Dialog v-model="showReplyDialog" :options="{ title: __('Responder no Instagram'), size: 'sm' }">
-    <template #body-content>
-      <p class="mb-3 text-p-sm text-ink-gray-6">
-        {{ __('Enviando pro lead') }}: {{ replyTarget?.lead }}
-      </p>
-      <FormControl
-        type="textarea"
-        v-model="replyMessage"
-        :placeholder="__('Escreva sua resposta...')"
-        rows="4"
-      />
-      <ErrorMessage v-if="replyError" class="mt-2" :message="replyError" />
-    </template>
-    <template #actions>
-      <Button
-        variant="solid"
-        :label="__('Enviar')"
-        :loading="sending"
-        @click="sendReply"
-      />
-    </template>
-  </Dialog>
+  <div class="flex min-h-0 flex-1">
+    <!-- Conversas -->
+    <div
+      class="flex w-full flex-col border-r border-outline-gray-1 md:w-80 md:shrink-0"
+      :class="selected ? 'hidden md:flex' : 'flex'"
+    >
+      <div class="p-3">
+        <FormControl v-model="search" type="text" :placeholder="__('Buscar conversa')" />
+      </div>
+      <div class="flex-1 overflow-y-auto">
+        <div v-if="conversations.loading && !conversations.data" class="p-4 text-p-sm text-ink-gray-5">
+          {{ __('Carregando...') }}
+        </div>
+        <div
+          v-else-if="!filtered.length"
+          class="flex flex-col items-center gap-2 px-6 py-16 text-center text-ink-gray-5"
+        >
+          <ChatIcon class="size-8" />
+          <div class="text-p-sm">
+            {{
+              search
+                ? __('Nenhuma conversa encontrada.')
+                : __('Nenhuma conversa ainda. Quando alguém mandar mensagem para o perfil, ela aparece aqui.')
+            }}
+          </div>
+        </div>
+        <button
+          v-for="c in filtered"
+          :key="c.lead"
+          type="button"
+          class="flex w-full items-center gap-3 px-3 py-3 text-left hover:bg-surface-gray-2"
+          :class="selected?.lead === c.lead ? 'bg-surface-gray-2' : ''"
+          @click="select(c)"
+        >
+          <Avatar :image="c.photo" :label="c.name" size="xl" />
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center justify-between gap-2">
+              <div class="truncate text-base-medium text-ink-gray-9">{{ c.name }}</div>
+              <div class="shrink-0 text-xs text-ink-gray-5">{{ timeText(c.last_time) }}</div>
+            </div>
+            <div v-if="c.username" class="truncate text-xs text-ink-gray-5">@{{ c.username }}</div>
+            <div class="truncate text-p-sm text-ink-gray-6">
+              <span v-if="c.last_direction === 'Sent'">{{ __('Você') }}: </span>{{ c.last_message }}
+            </div>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Conversa aberta -->
+    <div class="min-w-0 flex-1 flex-col" :class="selected ? 'flex' : 'hidden md:flex'">
+      <div v-if="!selected" class="flex flex-1 items-center justify-center text-p-sm text-ink-gray-5">
+        {{ __('Escolha uma conversa ao lado para ver as mensagens.') }}
+      </div>
+      <template v-else>
+        <div class="flex items-center gap-3 border-b border-outline-gray-1 px-4 py-3">
+          <Button class="md:hidden" variant="ghost" icon="lucide-chevron-left" @click="selected = null" />
+          <Avatar :image="selected.photo" :label="selected.name" size="lg" />
+          <div class="min-w-0 flex-1">
+            <div class="truncate text-base-medium text-ink-gray-9">{{ selected.name }}</div>
+            <div v-if="selected.username" class="truncate text-xs text-ink-gray-5">@{{ selected.username }}</div>
+          </div>
+          <Button variant="subtle" :label="__('Abrir lead')" @click="openLead" />
+        </div>
+
+        <div ref="scroller" class="flex flex-1 flex-col gap-2 overflow-y-auto px-4 py-4">
+          <div
+            v-for="m in thread.data || []"
+            :key="m.name"
+            class="flex"
+            :class="m.direction === 'Sent' ? 'justify-end' : 'justify-start'"
+          >
+            <div
+              class="max-w-[75%] whitespace-pre-wrap break-words rounded-2xl px-3.5 py-2 text-p-base"
+              :class="
+                m.direction === 'Sent'
+                  ? 'rounded-br-md bg-surface-gray-9 text-ink-white'
+                  : 'rounded-bl-md bg-surface-gray-2 text-ink-gray-9'
+              "
+            >
+              {{ m.message }}
+              <div
+                class="mt-1 text-right text-[10px]"
+                :class="m.direction === 'Sent' ? 'text-ink-gray-4' : 'text-ink-gray-5'"
+              >
+                {{ timeText(m.timestamp) }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="border-t border-outline-gray-1 p-3">
+          <ErrorMessage v-if="replyError" class="mb-2" :message="replyError" />
+          <div class="flex items-end gap-2">
+            <FormControl
+              v-model="replyMessage"
+              class="flex-1"
+              type="textarea"
+              :rows="2"
+              :placeholder="__('Escreva sua resposta...')"
+              @keydown.enter.exact.prevent="sendReply"
+            />
+            <Button variant="solid" :label="__('Enviar')" :loading="sending" @click="sendReply" />
+          </div>
+        </div>
+      </template>
+    </div>
+  </div>
 </template>
 
 <script setup>
-import ViewBreadcrumbs from '@/components/ViewBreadcrumbs.vue'
 import LayoutHeader from '@/components/LayoutHeader.vue'
-import ViewControls from '@/components/ViewControls.vue'
-import EmptyState from '@/components/ListViews/EmptyState.vue'
-import ListRows from '@/components/ListViews/ListRows.vue'
 import ChatIcon from '@/components/Icons/InstagramIcon.vue'
 import SettingsIcon from '@/components/Icons/SettingsIcon.vue'
-import { formatDate } from '@/utils'
 import { timestampCell } from '@/composables/useTimelinePreferences'
 import { showSettings, activeSettingsPage } from '@/composables/settings'
-import {
-  ListView,
-  ListHeader,
-  ListHeaderItem,
-  ListRowItem,
-  ListFooter,
-  Dialog,
-  FormControl,
-  ErrorMessage,
-  Tooltip,
-  call,
-} from 'frappe-ui'
-import { computed, ref } from 'vue'
+import { Avatar, Button, ErrorMessage, FormControl, call, createResource } from 'frappe-ui'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const messages = ref({})
-const loadMore = ref(1)
-const triggerResize = ref(1)
-const updatedPageCount = ref(20)
-const viewControls = ref(null)
-
-const rows = computed(() => {
-  if (!messages.value?.data?.data) return []
-  return parseRows(messages.value.data.data, messages.value.data.columns)
-})
-
-const columns = computed(() => messages.value?.data?.columns || [])
-
-function openInstagramSettings() {
-  showSettings.value = true
-  activeSettingsPage.value = 'Instagram'
-}
-
-function parseRows(data, columns = []) {
-  return data.map((msg) => {
-    let _row = {}
-    messages.value?.data.rows.forEach((fieldname) => {
-      _row[fieldname] = msg[fieldname]
-      let fieldType = columns?.find((col) => (col.key || col.value) == fieldname)?.type
-      if (fieldType === 'Datetime') {
-        _row[fieldname] = timestampCell(msg[fieldname])
-      }
-    })
-    return _row
-  })
-}
-
-const showReplyDialog = ref(false)
-const replyTarget = ref(null)
+const search = ref('')
+const selected = ref(null)
+const scroller = ref(null)
 const replyMessage = ref('')
 const replyError = ref('')
 const sending = ref(false)
 
-function openReply(row) {
-  replyTarget.value = row
-  replyMessage.value = ''
-  replyError.value = ''
-  showReplyDialog.value = true
+const conversations = createResource({
+  url: 'crm.api.instagram.get_conversations',
+  auto: true,
+})
+
+const thread = createResource({
+  url: 'crm.api.instagram.get_messages',
+  makeParams: () => ({ lead: selected.value?.lead }),
+})
+
+const filtered = computed(() => {
+  const q = search.value.trim().toLowerCase()
+  const list = conversations.data || []
+  if (!q) return list
+  return list.filter((c) => `${c.name} ${c.username}`.toLowerCase().includes(q))
+})
+
+function timeText(value) {
+  return value ? timestampCell(value).timeAgo : ''
 }
 
+function select(c) {
+  selected.value = c
+  thread.fetch()
+}
+
+function scrollToEnd() {
+  nextTick(() => {
+    if (scroller.value) scroller.value.scrollTop = scroller.value.scrollHeight
+  })
+}
+
+// rola para a última mensagem quando chegar algo novo
+watch(() => thread.data?.length, scrollToEnd)
+
+// atualiza sozinho: novas mensagens aparecem sem precisar recarregar a página
+let timer = null
+onMounted(() => {
+  timer = setInterval(() => {
+    conversations.reload()
+    if (selected.value) thread.reload()
+  }, 10000)
+})
+onBeforeUnmount(() => clearInterval(timer))
+
 async function sendReply() {
-  if (!replyMessage.value.trim()) return
+  const text = replyMessage.value.trim()
+  if (!text || !selected.value) return
   sending.value = true
   replyError.value = ''
   try {
-    await call('crm.api.instagram.send_reply', {
-      lead: replyTarget.value.lead,
-      message: replyMessage.value,
-    })
-    showReplyDialog.value = false
-    messages.value.reload()
+    await call('crm.api.instagram.send_reply', { lead: selected.value.lead, message: text })
+    replyMessage.value = ''
+    await Promise.all([thread.reload(), conversations.reload()])
+    scrollToEnd()
   } catch (e) {
     replyError.value = e.messages?.join(', ') || e.message || __('Falha ao enviar')
   } finally {
     sending.value = false
   }
+}
+
+function openLead() {
+  router.push({ name: 'Lead', params: { leadId: selected.value.lead } })
+}
+
+function openInstagramSettings() {
+  showSettings.value = true
+  activeSettingsPage.value = 'Instagram'
 }
 </script>
