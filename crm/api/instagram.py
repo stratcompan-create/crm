@@ -193,6 +193,24 @@ def _get_or_create_lead(sender_id: str) -> str:
 	profile = _fetch_sender_profile(sender_id)
 	full_name = (profile.get("name") or "").strip()
 	username = (profile.get("username") or "").strip()
+
+	# a pessoa foi abordada por @ e agora respondeu: liga ao lead que já existe, sem duplicar
+	if username:
+		known = frappe.db.get_value(
+			"CRM Lead", {"instagram_username": username, "instagram_sender_id": ["in", ["", None]]}
+		) or frappe.db.sql(
+			"select name from `tabCRM Lead` where lower(instagram_username) = %s "
+			"and ifnull(instagram_sender_id, '') = '' limit 1",
+			(username.lower(),),
+		)
+		if isinstance(known, (list, tuple)):
+			known = known[0][0] if known else None
+		if known:
+			frappe.db.set_value("CRM Lead", known, "instagram_sender_id", sender_id, update_modified=False)
+			_apply_profile(known, sender_id, profile)
+			frappe.db.commit()
+			return known
+
 	if full_name:
 		first_name, _sep, last_name = full_name.partition(" ")
 	elif username:

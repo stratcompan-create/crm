@@ -1,0 +1,77 @@
+{
+ "actions": [],
+ "creation": "2026-09-20 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "ativado",
+  "primeiro_dias",
+  "segundo_dias",
+  "maximo",
+  "origens",
+  "mensagem_padrao"
+ ],
+ "fields": [
+  {
+   "default": "1",
+   "fieldname": "ativado",
+   "fieldtype": "Check",
+   "label": "Follow-up automático ligado"
+  },
+  {
+   "default": "2",
+   "fieldname": "primeiro_dias",
+   "fieldtype": "Int",
+   "label": "Primeiro follow-up após (dias)"
+  },
+  {
+   "default": "4",
+   "fieldname": "segundo_dias",
+   "fieldtype": "Int",
+   "label": "Follow-ups seguintes após (dias)"
+  },
+  {
+   "default": "2",
+   "fieldname": "maximo",
+   "fieldtype": "Int",
+   "label": "Máximo de follow-ups por pessoa"
+  },
+  {
+   "default": "Instagram\nWhatsApp",
+   "fieldname": "origens",
+   "fieldtype": "Small Text",
+   "label": "Canais monitorados"
+  },
+  {
+   "fieldname": "mensagem_padrao",
+   "fieldtype": "Small Text",
+   "label": "Mensagem padrão"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-09-20 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "FCRM",
+ "name": "CRM Follow-up Config",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "write": 1,
+   "role": "System Manager"
+  },
+  {
+   "read": 1,
+   "write": 1,
+   "role": "Sales Manager"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -12,9 +12,9 @@
     </template>
   </LayoutHeader>
 
-  <div v-if="isManager()" class="flex gap-1 border-b border-outline-gray-1 px-4 pt-1">
+  <div class="flex gap-1 border-b border-outline-gray-1 px-4 pt-1">
     <button
-      v-for="t in tabs"
+      v-for="t in visibleTabs"
       :key="t.key"
       type="button"
       class="-mb-px border-b-2 px-3 py-2 text-p-base"
@@ -25,7 +25,9 @@
     </button>
   </div>
 
-  <InstagramMetrics v-if="tab === 'metricas' && isManager()" />
+  <InstagramProspeccao v-if="tab === 'prospeccao'" @abrir-conversa="openFromProspeccao" />
+
+  <InstagramMetrics v-else-if="tab === 'metricas' && isManager()" />
 
   <div v-else class="flex min-h-0 flex-1">
     <!-- Conversas -->
@@ -143,6 +145,7 @@ import ChatIcon from '@/components/Icons/InstagramIcon.vue'
 import SettingsIcon from '@/components/Icons/SettingsIcon.vue'
 import { timestampCell } from '@/composables/useTimelinePreferences'
 import InstagramMetrics from '@/components/InstagramMetrics.vue'
+import InstagramProspeccao from '@/components/InstagramProspeccao.vue'
 import { usersStore } from '@/stores/users'
 import { showSettings, activeSettingsPage } from '@/composables/settings'
 import { Avatar, Button, ErrorMessage, FormControl, call, createResource } from 'frappe-ui'
@@ -154,8 +157,16 @@ const { isManager } = usersStore()
 const tab = ref('mensagens')
 const tabs = [
   { key: 'mensagens', label: __('Mensagens') },
-  { key: 'metricas', label: __('Métricas') },
+  { key: 'prospeccao', label: __('Prospecção') },
+  { key: 'metricas', label: __('Perfil'), manager: true },
 ]
+const visibleTabs = computed(() => tabs.filter((t) => !t.manager || isManager()))
+
+function openFromProspeccao(lead) {
+  tab.value = 'mensagens'
+  const c = (conversations.data || []).find((x) => x.lead === lead)
+  if (c) select(c)
+}
 const search = ref('')
 const selected = ref(null)
 const scroller = ref(null)

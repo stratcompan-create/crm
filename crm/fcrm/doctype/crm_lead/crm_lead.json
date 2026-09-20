@@ -29,6 +29,10 @@
   "instagram_sender_id",
   "instagram_username",
   "instagram_photo",
+  "abordagem",
+  "abordado_em",
+  "followups_feitos",
+  "ultimo_followup_em",
   "territory",
   "industry",
   "job_title",
@@ -488,6 +492,35 @@
    "no_copy": 1,
    "read_only": 1,
    "hidden": 1
+  },
+  {
+   "fieldname": "abordagem",
+   "fieldtype": "Link",
+   "options": "CRM Abordagem",
+   "label": "Tipo de abordagem",
+   "no_copy": 1
+  },
+  {
+   "fieldname": "abordado_em",
+   "fieldtype": "Datetime",
+   "label": "Abordado em",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "followups_feitos",
+   "fieldtype": "Int",
+   "label": "Follow-ups criados",
+   "default": "0",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "ultimo_followup_em",
+   "fieldtype": "Datetime",
+   "label": "Último follow-up",
+   "no_copy": 1,
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,

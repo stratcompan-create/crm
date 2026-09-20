@@ -235,7 +235,7 @@ doc_events = {
 
 scheduler_events = {
 	"all": ["crm.api.event.trigger_offset_event_notifications"],
-	"hourly": ["crm.api.event.trigger_hourly_event_notifications"],
+	"hourly": ["crm.api.event.trigger_hourly_event_notifications", "crm.api.followup.run_followups"],
 	"daily": [
 		"crm.api.financeiro.mark_overdue",
 		"crm.api.event.trigger_daily_event_notifications",
