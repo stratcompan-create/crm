@@ -27,6 +27,8 @@
 
   <InstagramProspeccao v-if="tab === 'prospeccao'" @abrir-conversa="openFromProspeccao" />
 
+  <InstagramAutomacao v-else-if="tab === 'automacoes' && isManager()" />
+
   <InstagramMetrics v-else-if="tab === 'metricas' && isManager()" />
 
   <div v-else class="flex min-h-0 flex-1">
@@ -145,6 +147,7 @@ import ChatIcon from '@/components/Icons/InstagramIcon.vue'
 import SettingsIcon from '@/components/Icons/SettingsIcon.vue'
 import { timestampCell } from '@/composables/useTimelinePreferences'
 import InstagramMetrics from '@/components/InstagramMetrics.vue'
+import InstagramAutomacao from '@/components/InstagramAutomacao.vue'
 import InstagramProspeccao from '@/components/InstagramProspeccao.vue'
 import { usersStore } from '@/stores/users'
 import { showSettings, activeSettingsPage } from '@/composables/settings'
@@ -158,6 +161,7 @@ const tab = ref('mensagens')
 const tabs = [
   { key: 'mensagens', label: __('Mensagens') },
   { key: 'prospeccao', label: __('Prospecção') },
+  { key: 'automacoes', label: __('Automações'), manager: true },
   { key: 'metricas', label: __('Perfil'), manager: true },
 ]
 const visibleTabs = computed(() => tabs.filter((t) => !t.manager || isManager()))

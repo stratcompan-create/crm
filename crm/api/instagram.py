@@ -94,6 +94,16 @@ def _handle_incoming_event():
 				# depois de muitas falhas; registramos aqui e respondemos 200
 				frappe.db.rollback()
 				frappe.log_error("Instagram: falha ao processar mensagem", frappe.get_traceback())
+		for change in entry.get("changes", []):
+			if change.get("field") != "comments":
+				continue
+			try:
+				from crm.api.instagram_automacao import process_comment_change
+
+				process_comment_change(change.get("value") or {})
+			except Exception:
+				frappe.db.rollback()
+				frappe.log_error("Instagram: falha ao processar comentário", frappe.get_traceback())
 
 	return {"status": "ok"}
 
@@ -130,6 +140,10 @@ def _process_message_event(event: dict):
 		}
 	).insert(ignore_permissions=True)
 	frappe.db.commit()
+
+	from crm.api.instagram_automacao import maybe_send_welcome
+
+	maybe_send_welcome(lead_name, sender_id)
 
 
 def _fetch_sender_profile(sender_id: str) -> dict:
@@ -185,12 +199,12 @@ def _apply_profile(lead: str, sender_id: str, profile: dict):
 		frappe.db.set_value("CRM Lead", lead, values, update_modified=False)
 
 
-def _get_or_create_lead(sender_id: str) -> str:
+def _get_or_create_lead(sender_id: str, fallback: dict | None = None) -> str:
 	existing = frappe.db.get_value("CRM Lead", {"instagram_sender_id": sender_id})
 	if existing:
 		return existing
 
-	profile = _fetch_sender_profile(sender_id)
+	profile = _fetch_sender_profile(sender_id) or (fallback or {})
 	full_name = (profile.get("name") or "").strip()
 	username = (profile.get("username") or "").strip()
 

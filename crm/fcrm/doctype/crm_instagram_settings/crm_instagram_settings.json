@@ -11,7 +11,10 @@
   "section_break_1",
   "access_token",
   "app_secret",
-  "token_expires_on"
+  "token_expires_on",
+  "section_boas_vindas",
+  "boas_vindas_ativa",
+  "boas_vindas_mensagem"
  ],
  "fields": [
   {
@@ -58,6 +61,22 @@
    "label": "Token válido até",
    "read_only": 1,
    "description": "Calculado automaticamente. O CRM renova o token sozinho antes de vencer."
+  },
+  {
+   "fieldname": "section_boas_vindas",
+   "fieldtype": "Section Break",
+   "label": "Boas-vindas"
+  },
+  {
+   "default": "0",
+   "fieldname": "boas_vindas_ativa",
+   "fieldtype": "Check",
+   "label": "Responder automaticamente o primeiro contato"
+  },
+  {
+   "fieldname": "boas_vindas_mensagem",
+   "fieldtype": "Small Text",
+   "label": "Mensagem de boas-vindas"
   }
  ],
  "index_web_pages_for_search": 1,
