@@ -55,12 +55,18 @@ def _handle_verification():
 	challenge = args.get("hub.challenge")
 
 	if mode == "subscribe" and token and settings.verify_token and token == settings.verify_token:
-		frappe.response["type"] = "page"
-		frappe.local.response_data = challenge
-		return challenge
+		# a Meta espera o valor de hub.challenge cru, como texto puro — devolver
+		# como JSON (o padrão de um método whitelisted) faz a verificação falhar
+		frappe.response["type"] = "download"
+		frappe.response["filename"] = "challenge.txt"
+		frappe.response["filecontent"] = str(challenge or "")
+		frappe.response["content_type"] = "text/plain"
+		frappe.response["display_content_as"] = "inline"
+		return
 
-	frappe.local.response.http_status_code = 403
-	return "Verification failed"
+	# a resposta de "download" (usada acima) não aplica o código de status HTTP
+	# sozinha — levantar o erro é o jeito que o Frappe garante o 403 de verdade
+	frappe.throw(_("Verification failed"), frappe.PermissionError)
 
 
 def _handle_incoming_event():
@@ -187,9 +193,9 @@ def fetch_profile(token: str) -> dict | None:
 		)
 		if resp.ok:
 			return resp.json()
-		frappe.log_error("Instagram: token inválido", resp.text[:1500])
+		frappe.log_error(resp.text[:1500], "Instagram: token inválido")
 	except requests.RequestException:
-		frappe.log_error("Instagram: falha ao validar token", frappe.get_traceback())
+		frappe.log_error(frappe.get_traceback(), "Instagram: falha ao validar token")
 	return None
 
 
@@ -227,9 +233,9 @@ def _refresh_token(current_token: str) -> dict | None:
 		)
 		if resp.ok:
 			return resp.json()
-		frappe.log_error("Instagram: falha ao renovar o token", resp.text[:1500])
+		frappe.log_error(resp.text[:1500], "Instagram: falha ao renovar o token")
 	except requests.RequestException:
-		frappe.log_error("Instagram: falha ao renovar o token", frappe.get_traceback())
+		frappe.log_error(frappe.get_traceback(), "Instagram: falha ao renovar o token")
 	return None
 
 
