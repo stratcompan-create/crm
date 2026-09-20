@@ -87,6 +87,23 @@
       </div>
     </div>
 
+    <!-- Recorrente x pontual -->
+    <div class="rounded-lg border border-outline-gray-2 p-5">
+      <div class="text-p-sm text-ink-gray-6">{{ __('Faturamento recebido no mês') }}</div>
+      <div class="mt-1 text-2xl font-semibold text-ink-gray-9">{{ formatCurrency(natureNow.total) }}</div>
+      <div class="mt-3 flex h-2 w-full overflow-hidden rounded-full bg-surface-gray-2">
+        <div class="h-full bg-[#042d3c]" :style="{ width: (natureNow.pct_recorrente || 0) + '%' }" />
+        <div class="h-full bg-[#8aa1a9]" :style="{ width: natureNow.total ? 100 - (natureNow.pct_recorrente || 0) + '%' : '0%' }" />
+      </div>
+      <div class="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-p-sm text-ink-gray-6">
+        <span>{{ __('Recorrente') }}: {{ formatCurrency(natureNow.recorrente) }} ({{ natureNow.pct_recorrente || 0 }}%)</span>
+        <span>{{ __('Pontual') }}: {{ formatCurrency(natureNow.pontual) }}</span>
+      </div>
+      <div class="mt-1 text-p-sm text-ink-gray-5">
+        {{ __('O pontual (projetos e serviços avulsos) soma no faturamento do mês, mas não se repete.') }}
+      </div>
+    </div>
+
     <!-- Negocios ganhos x perdidos -->
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
       <div class="rounded-lg border border-outline-gray-2 p-5">
@@ -124,6 +141,13 @@ function formatCurrency(value) {
     currency: 'BRL',
   }).format(value)
 }
+
+const nature = createResource({
+  url: 'crm.api.financeiro.get_revenue_nature',
+  params: { months: 1 },
+  auto: true,
+})
+const natureNow = computed(() => (nature.data || [])[0] || {})
 
 const goalProgress = computed(() => {
   const meta = health.data?.meta_trimestral || 0

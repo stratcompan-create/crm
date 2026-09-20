@@ -305,3 +305,49 @@ def export_goals_pdf():
 	)
 	file_doc.insert(ignore_permissions=True)
 	return {"file_url": file_doc.file_url, "file_name": file_doc.file_name}
+
+
+@frappe.whitelist()
+def get_revenue_nature(months: int = 6):
+	"""Faturamento recebido por mês, separando o que é recorrente (mensalidades, que se repetem
+	todo mês) do que é pontual (projetos e serviços avulsos, como a implantação de um CRM ou a
+	criação de um site). O pontual entra no faturamento do mês, mas não se repete."""
+	_managers_only()
+	months = max(1, min(int(months), 24))
+	current = nowdate().rsplit("-", 1)[0] + "-01"
+	start = getdate(add_months(current, -(months - 1)))
+
+	def by_month(status_in, date_field):
+		rows = frappe.db.sql(
+			f"""select date_format({date_field}, '%%Y-%%m') as month,
+				if(tipo_honorario = %s, 'recorrente', 'pontual') as natureza, sum(valor) as total
+			from `tabCRM Honorario` where status in %s and {date_field} is not null and {date_field} >= %s
+			group by month, natureza""",
+			(MONTHLY_TYPE, status_in, start),
+			as_dict=True,
+		)
+		out = {}
+		for r in rows:
+			out.setdefault(r.month, {"recorrente": 0, "pontual": 0})[r.natureza] = flt(r.total)
+		return out
+
+	recebido = by_month(("Pago",), "data_pagamento")
+	previsto = by_month(("Pendente", "Atrasado"), "data_vencimento")
+
+	out, cursor = [], start
+	while cursor <= getdate(current):
+		key = cursor.strftime("%Y-%m")
+		r = recebido.get(key, {"recorrente": 0, "pontual": 0})
+		p = previsto.get(key, {"recorrente": 0, "pontual": 0})
+		total = r["recorrente"] + r["pontual"]
+		out.append({
+			"month": key,
+			"recorrente": r["recorrente"],
+			"pontual": r["pontual"],
+			"total": total,
+			"pct_recorrente": round(r["recorrente"] / total * 100) if total else 0,
+			"previsto_recorrente": p["recorrente"],
+			"previsto_pontual": p["pontual"],
+		})
+		cursor = getdate(add_months(cursor, 1))
+	return out

@@ -39,6 +39,47 @@
     </div>
 
     <div class="rounded-lg border border-outline-gray-2 p-5">
+      <div class="mb-1 text-p-base-medium text-ink-gray-8">{{ __('Receita recorrente x pontual') }}</div>
+      <div class="mb-4 text-p-sm text-ink-gray-5">
+        {{
+          __(
+            'Recorrente = mensalidades, que se repetem todo mês. Pontual = projetos e serviços avulsos (como a implantação de um CRM ou a criação de um site): entram no faturamento do mês, mas não se repetem.',
+          )
+        }}
+      </div>
+      <div class="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <div class="rounded-lg bg-surface-gray-2 p-4">
+          <div class="text-p-sm text-ink-gray-6">{{ __('Faturamento recebido no mês') }}</div>
+          <div class="mt-1 text-xl font-semibold text-ink-gray-9">{{ formatCurrency(currentNature.total) }}</div>
+        </div>
+        <div class="rounded-lg bg-surface-gray-2 p-4">
+          <div class="text-p-sm text-ink-gray-6">{{ __('Recorrente') }} · {{ currentNature.pct_recorrente || 0 }}%</div>
+          <div class="mt-1 text-xl font-semibold text-ink-gray-9">{{ formatCurrency(currentNature.recorrente) }}</div>
+          <div class="text-p-sm text-ink-gray-5">{{ __('a receber:') }} {{ formatCurrency(currentNature.previsto_recorrente) }}</div>
+        </div>
+        <div class="rounded-lg bg-surface-gray-2 p-4">
+          <div class="text-p-sm text-ink-gray-6">{{ __('Pontual') }} · {{ currentNature.total ? 100 - (currentNature.pct_recorrente || 0) : 0 }}%</div>
+          <div class="mt-1 text-xl font-semibold text-ink-gray-9">{{ formatCurrency(currentNature.pontual) }}</div>
+          <div class="text-p-sm text-ink-gray-5">{{ __('a receber:') }} {{ formatCurrency(currentNature.previsto_pontual) }}</div>
+        </div>
+      </div>
+      <div v-for="row in nature.data || []" :key="row.month" class="mb-3">
+        <div class="flex justify-between text-p-sm">
+          <span class="text-ink-gray-8">{{ monthLabel(row.month) }}</span>
+          <span class="text-ink-gray-6">{{ formatCurrency(row.recorrente) }} {{ __('recorrente') }} · {{ formatCurrency(row.pontual) }} {{ __('pontual') }}</span>
+        </div>
+        <div class="mt-1 flex h-2 w-full overflow-hidden rounded-full bg-surface-gray-2">
+          <div class="h-full bg-[#042d3c]" :style="{ width: natureWidth(row.recorrente) + '%' }" />
+          <div class="h-full bg-[#8aa1a9]" :style="{ width: natureWidth(row.pontual) + '%' }" />
+        </div>
+      </div>
+      <div class="mt-2 flex gap-4 text-p-sm text-ink-gray-5">
+        <span><span class="mr-1 inline-block size-2 rounded-full bg-[#042d3c]" />{{ __('Recorrente') }}</span>
+        <span><span class="mr-1 inline-block size-2 rounded-full bg-[#8aa1a9]" />{{ __('Pontual') }}</span>
+      </div>
+    </div>
+
+    <div class="rounded-lg border border-outline-gray-2 p-5">
       <div class="mb-3 text-p-base-medium text-ink-gray-8">{{ __('Fluxo de Caixa') }}</div>
       <div class="overflow-x-auto">
         <table class="w-full text-p-sm">
@@ -115,6 +156,15 @@ const breakdown = createResource({
   url: 'crm.api.financeiro.get_revenue_breakdown',
   auto: true,
 })
+
+const nature = createResource({
+  url: 'crm.api.financeiro.get_revenue_nature',
+  params: { months: 6 },
+  auto: true,
+})
+const maxNature = computed(() => Math.max(1, ...(nature.data || []).map((r) => r.total)))
+const natureWidth = (value) => (value ? Math.max(1, Math.round((value / maxNature.value) * 100)) : 0)
+const currentNature = computed(() => (nature.data || []).slice(-1)[0] || {})
 
 const maxClient = computed(() =>
   Math.max(1, ...(breakdown.data?.clientes || []).map((c) => c.pago + c.pendente)),
