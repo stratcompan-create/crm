@@ -117,7 +117,7 @@ def callback(code: str | None = None, state: str | None = None, error: str | Non
 		)
 		tokens = resp.json()
 		if resp.status_code != 200 or not tokens.get("refresh_token"):
-			frappe.log_error(json.dumps({k: v for k, v in tokens.items() if "token" not in k}), "Google Drive: falha na troca do código")
+			frappe.log_error("Google Drive: falha na troca do código", json.dumps({k: v for k, v in tokens.items() if "token" not in k}))
 			return ir(destino_erro)
 
 		email = ""
@@ -150,7 +150,7 @@ def callback(code: str | None = None, state: str | None = None, error: str | Non
 		frappe.cache().delete_value("gdrive_access_token")
 		return ir(destino_ok)
 	except Exception:
-		frappe.log_error(frappe.get_traceback(), "Google Drive: falha ao conectar")
+		frappe.log_error("Google Drive: falha ao conectar", frappe.get_traceback())
 		return ir(destino_erro)
 
 
@@ -236,7 +236,7 @@ def _drive_call(method: str, url: str, **kwargs):
 		frappe.cache().delete_value("gdrive_access_token")
 		resp = requests.request(method, url, headers=_headers(), timeout=TIMEOUT, **kwargs)
 	if resp.status_code >= 400:
-		frappe.log_error(f"{method} {url}\n{resp.text[:1500]}", "Google Drive: erro na API")
+		frappe.log_error("Google Drive: erro na API", f"{method} {url}\n{resp.text[:1500]}")
 		frappe.throw(_("O Google Drive recusou a operação."))
 	return resp.json()
 
@@ -304,7 +304,7 @@ def upload_bytes(filename: str, content: bytes, mime: str = "application/octet-s
 			f"{UPLOAD_URL}?uploadType=multipart&fields=id,webViewLink", headers=_headers(), files=files, timeout=120
 		)
 	if resp.status_code >= 400:
-		frappe.log_error(resp.text[:1500], "Google Drive: falha no envio do arquivo")
+		frappe.log_error("Google Drive: falha no envio do arquivo", resp.text[:1500])
 		frappe.throw(_("Não foi possível enviar o arquivo para o Google Drive."))
 	data = resp.json()
 	return {"id": data.get("id"), "link": data.get("webViewLink")}
@@ -366,7 +366,7 @@ def on_file_insert(doc, method=None):
 			enqueue_after_commit=True,
 		)
 	except Exception:
-		frappe.log_error(frappe.get_traceback(), "Google Drive: falha ao agendar o envio")
+		frappe.log_error("Google Drive: falha ao agendar o envio", frappe.get_traceback())
 
 
 def upload_file_doc(name: str):

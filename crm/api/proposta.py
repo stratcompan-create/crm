@@ -104,7 +104,7 @@ def save_proposal(deal: str, data):
 		ctx = deal_context(doc)
 		avisos = check_fit(ctx["settings"], ctx["items"], ctx["total"], ctx["client_name"], _merge(default_proposal(), data))
 	except Exception:
-		frappe.log_error(frappe.get_traceback(), "Falha ao conferir o tamanho da proposta")
+		frappe.log_error("Falha ao conferir o tamanho da proposta", frappe.get_traceback())
 	return {"ok": True, "avisos": avisos}
 
 
@@ -653,7 +653,7 @@ def render_pdf(html: str) -> bytes:
 	]
 	proc = subprocess.run(cmd, input=html.encode("utf-8"), capture_output=True, timeout=180)
 	if not proc.stdout.startswith(b"%PDF"):
-		frappe.log_error(proc.stderr.decode("utf-8", "ignore")[-2000:], "Falha ao gerar PDF da proposta")
+		frappe.log_error("Falha ao gerar PDF da proposta", proc.stderr.decode("utf-8", "ignore")[-2000:])
 		frappe.throw(_("Não foi possível gerar o PDF da proposta"))
 	return proc.stdout
 

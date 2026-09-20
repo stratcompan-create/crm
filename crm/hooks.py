@@ -240,6 +240,7 @@ scheduler_events = {
 		"crm.api.financeiro.mark_overdue",
 		"crm.api.event.trigger_daily_event_notifications",
 		"crm.fcrm.doctype.crm_invitation.crm_invitation.expire_invitations",
+		"crm.api.instagram.refresh_token_if_needed",
 		"crm.fcrm.doctype.crm_view_settings.crm_view_settings.clear_old_versions",
 		"crm.telemetry.capture_feature_state",
 	],
