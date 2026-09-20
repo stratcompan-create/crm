@@ -30,6 +30,7 @@
     :options="{
       showTooltip: false,
       resizeColumn: true,
+      onRowClick: (row) => router.push({ name: 'Lead', params: { leadId: row.lead } }),
       rowCount: messages.data.row_count,
       totalCount: messages.data.total_count,
     }"
@@ -38,16 +39,37 @@
     <ListHeader class="mx-3 sm:mx-5" @columnWidthUpdated="() => triggerResize++">
       <ListHeaderItem v-for="column in columns" :key="column.key" :item="column" />
     </ListHeader>
-    <ListRows v-slot="{ column, item, row }" class="mx-3 sm:mx-5" :rows="rows" doctype="CRM Instagram Message">
-      <ListRowItem :item="item" :align="column.align" class="overflow-hidden" />
-      <Button
-        v-if="column.key === 'message'"
-        class="ml-2 shrink-0"
-        variant="ghost"
-        size="sm"
-        :label="__('Responder')"
-        @click.stop="openReply(row)"
+    <ListRows
+      v-slot="{ column, item, row }"
+      class="mx-3 sm:mx-5"
+      :rows="rows"
+      doctype="CRM Instagram Message"
+    >
+      <div v-if="column.key === 'timestamp'" class="truncate text-base">
+        <Tooltip :text="item?.label">
+          <div>{{ item?.timeAgo }}</div>
+        </Tooltip>
+      </div>
+      <div
+        v-else-if="column.key === 'message'"
+        class="flex w-full items-center gap-2 overflow-hidden"
+      >
+        <ListRowItem :item="item" :align="column.align" class="min-w-0 flex-1 overflow-hidden" />
+        <Button
+          class="shrink-0"
+          variant="ghost"
+          size="sm"
+          :label="__('Responder')"
+          @click.stop="openReply(row)"
+        />
+      </div>
+      <ListRowItem
+        v-else-if="column.key === 'direction'"
+        :item="__(item)"
+        :align="column.align"
+        class="overflow-hidden"
       />
+      <ListRowItem v-else :item="item" :align="column.align" class="overflow-hidden" />
     </ListRows>
     <ListFooter
       class="border-t px-3 py-2 sm:px-5"
@@ -90,6 +112,7 @@ import ViewBreadcrumbs from '@/components/ViewBreadcrumbs.vue'
 import LayoutHeader from '@/components/LayoutHeader.vue'
 import ViewControls from '@/components/ViewControls.vue'
 import EmptyState from '@/components/ListViews/EmptyState.vue'
+import ListRows from '@/components/ListViews/ListRows.vue'
 import ChatIcon from '@/components/Icons/InstagramIcon.vue'
 import SettingsIcon from '@/components/Icons/SettingsIcon.vue'
 import { formatDate } from '@/utils'
@@ -99,16 +122,18 @@ import {
   ListView,
   ListHeader,
   ListHeaderItem,
-  ListRows,
   ListRowItem,
   ListFooter,
   Dialog,
   FormControl,
   ErrorMessage,
+  Tooltip,
   call,
 } from 'frappe-ui'
 import { computed, ref } from 'vue'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const messages = ref({})
 const loadMore = ref(1)
 const triggerResize = ref(1)
