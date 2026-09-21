@@ -82,7 +82,9 @@
   "facebook_form_id",
   "lost_details_tab",
   "lost_reason",
-  "lost_notes"
+  "lost_notes",
+  "servico",
+  "natureza"
  ],
  "fields": [
   {
@@ -521,6 +523,18 @@
    "label": "Último follow-up",
    "no_copy": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "servico",
+   "fieldtype": "Link",
+   "label": "Serviço",
+   "options": "CRM Servico"
+  },
+  {
+   "fieldname": "natureza",
+   "fieldtype": "Select",
+   "label": "Tipo de cobrança",
+   "options": "\nPontual\nRecorrente\nPontual e recorrente"
   }
  ],
  "grid_page_length": 50,

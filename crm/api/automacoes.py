@@ -254,10 +254,31 @@ def on_user_change(doc, method=None):
 
 # ------------------------------------------------------------------ 2. negócio ganho
 
+NATUREZA_RECORRENTE = "Recorrente"
+NATUREZA_AMBOS = "Pontual e recorrente"
+MONTHLY_TYPE = "Consultivo Mensal"
+
+
+def _service_for(deal_doc):
+	"""Serviço escolhido no negócio; se não tiver (ou não existir no Financeiro), deduz pelo orçamento."""
+	options = (frappe.get_meta("CRM Honorario").get_field("servico").options or "").split("\n")
+	chosen = deal_doc.get("servico")
+	return chosen if chosen in options else deal_doc._guess_service()
+
+
 def on_deal_won(deal_doc, valor: float) -> None:
-	"""Chamado quando o negócio vira 'ganho': parcelas, contrato, conta do cliente e tarefas."""
+	"""Chamado quando o negócio vira 'ganho': cobranças, contrato, conta do cliente e tarefas.
+	O tipo de cobrança do negócio decide o que entra no Financeiro: pontual (parcelas),
+	recorrente (mensalidade que se renova sozinha) ou os dois."""
 	cfg = get_config()
-	create_installments(deal_doc, valor, cint(cfg.parcelas_padrao) or 1, cint(cfg.parcelas_intervalo) or 30)
+	natureza = deal_doc.get("natureza") or ""
+	mensal = flt(deal_doc.get("valor_recorrente"))
+	if natureza == NATUREZA_RECORRENTE:
+		create_monthly(deal_doc, mensal or valor)
+	else:
+		create_installments(deal_doc, valor, cint(cfg.parcelas_padrao) or 1, cint(cfg.parcelas_intervalo) or 30)
+		if natureza == NATUREZA_AMBOS and mensal > 0:
+			create_monthly(deal_doc, mensal)
 	try:
 		_attach_contract(deal_doc)
 	except Exception:
@@ -276,6 +297,22 @@ def on_deal_won(deal_doc, valor: float) -> None:
 			_create_task(deal_doc.name, f"{title} — {_client(deal_doc.name).completo}", "", owner, days)
 
 
+def create_monthly(deal_doc, valor: float):
+	"""Primeira mensalidade; a cada uma paga, o Financeiro cria a do mês seguinte."""
+	frappe.get_doc(
+		{
+			"doctype": "CRM Honorario",
+			"deal": deal_doc.name,
+			"status": "Pendente",
+			"tipo_honorario": MONTHLY_TYPE,
+			"servico": _service_for(deal_doc),
+			"valor": valor,
+			"data_vencimento": add_days(nowdate(), 30),
+			"observacoes": _("Mensalidade"),
+		}
+	).insert(ignore_permissions=True)
+
+
 def create_installments(deal_doc, valor: float, parcelas: int, intervalo: int):
 	tipos = (frappe.get_meta("CRM Honorario").get_field("tipo_honorario").options or "").split("\n")
 	tipo = tipos[0] if tipos and tipos[0] else None
@@ -291,7 +328,7 @@ def create_installments(deal_doc, valor: float, parcelas: int, intervalo: int):
 				"deal": deal_doc.name,
 				"status": "Pendente",
 				"tipo_honorario": tipo,
-				"servico": deal_doc._guess_service(),
+				"servico": _service_for(deal_doc),
 				"valor": this,
 				"parcelas": parcelas,
 				"data_vencimento": due,
@@ -650,3 +687,68 @@ def generate_weekly_report_now():
 	_managers_only()
 	name = generate_weekly_report(force=True, send_email=False)
 	return {"name": name, "arquivo": frappe.db.get_value("CRM Relatorio Semanal", name, "arquivo")}
+
+# ------------------------------------------------------------------ serviços e campos nos formulários
+
+AGENCY_SERVICES = ["Audiovisual", "Sites", "Tráfego Pago", "CRM Jurídico", "Outros"]
+LAW_SERVICES = ["Consultivo", "Contencioso", "Contratos", "Societário", "Tributário", "Trabalhista", "Outros"]
+
+
+def ensure_services():
+	"""Lista inicial de serviços (o gestor edita depois). Só semeia quando a lista está vazia."""
+	if frappe.db.count("CRM Servico"):
+		return
+	profile = frappe.db.get_default("crm_profile") or "agencia"
+	names = AGENCY_SERVICES if profile == "agencia" else LAW_SERVICES
+	for nome in names:
+		frappe.get_doc({"doctype": "CRM Servico", "nome": nome, "ativo": 1}).insert(ignore_permissions=True)
+
+
+def ensure_service_layouts():
+	"""Coloca Serviço e Tipo de cobrança nos formulários de lead e negócio (o layout é dado do site,
+	então uma migração sozinha não o atualiza)."""
+	import json
+
+	extra = {
+		"CRM Lead": ["servico", "natureza"],
+		"CRM Deal": ["servico", "natureza", "valor_recorrente"],
+	}
+	for dt, fields in extra.items():
+		for kind in ("Quick Entry", "Side Panel"):
+			name = f"{dt}-{kind}"
+			if not frappe.db.exists("CRM Fields Layout", name):
+				continue
+			doc = frappe.get_doc("CRM Fields Layout", name)
+			layout = json.loads(doc.layout or "[]")
+			present = {f for s in layout for c in s.get("columns", []) for f in c.get("fields", [])}
+			missing = [f for f in fields if f not in present]
+			if not missing:
+				continue
+			if kind == "Side Panel":
+				target = next(
+					(s for s in layout if "contacts" not in s and any(c.get("fields") for c in s.get("columns", []))),
+					None,
+				)
+				if target:
+					target["columns"][0]["fields"].extend(missing)
+					doc.layout = json.dumps(layout)
+					doc.save(ignore_permissions=True)
+					continue
+			layout.append(
+				{
+					"name": "servico_section",
+					"columns": [{"name": "servico_col_a", "fields": missing[:2]}]
+					+ ([{"name": "servico_col_b", "fields": missing[2:]}] if len(missing) > 2 else []),
+				}
+			)
+			doc.layout = json.dumps(layout)
+			doc.save(ignore_permissions=True)
+
+
+def after_migrate():
+	try:
+		ensure_services()
+		ensure_service_layouts()
+		frappe.db.commit()
+	except Exception:
+		frappe.log_error("Serviços: falha ao preparar campos e layouts", frappe.get_traceback())

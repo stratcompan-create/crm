@@ -87,7 +87,10 @@
   "budget_discount",
   "proposal_data",
   "posvenda_avaliacao_em",
-  "posvenda_indicacao_em"
+  "posvenda_indicacao_em",
+  "servico",
+  "natureza",
+  "valor_recorrente"
  ],
  "fields": [
   {
@@ -560,6 +563,24 @@
    "read_only": 1,
    "no_copy": 1,
    "hidden": 1
+  },
+  {
+   "fieldname": "servico",
+   "fieldtype": "Link",
+   "label": "Serviço",
+   "options": "CRM Servico"
+  },
+  {
+   "fieldname": "natureza",
+   "fieldtype": "Select",
+   "label": "Tipo de cobrança",
+   "options": "\nPontual\nRecorrente\nPontual e recorrente"
+  },
+  {
+   "fieldname": "valor_recorrente",
+   "fieldtype": "Currency",
+   "label": "Valor mensal (R$)",
+   "description": "Só para tipo recorrente ou pontual e recorrente."
   }
  ],
  "grid_page_length": 50,
