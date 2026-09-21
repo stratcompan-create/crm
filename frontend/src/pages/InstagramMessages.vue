@@ -122,6 +122,12 @@
           </div>
         </div>
 
+        <ReplySuggestions
+          :lead="selected.lead"
+          :version="`${thread.data?.length || 0}-${thread.data?.[thread.data.length - 1]?.name || ''}`"
+          @usar="(text) => (replyMessage = text)"
+        />
+
         <div class="border-t border-outline-gray-1 p-3">
           <ErrorMessage v-if="replyError" class="mb-2" :message="replyError" />
           <div class="flex items-end gap-2">
@@ -148,6 +154,7 @@ import SettingsIcon from '@/components/Icons/SettingsIcon.vue'
 import { timestampCell } from '@/composables/useTimelinePreferences'
 import InstagramMetrics from '@/components/InstagramMetrics.vue'
 import InstagramAutomacao from '@/components/InstagramAutomacao.vue'
+import ReplySuggestions from '@/components/ReplySuggestions.vue'
 import InstagramProspeccao from '@/components/InstagramProspeccao.vue'
 import { usersStore } from '@/stores/users'
 import { showSettings, activeSettingsPage } from '@/composables/settings'
