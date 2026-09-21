@@ -59,6 +59,7 @@
         <Button variant="subtle" iconLeft="lucide-square" :label="__('Bloco')" @click="addNode('card')" />
         <Button variant="subtle" iconLeft="lucide-sticky-note" :label="__('Nota')" @click="addNode('sticky')" />
         <Button variant="subtle" iconLeft="lucide-type" :label="__('Texto')" @click="addNode('text')" />
+        <Button variant="subtle" iconLeft="lucide-bar-chart-3" :label="__('Dado do CRM')" @click="showData = true" />
         <span class="mx-1 h-5 border-l border-outline-gray-2" />
         <Button variant="ghost" iconLeft="lucide-trash-2" theme="red" :label="__('Apagar seleção')" :disabled="!hasSelection" @click="deleteSelection" />
         <span class="ml-auto hidden text-xs text-ink-gray-5 lg:inline">
@@ -81,6 +82,7 @@
           :snap-to-grid="true"
           :snap-grid="[16, 16]"
           @node-click="({ node }) => select('node', node.id)"
+          @node-double-click="({ node }) => node.type === 'data' && openMetric(node)"
           @edge-click="({ edge }) => select('edge', edge.id)"
           @pane-click="select(null, null)"
           @move-end="scheduleSave"
@@ -88,6 +90,7 @@
           <template #node-card="p"><StrategyNode v-bind="p" /></template>
           <template #node-sticky="p"><StrategyNode v-bind="p" /></template>
           <template #node-text="p"><StrategyNode v-bind="p" /></template>
+          <template #node-data="p"><StrategyNode v-bind="p" /></template>
           <Background :gap="16" pattern-color="#c9d2d8" />
           <Controls :show-interactive="false" position="bottom-left" />
         </VueFlow>
@@ -97,11 +100,16 @@
     <!-- painel de edição -->
     <aside v-if="canEdit && selected" class="w-72 shrink-0 overflow-y-auto border-l border-outline-gray-1 p-4">
       <template v-if="selected.kind === 'node' && selNode">
-        <div class="mb-3 text-p-base-medium text-ink-gray-9">{{ selNode.type === 'card' ? __('Bloco') : selNode.type === 'sticky' ? __('Nota') : __('Texto') }}</div>
+        <div class="mb-3 text-p-base-medium text-ink-gray-9">{{ { card: __('Bloco'), data: __('Dado do CRM'), sticky: __('Nota') }[selNode.type] || __('Texto') }}</div>
         <div class="flex flex-col gap-3">
           <div class="flex flex-col gap-1">
-            <span class="text-p-sm text-ink-gray-6">{{ selNode.type === 'card' ? __('Título') : __('Texto') }}</span>
-            <FormControl v-model="selNode.data.label" :type="selNode.type === 'card' ? 'text' : 'textarea'" :rows="4" />
+            <span class="text-p-sm text-ink-gray-6">{{ ['card', 'data'].includes(selNode.type) ? __('Título') : __('Texto') }}</span>
+            <FormControl v-model="selNode.data.label" :type="['card', 'data'].includes(selNode.type) ? 'text' : 'textarea'" :rows="4" />
+          </div>
+          <div v-if="selNode.type === 'data'" class="flex flex-col gap-1">
+            <span class="text-p-sm text-ink-gray-6">{{ __('Dado exibido') }}</span>
+            <FormControl v-model="selNode.data.metric" type="select" :options="metricOptions" />
+            <Button class="mt-1" variant="subtle" iconLeft="lucide-external-link" :label="__('Abrir no CRM')" @click="openMetric(selNode)" />
           </div>
           <div v-if="selNode.type === 'card'" class="flex flex-col gap-1">
             <span class="text-p-sm text-ink-gray-6">{{ __('Descrição (opcional)') }}</span>
@@ -121,7 +129,7 @@
               />
             </div>
           </div>
-          <div v-if="selNode.type === 'card'" class="flex flex-col gap-1">
+          <div v-if="['card', 'data'].includes(selNode.type)" class="flex flex-col gap-1">
             <span class="text-p-sm text-ink-gray-6">{{ __('Ícone') }}</span>
             <div class="grid grid-cols-6 gap-1">
               <button
@@ -156,6 +164,27 @@
       </template>
     </aside>
   </div>
+
+  <!-- Dado do CRM -->
+  <Dialog v-model="showData" :options="{ title: __('Dado do CRM'), size: 'lg' }">
+    <template #body-content>
+      <p class="mb-3 text-p-sm text-ink-gray-6">{{ __('O bloco mostra o número real, sempre atualizado, e abre a lista com um duplo clique.') }}</p>
+      <div v-for="(items, group) in catalogGroups" :key="group" class="mb-3">
+        <div class="mb-1 text-xs font-medium uppercase tracking-wide text-ink-gray-5">{{ __(group) }}</div>
+        <div class="flex flex-wrap gap-1.5">
+          <button
+            v-for="c in items"
+            :key="c.key"
+            type="button"
+            class="rounded-full border border-outline-gray-2 px-3 py-1 text-p-sm text-ink-gray-8 hover:bg-surface-gray-2"
+            @click="addDataNode(c)"
+          >
+            {{ c.label }}
+          </button>
+        </div>
+      </div>
+    </template>
+  </Dialog>
 
   <!-- Novo mapa -->
   <Dialog v-model="showNew" :options="{ title: __('Novo mapa'), size: '2xl' }">
@@ -202,13 +231,31 @@ import '@vue-flow/core/dist/style.css'
 import '@vue-flow/core/dist/theme-default.css'
 import { Button, Dialog, ErrorMessage, FormControl, call, createResource, toast } from 'frappe-ui'
 import { toPng } from 'html-to-image'
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, provide, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 const route = useRoute()
 const router = useRouter()
 
 const maps = createResource({ url: 'crm.api.mapas.list_maps', auto: true })
+const metrics = createResource({ url: 'crm.api.mapas.get_metrics', auto: true, onError() {} })
+provide('mapMetrics', metrics)
+const metricTimer = setInterval(() => mapId.value && metrics.reload(), 60000)
+const showData = ref(false)
+const catalogGroups = computed(() => {
+  const groups = {}
+  for (const c of metrics.data?.catalogo || []) (groups[c.grupo] ||= []).push(c)
+  return groups
+})
+const metricOptions = computed(() => (metrics.data?.catalogo || []).map((c) => ({ label: c.label, value: c.key })))
+function addDataNode(c) {
+  showData.value = false
+  addNode('data', { metric: c.key, label: c.label })
+}
+function openMetric(node) {
+  const item = (metrics.data?.catalogo || []).find((c) => c.key === node.data?.metric)
+  if (item?.route) router.push({ name: item.route })
+}
 const templates = createResource({ url: 'crm.api.mapas.get_templates', auto: true })
 const dateBr = (v) => (v ? String(v).slice(0, 10).split('-').reverse().join('/') : '')
 
@@ -317,7 +364,7 @@ function deleteSelection() {
   selected.value = null
 }
 
-function addNode(kind) {
+function addNode(kind, extra = {}) {
   const box = canvasBox.value?.getBoundingClientRect()
   const pos = box
     ? screenToFlowCoordinate({ x: box.left + box.width / 2 - 90, y: box.top + box.height / 2 - 30 })
@@ -327,8 +374,9 @@ function addNode(kind) {
     card: { label: __('Novo bloco'), note: '', icon: 'circle', color: 'blue' },
     sticky: { label: __('Escreva aqui'), note: '', icon: 'circle', color: 'yellow' },
     text: { label: __('Título'), note: '', icon: 'circle', color: 'gray' },
+    data: { label: '', note: '', icon: 'bar-chart-2', color: 'blue', metric: '' },
   }[kind]
-  nodes.value = [...nodes.value, { id, type: kind, position: { x: Math.round(pos.x / 16) * 16, y: Math.round(pos.y / 16) * 16 }, data: base }]
+  nodes.value = [...nodes.value, { id, type: kind, position: { x: Math.round(pos.x / 16) * 16, y: Math.round(pos.y / 16) * 16 }, data: { ...base, ...extra } }]
   select('node', id)
 }
 
@@ -374,7 +422,10 @@ async function doSave() {
 }
 watch([nodes, edges], scheduleSave, { deep: true })
 watch(title, scheduleSave)
-onBeforeUnmount(() => flushSave())
+onBeforeUnmount(() => {
+  flushSave()
+  clearInterval(metricTimer)
+})
 
 // ---- exportar imagem
 async function exportImage() {

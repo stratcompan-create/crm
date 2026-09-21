@@ -120,7 +120,7 @@ def process_comment_change(value: dict):
 	cleaned = re.sub(r"[^\w\s]", " ", text)
 	normalized = f" {_norm(cleaned)} "
 	trigger = None
-	for g in frappe.get_all("CRM Instagram Gatilho", filters={"ativa": 1}, fields=["palavra", "mensagem"]):
+	for g in frappe.get_all("CRM Instagram Gatilho", filters={"ativa": 1}, fields=["palavra", "mensagem", "servico"]):
 		word = _norm(g.palavra)
 		if word and f" {word} " in normalized:
 			trigger = g
@@ -129,6 +129,8 @@ def process_comment_change(value: dict):
 		return
 
 	lead = ig._get_or_create_lead(author_id, fallback={"username": username or ""})
+	if trigger.get("servico") and not frappe.db.get_value("CRM Lead", lead, "servico"):
+		frappe.db.set_value("CRM Lead", lead, "servico", trigger.servico, update_modified=False)
 	# uma mensagem por pessoa e palavra a cada 24h, mesmo que ela comente de novo
 	dm = _fill(trigger.mensagem, lead)
 	if not dm:
@@ -156,7 +158,7 @@ def get_automation_settings() -> dict:
 		"boas_vindas_ativa": cint(s.get("boas_vindas_ativa")),
 		"boas_vindas_mensagem": s.get("boas_vindas_mensagem") or DEFAULT_WELCOME,
 		"gatilhos": frappe.get_all(
-			"CRM Instagram Gatilho", fields=["palavra", "mensagem", "ativa"], order_by="creation asc"
+			"CRM Instagram Gatilho", fields=["palavra", "mensagem", "ativa", "servico"], order_by="creation asc"
 		),
 		"mensagem_exemplo": DEFAULT_TRIGGER,
 	}
@@ -171,17 +173,19 @@ def save_welcome(ativa=0, mensagem: str = ""):
 
 
 @frappe.whitelist()
-def save_gatilho(palavra: str, mensagem: str, ativa=1):
+def save_gatilho(palavra: str, mensagem: str, ativa=1, servico: str = ""):
 	_managers_only()
 	palavra = (palavra or "").strip()
 	mensagem = (mensagem or "").strip()
 	if not palavra or not mensagem:
 		frappe.throw(_("Preencha a palavra-chave e a mensagem."))
 	if frappe.db.exists("CRM Instagram Gatilho", palavra):
-		frappe.db.set_value("CRM Instagram Gatilho", palavra, {"mensagem": mensagem, "ativa": cint(ativa)})
+		frappe.db.set_value(
+			"CRM Instagram Gatilho", palavra, {"mensagem": mensagem, "ativa": cint(ativa), "servico": servico or None}
+		)
 	else:
 		frappe.get_doc(
-			{"doctype": "CRM Instagram Gatilho", "palavra": palavra, "mensagem": mensagem, "ativa": cint(ativa)}
+			{"doctype": "CRM Instagram Gatilho", "palavra": palavra, "mensagem": mensagem, "ativa": cint(ativa), "servico": servico or None}
 		).insert()
 	return {"ok": True}
 

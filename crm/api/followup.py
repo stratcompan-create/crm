@@ -125,6 +125,10 @@ def get_abordagens() -> list:
 	return frappe.get_all("CRM Abordagem", filters={"ativa": 1}, pluck="nome", order_by="creation asc")
 
 
+# o tipo de abordagem já diz o serviço oferecido
+ABORDAGEM_SERVICO = {"Site": "Sites", "Conteúdo": "Audiovisual", "CRM": "CRM Jurídico"}
+
+
 @frappe.whitelist()
 def register_approach(nome: str, canal: str = "Instagram", abordagem: str = "", usuario: str = "", telefone: str = ""):
 	"""Registra uma pessoa que acabou de ser abordada. Cria o lead, conta a abordagem na
@@ -166,6 +170,10 @@ def register_approach(nome: str, canal: str = "Instagram", abordagem: str = "", 
 		lead.insert()
 		status = "criado"
 
+	if abordagem and not lead.get("servico"):
+		servico = ABORDAGEM_SERVICO.get(abordagem)
+		if servico and frappe.db.exists("CRM Servico", servico):
+			lead.db_set("servico", servico, update_modified=False)
 	lead.db_set(
 		{
 			"abordagem": abordagem or None,

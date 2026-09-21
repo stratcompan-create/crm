@@ -103,7 +103,34 @@ def _tpl_branco():
 	)
 
 
+def _tpl_vivo():
+	"""Funil ligado ao CRM: cada bloco mostra o número real e abre a lista."""
+	steps = [
+		("lead:New", "Leads novos", "users", "blue"),
+		("lead:Contacted", "Leads em conversa", "message-circle", "blue"),
+		("lead:Qualified", "Leads qualificados", "target", "amber"),
+		("deal:Qualification", "Negócios em qualificação", "briefcase", "amber"),
+		("deal:Proposal/Quotation", "Propostas enviadas", "file-text", "amber"),
+		("deal:Negotiation", "Em negociação", "refresh-cw", "amber"),
+		("deal:Won", "Negócios ganhos", "check-circle", "green"),
+	]
+	nodes = [
+		_node(f"n{i}", label, i * 250, 100, icon, color, kind="data") for i, (_k, label, icon, color) in enumerate(steps)
+	]
+	for n, (key, *_rest) in zip(nodes, steps):
+		n["data"]["metric"] = key
+	edges = [_edge(f"n{i}", f"n{i + 1}") for i in range(len(steps) - 1)]
+	money = [("receita_pendente", "A receber", "dollar-sign", "amber"), ("receita_atrasada", "Em atraso", "bell", "red"), ("recebido_mes", "Recebido no mês", "check-circle", "green")]
+	for j, (key, label, icon, color) in enumerate(money):
+		n = _node(f"m{j}", label, 500 + j * 250, 330, icon, color, kind="data")
+		n["data"]["metric"] = key
+		nodes.append(n)
+	nodes.append(_node("s1", "Os números se atualizam sozinhos. Clique duas vezes num bloco para abrir a lista.", 0, 300, kind="sticky", color="yellow"))
+	return nodes, edges
+
+
 TEMPLATES = {
+	"funil_vivo": ("Funil ao vivo (dados do CRM)", "Blocos com os números reais de leads, negócios e receita.", _tpl_vivo),
 	"em_branco": ("Em branco", "Comece do zero, com liberdade total.", _tpl_branco),
 	"funil": ("Funil de vendas", "Do primeiro contato ao pós-venda.", _tpl_funil),
 	"upsell": ("Upsell e cross-sell", "Como vender mais para quem já é cliente.", _tpl_upsell),
@@ -184,3 +211,55 @@ def delete_map(name: str):
 	_managers_only()
 	frappe.delete_doc("CRM Mapa", name)
 	return {"ok": True}
+
+
+# ------------------------------------------------------------------ blocos com dados do CRM
+
+def _catalog() -> list:
+	items = []
+	for s in frappe.get_all("CRM Lead Status", fields=["name", "position"], order_by="position asc"):
+		items.append({"key": f"lead:{s.name}", "label": _("Leads: {0}").format(_(s.name)), "grupo": "Leads", "tipo": "n", "route": "Leads"})
+	items.append({"key": "leads_semana", "label": _("Leads novos nos últimos 7 dias"), "grupo": "Leads", "tipo": "n", "route": "Leads"})
+	for s in frappe.get_all("CRM Deal Status", fields=["name", "position"], order_by="position asc"):
+		items.append({"key": f"deal:{s.name}", "label": _("Negócios: {0}").format(_(s.name)), "grupo": "Negócios", "tipo": "n", "route": "Deals"})
+	items += [
+		{"key": "reunioes_semana", "label": _("Reuniões nos próximos 7 dias"), "grupo": "Agenda", "tipo": "n", "route": "Calendar"},
+		{"key": "followups", "label": _("Follow-ups para enviar"), "grupo": "Tarefas", "tipo": "n", "route": "Tasks"},
+		{"key": "tarefas_atrasadas", "label": _("Tarefas atrasadas"), "grupo": "Tarefas", "tipo": "n", "route": "Tasks"},
+		{"key": "receita_pendente", "label": _("A receber"), "grupo": "Financeiro", "tipo": "brl", "route": "Financeiro"},
+		{"key": "receita_atrasada", "label": _("Em atraso"), "grupo": "Financeiro", "tipo": "brl", "route": "Financeiro"},
+		{"key": "recebido_mes", "label": _("Recebido no mês"), "grupo": "Financeiro", "tipo": "brl", "route": "Financeiro"},
+	]
+	return items
+
+
+@frappe.whitelist()
+def get_metrics() -> dict:
+	"""Valores ao vivo dos blocos de dados do mapa."""
+	_managers_only()
+	from frappe.utils import add_days, flt, get_first_day, nowdate
+
+	today = nowdate()
+	values = {}
+	for row in frappe.db.sql("select status, count(*) as n from `tabCRM Lead` group by status", as_dict=True):
+		values[f"lead:{row.status}"] = row.n
+	for row in frappe.db.sql("select status, count(*) as n from `tabCRM Deal` group by status", as_dict=True):
+		values[f"deal:{row.status}"] = row.n
+	values["leads_semana"] = frappe.db.count("CRM Lead", {"creation": [">=", f"{add_days(today, -7)} 00:00:00"]})
+	values["reunioes_semana"] = frappe.db.count(
+		"CRM Reuniao", {"status": "Agendada", "inicio": ["between", [f"{today} 00:00:00", f"{add_days(today, 7)} 23:59:59"]]}
+	)
+	values["followups"] = frappe.db.count(
+		"CRM Task", {"title": ["like", "Follow-up:%"], "status": ["in", ["Backlog", "Todo", "In Progress"]]}
+	)
+	values["tarefas_atrasadas"] = frappe.db.count(
+		"CRM Task", {"status": ["in", ["Backlog", "Todo", "In Progress"]], "due_date": ["<", f"{today} 00:00:00"]}
+	)
+
+	def money(filters):
+		return flt(frappe.get_all("CRM Honorario", filters=filters, fields=["sum(valor) as t"])[0].t)
+
+	values["receita_pendente"] = money({"status": "Pendente"})
+	values["receita_atrasada"] = money({"status": "Atrasado"})
+	values["recebido_mes"] = money({"status": "Pago", "data_pagamento": [">=", str(get_first_day(today))]})
+	return {"catalogo": _catalog(), "valores": values}

@@ -72,6 +72,40 @@ def _automatic(start) -> dict:
 		day = auto.setdefault(str(row.d), {"fechamentos": 0, "respostas": {}})
 		# usa o nome traduzido (ex: Reference -> Indicação) para casar com os canais do painel
 		day["respostas"][frappe._(row.source)] = cint(row.n)
+	def bump(day, key, n):
+		auto.setdefault(str(day), {"fechamentos": 0, "respostas": {}})[key] = cint(n)
+
+	# reuniões marcadas (no dia em que foram marcadas) e realizadas (no dia em que aconteceram)
+	for row in frappe.db.sql(
+		"""select date(creation) as d, count(*) as n from `tabCRM Reuniao`
+		where creation >= %s and status != 'Cancelada' group by d""",
+		(start,),
+		as_dict=True,
+	):
+		bump(row.d, "agendadas", row.n)
+	for row in frappe.db.sql(
+		"""select date(inicio) as d, count(*) as n from `tabCRM Reuniao`
+		where inicio >= %s and status = 'Realizada' group by d""",
+		(start,),
+		as_dict=True,
+	):
+		bump(row.d, "realizadas", row.n)
+	# propostas enviadas (um PDF de proposta por negócio a cada dia)
+	for row in frappe.db.sql(
+		"""select date(creation) as d, count(distinct attached_to_name) as n from `tabFile`
+		where attached_to_doctype = 'CRM Deal' and file_name like 'Proposta Comercial%%' and creation >= %s group by d""",
+		(start,),
+		as_dict=True,
+	):
+		bump(row.d, "propostas", row.n)
+	# abordagens registradas pelo botão "Nova abordagem"
+	for row in frappe.db.sql(
+		"""select date(abordado_em) as d, count(*) as n from `tabCRM Lead`
+		where abordado_em >= %s group by d""",
+		(start,),
+		as_dict=True,
+	):
+		bump(row.d, "abordados", row.n)
 	return auto
 
 
@@ -160,7 +194,8 @@ def _effective_days(start, end) -> dict:
 			"respostas": respostas,
 			"objecoes": _json(m.objecoes) if m else {},
 		}
-		out[key]["fechamentos"] = max(out[key]["fechamentos"], cint(a.get("fechamentos")))
+		for field in COUNT_FIELDS:
+			out[key][field] = max(out[key][field], cint(a.get(field)))
 		day = getdate(add_days(day, 1))
 	return out
 

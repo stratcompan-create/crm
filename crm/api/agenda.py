@@ -152,9 +152,36 @@ def book(nome: str, email: str, telefone: str, data: str, horario: str, mensagem
 			"content": f"Reunião agendada online para {start.strftime('%d/%m/%Y às %H:%M')}.",
 		}
 	).insert(ignore_permissions=True)
+	_add_to_calendar(meeting, lead, title, start, end, responsavel)
+	if frappe.db.get_value("CRM Lead", lead, "status") == "New" and frappe.db.exists("CRM Lead Status", "Contacted"):
+		frappe.db.set_value("CRM Lead", lead, "status", "Contacted")
 	_confirm_by_email(meeting, cfg, start, end)
 	frappe.db.commit()
 	return {"ok": True, "inicio": start.strftime("%d/%m/%Y às %H:%M")}
+
+
+def _add_to_calendar(meeting, lead, title, start, end, owner):
+	"""A reunião também vira evento no Calendário do CRM (o que a pessoa vê no dia a dia)."""
+	try:
+		event = frappe.get_doc(
+			{
+				"doctype": "Event",
+				"subject": title,
+				"starts_on": start,
+				"ends_on": end,
+				"event_type": "Public",
+				"status": "Open",
+				"description": meeting.observacoes or "",
+				"event_participants": [
+					{"reference_doctype": "CRM Lead", "reference_docname": lead, "email": meeting.email}
+				],
+			}
+		)
+		event.insert(ignore_permissions=True)
+		if owner:
+			frappe.db.set_value("Event", event.name, "owner", owner, update_modified=False)
+	except Exception:
+		frappe.log_error("Agenda: falha ao criar o evento no calendário", frappe.get_traceback())
 
 
 def _lead_for(nome: str, email: str, telefone: str, responsavel: str) -> str:

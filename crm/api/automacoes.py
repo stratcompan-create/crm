@@ -244,6 +244,42 @@ def sync_lead_distribution():
 	rule.insert(ignore_permissions=True)
 
 
+def on_task_update(doc, method=None):
+	"""Concluir a tarefa de uma reunião marca a reunião como realizada e pede a ficha."""
+	try:
+		if doc.status != "Done" or doc.reference_doctype != "CRM Lead" or not doc.due_date:
+			return
+		if not doc.has_value_changed("status"):
+			return
+		due = frappe.utils.get_datetime(doc.due_date)
+		for name in frappe.get_all(
+			"CRM Reuniao",
+			filters={"lead": doc.reference_docname, "status": "Agendada", "inicio": due},
+			pluck="name",
+		):
+			frappe.db.set_value("CRM Reuniao", name, "status", "Realizada")
+			lead = frappe.db.get_value("CRM Lead", doc.reference_docname, ["first_name", "ficha", "lead_owner"], as_dict=True)
+			title = f"Preencher a ficha da reunião — {lead.first_name}"
+			if not (lead.ficha or "").strip() and not frappe.db.exists(
+				"CRM Task", {"title": title, "reference_docname": doc.reference_docname, "status": ["in", ["Backlog", "Todo", "In Progress"]]}
+			):
+				frappe.get_doc(
+					{
+						"doctype": "CRM Task",
+						"title": title,
+						"description": "Cole a transcrição ou escreva o que foi alinhado, na aba Ficha da reunião.",
+						"status": "Todo",
+						"priority": "High",
+						"assigned_to": doc.assigned_to or lead.lead_owner,
+						"due_date": nowdate(),
+						"reference_doctype": "CRM Lead",
+						"reference_docname": doc.reference_docname,
+					}
+				).insert(ignore_permissions=True)
+	except Exception:
+		frappe.log_error("Reunião: falha ao marcar como realizada", frappe.get_traceback())
+
+
 def on_user_change(doc, method=None):
 	"""Quando entra ou muda um vendedor, o rodízio já passa a contar com ele."""
 	try:

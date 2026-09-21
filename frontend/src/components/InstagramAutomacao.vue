@@ -40,6 +40,10 @@
             </label>
           </div>
           <FormControl v-model="g.mensagem" type="textarea" :rows="3" />
+          <div class="mt-2 flex flex-col gap-1">
+            <span class="text-p-sm text-ink-gray-6">{{ __('Serviço deste lead (opcional)') }}</span>
+            <FormControl v-model="g.servico" type="select" :options="servicoOptions" />
+          </div>
           <div class="mt-2 flex gap-2">
             <Button variant="subtle" :label="__('Salvar')" @click="saveGatilho(g, true)" />
             <Button variant="ghost" theme="red" :label="__('Excluir')" @click="removeGatilho(g)" />
@@ -50,6 +54,7 @@
           <div class="mb-2 text-p-sm font-medium text-ink-gray-8">{{ __('Nova palavra-chave') }}</div>
           <FormControl v-model="novo.palavra" type="text" :placeholder="__('Ex.: escritório')" class="mb-2" />
           <FormControl v-model="novo.mensagem" type="textarea" :rows="3" :placeholder="cfg.mensagem_exemplo" />
+          <FormControl v-model="novo.servico" class="mt-2" type="select" :options="servicoOptions" />
           <div class="mt-2"><Button variant="subtle" :label="__('Adicionar palavra')" @click="addGatilho" /></div>
         </div>
       </section>
@@ -69,13 +74,17 @@
 
 <script setup>
 import { Button, FormControl, call, toast } from 'frappe-ui'
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 
 const cfg = ref(null)
-const novo = reactive({ palavra: '', mensagem: '' })
+const novo = reactive({ palavra: '', mensagem: '', servico: '' })
+const servicos = ref([])
+const servicoOptions = computed(() => [{ label: __('Sem serviço definido'), value: '' }, ...servicos.value.map((s) => ({ label: s, value: s }))])
 
 async function load() {
   cfg.value = await call('crm.api.instagram_automacao.get_automation_settings')
+  cfg.value.gatilhos.forEach((g) => (g.servico = g.servico || ''))
+  servicos.value = (await call('frappe.client.get_list', { doctype: 'CRM Servico', fields: ['name'], limit_page_length: 50 })).map((s) => s.name)
 }
 onMounted(load)
 
@@ -98,7 +107,7 @@ async function saveWelcome(showToast) {
 
 async function saveGatilho(g, showToast) {
   try {
-    await call('crm.api.instagram_automacao.save_gatilho', { palavra: g.palavra, mensagem: g.mensagem, ativa: g.ativa })
+    await call('crm.api.instagram_automacao.save_gatilho', { palavra: g.palavra, mensagem: g.mensagem, ativa: g.ativa, servico: g.servico })
     if (showToast === true) toast.success(__('Palavra salva'))
   } catch (e) {
     toast.error(errorText(e))
@@ -113,8 +122,8 @@ async function removeGatilho(g) {
 
 async function addGatilho() {
   try {
-    await call('crm.api.instagram_automacao.save_gatilho', { palavra: novo.palavra, mensagem: novo.mensagem, ativa: 1 })
-    Object.assign(novo, { palavra: '', mensagem: '' })
+    await call('crm.api.instagram_automacao.save_gatilho', { palavra: novo.palavra, mensagem: novo.mensagem, ativa: 1, servico: novo.servico })
+    Object.assign(novo, { palavra: '', mensagem: '', servico: '' })
     await load()
     toast.success(__('Palavra adicionada'))
   } catch (e) {

@@ -175,10 +175,13 @@ def save_ai_key(chave: str = ""):
 	chave = (chave or "").strip()
 	if chave and not chave.startswith("sk-ant-"):
 		frappe.throw(_("Essa não parece uma chave da Anthropic (ela começa com sk-ant-)."))
-	doc = frappe.get_single("CRM Automacoes Config")
-	doc.anthropic_api_key = chave
-	doc.flags.ignore_permissions = True
-	doc.save()
+	# só a chave: salvar o documento inteiro gravaria todas as outras automações como desligadas
+	from frappe.utils.password import remove_encrypted_password, set_encrypted_password
+
+	if chave:
+		set_encrypted_password("CRM Automacoes Config", "CRM Automacoes Config", chave, "anthropic_api_key")
+	else:
+		remove_encrypted_password("CRM Automacoes Config", "CRM Automacoes Config", "anthropic_api_key")
 	return {"configurada": bool(chave)}
 
 

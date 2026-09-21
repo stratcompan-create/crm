@@ -7,7 +7,8 @@
  "field_order": [
   "palavra",
   "ativa",
-  "mensagem"
+  "mensagem",
+  "servico"
  ],
  "fields": [
   {
@@ -29,6 +30,12 @@
    "fieldtype": "Small Text",
    "label": "Mensagem enviada no direct",
    "reqd": 1
+  },
+  {
+   "fieldname": "servico",
+   "fieldtype": "Link",
+   "label": "Serviço do lead",
+   "options": "CRM Servico"
   }
  ],
  "index_web_pages_for_search": 1,

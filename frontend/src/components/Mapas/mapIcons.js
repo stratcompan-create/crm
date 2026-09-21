@@ -33,6 +33,7 @@ export const MAP_ICONS = [
   { name: 'rocket', cls: 'lucide-rocket' },
   { name: 'zap', cls: 'lucide-zap' },
   { name: 'bell', cls: 'lucide-bell' },
+  { name: 'bar-chart-2', cls: 'lucide-bar-chart-2' },
   { name: 'circle', cls: 'lucide-circle' },
 ]
 

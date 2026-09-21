@@ -141,6 +141,11 @@ def _process_message_event(event: dict):
 	).insert(ignore_permissions=True)
 	frappe.db.commit()
 
+	from crm.api.sugestoes import on_inbound_message
+
+	on_inbound_message(lead_name, text)
+	frappe.db.commit()
+
 	from crm.api.instagram_automacao import maybe_send_welcome
 
 	maybe_send_welcome(lead_name, sender_id)

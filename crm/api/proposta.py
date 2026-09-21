@@ -809,4 +809,22 @@ def send_document(deal: str, doc_type: str, to: str, subject: str, message: str)
 		send_email=True,
 		attachments=[file_doc.name],
 	)
+	if doc_type == "proposta":
+		_advance_to_proposal(deal)
 	return {"ok": True, "arquivo": file_doc.file_name}
+
+
+def _advance_to_proposal(deal: str):
+	"""Enviar a proposta leva o negócio para a etapa de proposta (se ainda estava antes dela)."""
+	try:
+		target = "Proposal/Quotation"
+		if not frappe.db.exists("CRM Deal Status", target):
+			return
+		current = frappe.db.get_value("CRM Deal", deal, "status")
+		early = frappe.get_all("CRM Deal Status", filters={"type": ["in", ["Open"]]}, pluck="name") + ["Demo/Making"]
+		if current in early:
+			doc = frappe.get_doc("CRM Deal", deal)
+			doc.status = target
+			doc.save(ignore_permissions=True)
+	except Exception:
+		frappe.log_error("Proposta: não foi possível avançar a etapa do negócio", frappe.get_traceback())

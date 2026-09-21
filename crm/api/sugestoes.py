@@ -318,3 +318,52 @@ def generate_ai_suggestions(lead: str, force=0) -> dict:
 	frappe.db.set_value("CRM Instagram Message", row.name, "sugestoes", json.dumps(out, ensure_ascii=False), update_modified=False)
 	frappe.db.commit()
 	return {"sugestoes": out}
+
+
+# ------------------------------------------------------------------ o que a conversa alimenta sozinha
+
+OBJECTION_THEMES = ("sem_interesse", "sem_dinheiro", "sem_tempo", "ja_tem", "pensar", "decisor")
+
+
+def on_inbound_message(lead: str, text: str):
+	"""Cada mensagem do lead atualiza o resto do CRM: etapa do lead, objeções da Prospecção e ficha."""
+	try:
+		if frappe.db.get_value("CRM Lead", lead, "status") == "New" and frappe.db.exists("CRM Lead Status", "Contacted"):
+			frappe.db.set_value("CRM Lead", lead, "status", "Contacted")
+		key = detect(text or "")
+		if key not in OBJECTION_THEMES:
+			return
+		label = LIBRARY[key]["rotulo"]
+		_count_objection(label)
+		row = frappe.db.get_value("CRM Lead", lead, ["ficha"], as_dict=True)
+		try:
+			data = json.loads((row.ficha if row else "") or "{}")
+		except ValueError:
+			data = {}
+		current = data.get("objecoes") or ""
+		if label not in current:
+			data["objecoes"] = (current + "\n" if current else "") + f"- {label}: \"{(text or '')[:140]}\""
+			frappe.db.set_value("CRM Lead", lead, "ficha", json.dumps(data, ensure_ascii=False))
+	except Exception:
+		frappe.log_error("Sugestões: falha ao registrar a objeção", frappe.get_traceback())
+
+
+def _count_objection(label: str):
+	from frappe.utils import nowdate
+
+	today = nowdate()
+	cfg = frappe.get_single("CRM Prospecao Config")
+	known = [x.strip() for x in (cfg.objecoes or "").split("\n") if x.strip()]
+	if label not in known:
+		frappe.db.set_single_value("CRM Prospecao Config", "objecoes", "\n".join(known + [label]))
+	if frappe.db.exists("CRM Prospecao Dia", today):
+		row = frappe.db.get_value("CRM Prospecao Dia", today, "objecoes")
+	else:
+		frappe.get_doc({"doctype": "CRM Prospecao Dia", "data": today}).insert(ignore_permissions=True)
+		row = ""
+	try:
+		counts = json.loads(row or "{}")
+	except ValueError:
+		counts = {}
+	counts[label] = cint(counts.get(label)) + 1
+	frappe.db.set_value("CRM Prospecao Dia", today, "objecoes", json.dumps(counts, ensure_ascii=False))
