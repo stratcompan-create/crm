@@ -104,6 +104,8 @@ def apply_regional_defaults():
 	frappe.db.set_single_value("System Settings", "country", "Brazil")
 	frappe.db.set_single_value("System Settings", "number_format", "#.###,##")
 	frappe.db.set_single_value("System Settings", "currency_precision", "2")
+	# sem isso o Frappe usa outro fuso e os horários (agenda, resumo das 8h) saem deslocados
+	frappe.db.set_single_value("System Settings", "time_zone", "America/Sao_Paulo")
 	frappe.db.set_single_value("FCRM Settings", "currency", "BRL")
 
 
