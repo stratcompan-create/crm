@@ -49,6 +49,7 @@
   </LayoutHeader>
   <div v-if="doc.name" class="flex h-full overflow-hidden">
     <Tabs
+      v-tabs-scroll
       v-model="tabIndex"
       :tabs="tabs"
       class="flex flex-1 overflow-hidden flex-col [&_[role='tab']]:px-0 [&_[role='tab']]:shrink-0 [&_[role='tablist']]:px-5 [&_[role='tablist']::-webkit-scrollbar]:h-0 [&_[role='tablist']]:min-h-[45px] [&_[role='tablist']]:gap-7.5 [&_[role='tabpanel']:not([hidden])]:flex [&_[role='tabpanel']:not([hidden])]:grow"
@@ -260,6 +261,7 @@ import AttachmentIcon from '@/components/Icons/AttachmentIcon.vue'
 import LostReasonModal from '@/components/Modals/LostReasonModal.vue'
 import LayoutHeader from '@/components/LayoutHeader.vue'
 import FichaIcon from '~icons/lucide/clipboard-list'
+import vTabsScroll from '@/directives/tabsScroll'
 import Activities from '@/components/Activities/Activities.vue'
 import AssignTo from '@/components/AssignTo.vue'
 import FilesUploader from '@/components/FilesUploader/FilesUploader.vue'

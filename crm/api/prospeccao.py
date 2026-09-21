@@ -55,7 +55,8 @@ def _automatic(start) -> dict:
 	won = frappe.db.sql(
 		"""select deal.closed_date as d, count(*) as n from `tabCRM Deal` deal
 		inner join `tabCRM Deal Status` st on st.name = deal.status
-		where st.type = 'Won' and deal.closed_date >= %s group by deal.closed_date""",
+		where st.type = 'Won' and deal.closed_date >= %s and ifnull(deal.lancamento_antigo, 0) = 0
+		group by deal.closed_date""",
 		(start,),
 		as_dict=True,
 	)

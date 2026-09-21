@@ -307,6 +307,10 @@ def on_deal_won(deal_doc, valor: float) -> None:
 	O tipo de cobrança do negócio decide o que entra no Financeiro: pontual (parcelas),
 	recorrente (mensalidade que se renova sozinha) ou os dois."""
 	cfg = get_config()
+	if cint(deal_doc.get("lancamento_antigo")):
+		# dívida anterior ao CRM: entra só como cobrança, vencendo hoje
+		create_installments(deal_doc, valor, 1, 30, first_due=nowdate())
+		return
 	natureza = deal_doc.get("natureza") or ""
 	mensal = flt(deal_doc.get("valor_recorrente"))
 	if natureza == NATUREZA_RECORRENTE:
@@ -349,12 +353,12 @@ def create_monthly(deal_doc, valor: float):
 	).insert(ignore_permissions=True)
 
 
-def create_installments(deal_doc, valor: float, parcelas: int, intervalo: int):
+def create_installments(deal_doc, valor: float, parcelas: int, intervalo: int, first_due=None):
 	tipos = (frappe.get_meta("CRM Honorario").get_field("tipo_honorario").options or "").split("\n")
 	tipo = tipos[0] if tipos and tipos[0] else None
 	parcelas = max(1, min(parcelas, 36))
 	base = round(valor / parcelas, 2)
-	primeira = add_days(nowdate(), 30)
+	primeira = first_due or add_days(nowdate(), 30)
 	for i in range(parcelas):
 		this = base if i < parcelas - 1 else round(valor - base * (parcelas - 1), 2)
 		due = add_days(primeira, intervalo * i) if intervalo != 30 else add_months(primeira, i)
@@ -503,7 +507,12 @@ def run_posvenda():
 		limit = add_days(today, -days)
 		for d in frappe.get_all(
 			"CRM Deal",
-			filters={"status": ["in", won], "closed_date": ["between", [add_days(today, -400), limit]], field: ["is", "not set"]},
+			filters={
+				"status": ["in", won],
+				"closed_date": ["between", [add_days(today, -400), limit]],
+				field: ["is", "not set"],
+				"lancamento_antigo": 0,
+			},
 			fields=["name"],
 			limit_page_length=100,
 		):
@@ -562,7 +571,7 @@ def _metrics(start, end) -> dict:
 		"propostas": total("propostas"),
 		"fechamentos": total("fechamentos"),
 		"leads_novos": frappe.db.count("CRM Lead", {"creation": ["between", [f"{start} 00:00:00", f"{end} 23:59:59"]]}),
-		"ganhos": frappe.db.count("CRM Deal", {"status": ["in", won], "closed_date": span}) if won else 0,
+		"ganhos": frappe.db.count("CRM Deal", {"status": ["in", won], "closed_date": span, "lancamento_antigo": 0}) if won else 0,
 		"recebido": money({"status": "Pago", "data_pagamento": span}),
 	}
 
@@ -752,7 +761,7 @@ def ensure_service_layouts():
 
 	extra = {
 		"CRM Lead": ["servico", "natureza"],
-		"CRM Deal": ["servico", "natureza", "valor_recorrente"],
+		"CRM Deal": ["servico", "natureza", "valor_recorrente", "lancamento_antigo"],
 	}
 	for dt, fields in extra.items():
 		for kind in ("Quick Entry", "Side Panel"):
@@ -777,7 +786,7 @@ def ensure_service_layouts():
 					continue
 			layout.append(
 				{
-					"name": "servico_section",
+					"name": f"servico_section_{len(layout)}",
 					"columns": [{"name": "servico_col_a", "fields": missing[:2]}]
 					+ ([{"name": "servico_col_b", "fields": missing[2:]}] if len(missing) > 2 else []),
 				}

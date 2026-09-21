@@ -44,6 +44,7 @@
   </LayoutHeader>
   <div v-if="doc.name" class="flex h-full overflow-hidden">
     <Tabs
+      v-tabs-scroll
       v-model="tabIndex"
       as="div"
       :tabs="tabs"
@@ -365,6 +366,7 @@ import AttachmentIcon from '@/components/Icons/AttachmentIcon.vue'
 import LayoutHeader from '@/components/LayoutHeader.vue'
 import DocumentosIcon from '~icons/lucide/folder-open'
 import FichaIcon from '~icons/lucide/clipboard-list'
+import vTabsScroll from '@/directives/tabsScroll'
 import Activities from '@/components/Activities/Activities.vue'
 import OrganizationModal from '@/components/Modals/OrganizationModal.vue'
 import LostReasonModal from '@/components/Modals/LostReasonModal.vue'

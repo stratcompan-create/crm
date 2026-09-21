@@ -245,6 +245,7 @@ scheduler_events = {
 		"crm.api.followup.run_followups",
 		"crm.api.agenda.send_meeting_reminders",
 		"crm.api.automacoes.weekly_job",
+		"crm.api.saude_sistema.check_and_alert",
 	],
 	"daily": [
 		"crm.api.financeiro.mark_overdue",

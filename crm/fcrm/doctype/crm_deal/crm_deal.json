@@ -94,7 +94,8 @@
   "ficha",
   "ficha_transcricao",
   "cidade_estado",
-  "pasta_cliente"
+  "pasta_cliente",
+  "lancamento_antigo"
  ],
  "fields": [
   {
@@ -610,6 +611,13 @@
    "hidden": 1,
    "read_only": 1,
    "no_copy": 1
+  },
+  {
+   "fieldname": "lancamento_antigo",
+   "fieldtype": "Check",
+   "label": "Valor antigo (anterior ao CRM)",
+   "description": "Só registra a cobrança. Não conta como venda nova nem gera contrato, tarefas de início ou pós-venda.",
+   "default": "0"
   }
  ],
  "grid_page_length": 50,

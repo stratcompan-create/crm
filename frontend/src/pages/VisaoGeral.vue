@@ -73,6 +73,30 @@
         </button>
       </div>
 
+      <div v-if="health.data?.gestor && system.data" class="mt-8">
+        <div class="flex items-center justify-between">
+          <div class="text-lg-semibold text-ink-gray-9">{{ __('Saúde do sistema') }}</div>
+          <span class="rounded-full px-2 py-0.5 text-xs font-medium" :class="system.data.ok ? 'bg-surface-green-2 text-ink-green-3' : 'bg-surface-red-2 text-ink-red-6'">
+            {{ system.data.ok ? __('Tudo funcionando') : __('Precisa de atenção') }}
+          </span>
+        </div>
+        <p class="text-p-sm text-ink-gray-6">{{ __('O CRM confere isso de hora em hora e avisa por e-mail se algo falhar.') }}</p>
+        <div class="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div
+            v-for="i in system.data.itens"
+            :key="i.key"
+            class="flex items-start gap-2 rounded-lg border px-3 py-2"
+            :class="i.ok ? 'border-outline-gray-2' : 'border-outline-red-2 bg-surface-red-1'"
+          >
+            <span :class="i.ok ? 'lucide-check-circle text-ink-green-3' : 'lucide-alert-triangle text-ink-red-6'" class="mt-0.5 size-4 shrink-0" aria-hidden="true" />
+            <div class="min-w-0">
+              <div class="text-p-sm font-medium text-ink-gray-8">{{ __(i.label) }}</div>
+              <div class="text-xs text-ink-gray-6">{{ i.mensagem }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div v-if="health.data?.gestor && reports.data?.length" class="mt-8">
         <div class="text-lg-semibold text-ink-gray-9">{{ __('Resumos semanais') }}</div>
         <p class="text-p-sm text-ink-gray-6">{{ __('Gerados toda segunda-feira, às 8h, com a semana anterior.') }}</p>
@@ -123,6 +147,7 @@ function setTab(key) {
 }
 
 const health = createResource({ url: 'crm.api.saude.get_business_health', auto: true })
+const system = createResource({ url: 'crm.api.saude_sistema.get_system_health', auto: true, onError() {} })
 const reports = createResource({ url: 'crm.api.automacoes.list_weekly_reports', auto: true, onError() {} })
 const fmt = (v) => (v ? v.split('-').reverse().slice(0, 2).join('/') : '')
 const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0)
