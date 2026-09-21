@@ -96,23 +96,33 @@
         <Field class="mt-3" :label="__('Aviso na página (opcional)')"><FormControl v-model="cfg.agenda_mensagem" type="textarea" :rows="2" /></Field>
       </section>
 
-      <!-- Relatório semanal -->
+      <!-- Resumo semanal -->
       <section class="rounded-lg border border-outline-gray-2 p-4">
         <div class="flex items-start justify-between gap-3">
           <div>
-            <div class="text-base-semibold text-ink-gray-9">{{ __('Resumo semanal por e-mail') }}</div>
+            <div class="text-base-semibold text-ink-gray-9">{{ __('Resumo semanal') }}</div>
             <p class="mt-1 text-p-sm text-ink-gray-6">
-              {{ __('Toda segunda-feira chega um resumo com prospecção, financeiro e pendências da semana.') }}
+              {{ __('Toda segunda-feira, às 8h, o CRM monta o resumo da semana anterior (de segunda a domingo) em PDF, com prospecção, financeiro e pendências. Ele fica guardado aqui para baixar quando quiser.') }}
             </p>
           </div>
           <Toggle v-model="cfg.relatorio_ativo" />
         </div>
-        <Field class="mt-3" :label="__('Quem recebe (e-mails, um por linha; vazio = gestores)')">
+        <label class="mt-3 flex items-center gap-2 text-p-sm text-ink-gray-7">
+          <input v-model="cfg.relatorio_email" type="checkbox" :true-value="1" :false-value="0" />
+          {{ __('Enviar também por e-mail (com o PDF anexado), para ler pelo celular') }}
+        </label>
+        <Field class="mt-3" :label="__('Quem recebe por e-mail (um por linha; vazio = gestores)')">
           <FormControl v-model="cfg.relatorio_destinatarios" type="textarea" :rows="2" />
         </Field>
-        <div class="mt-2"><Button variant="subtle" :label="__('Enviar um resumo agora')" :loading="sending" @click="sendNow" /></div>
+        <div class="mt-3 flex flex-col gap-1">
+          <div v-for="r in reports" :key="r.name" class="flex items-center justify-between rounded-md border border-outline-gray-1 px-3 py-2 text-p-sm">
+            <span class="text-ink-gray-8">{{ __('Semana de {0} a {1}', [fmt(r.inicio), fmt(r.fim)]) }}</span>
+            <a v-if="r.arquivo" :href="r.arquivo" target="_blank" class="font-medium text-ink-gray-9 underline">{{ __('Baixar PDF') }}</a>
+          </div>
+          <div v-if="!reports.length" class="text-p-sm text-ink-gray-5">{{ __('Nenhum resumo gerado ainda. O primeiro sai na próxima segunda-feira às 8h.') }}</div>
+        </div>
+        <div class="mt-2"><Button variant="subtle" :label="__('Gerar o resumo da última semana agora')" :loading="sending" @click="sendNow" /></div>
       </section>
-
       <div class="sticky bottom-0 flex justify-end bg-surface-white py-2">
         <Button variant="solid" :label="__('Salvar automações')" :loading="saving" @click="save" />
       </div>
@@ -152,11 +162,14 @@ const Toggle = defineComponent({
 })
 
 const cfg = ref(null)
+const reports = ref([])
+const fmt = (v) => (v ? v.split('-').reverse().slice(0, 2).join('/') : '')
 const saving = ref(false)
 const sending = ref(false)
 
 onMounted(async () => {
   cfg.value = await call('crm.api.automacoes.get_settings')
+  reports.value = await call('crm.api.automacoes.list_weekly_reports')
 })
 
 async function save() {
@@ -175,15 +188,15 @@ async function save() {
 async function sendNow() {
   sending.value = true
   try {
-    const r = await call('crm.api.automacoes.send_weekly_report_now')
-    toast.success(__('Resumo enviado para {0} pessoa(s)', [r.enviado_para]))
+    await call('crm.api.automacoes.generate_weekly_report_now')
+    reports.value = await call('crm.api.automacoes.list_weekly_reports')
+    toast.success(__('Resumo gerado. Já dá para baixar na lista.'))
   } catch (e) {
-    toast.error(e?.messages?.[0] || __('Não foi possível enviar.'))
+    toast.error(e?.messages?.[0] || __('Não foi possível gerar o resumo.'))
   } finally {
     sending.value = false
   }
 }
-
 async function copy(text) {
   try {
     await navigator.clipboard.writeText(text)

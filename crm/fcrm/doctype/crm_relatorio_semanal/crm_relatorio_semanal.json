@@ -1,0 +1,67 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "naming_rule": "Random",
+ "creation": "2026-09-21 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "inicio",
+  "fim",
+  "arquivo",
+  "enviado_por_email"
+ ],
+ "fields": [
+  {
+   "fieldname": "inicio",
+   "fieldtype": "Date",
+   "label": "Início da semana",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "fim",
+   "fieldtype": "Date",
+   "label": "Fim da semana",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "arquivo",
+   "fieldtype": "Attach",
+   "label": "Arquivo (PDF)"
+  },
+  {
+   "fieldname": "enviado_por_email",
+   "fieldtype": "Check",
+   "label": "Enviado por e-mail",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-09-21 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "FCRM",
+ "name": "CRM Relatorio Semanal",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "write": 1,
+   "role": "System Manager"
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "write": 1,
+   "role": "Sales Manager"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "inicio",
+ "sort_order": "DESC",
+ "states": []
+}

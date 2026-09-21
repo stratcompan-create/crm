@@ -45,6 +45,17 @@
         </button>
       </div>
 
+      <div v-if="health.data?.gestor && reports.data?.length" class="mt-8">
+        <div class="text-lg-semibold text-ink-gray-9">{{ __('Resumos semanais') }}</div>
+        <p class="text-p-sm text-ink-gray-6">{{ __('Gerados toda segunda-feira, às 8h, com a semana anterior.') }}</p>
+        <div class="mt-3 flex flex-col gap-2">
+          <div v-for="r in reports.data.slice(0, 4)" :key="r.name" class="flex items-center justify-between rounded-lg border border-outline-gray-2 px-4 py-3">
+            <span class="text-p-base text-ink-gray-8">{{ __('Semana de {0} a {1}', [fmt(r.inicio), fmt(r.fim)]) }}</span>
+            <a v-if="r.arquivo" :href="r.arquivo" target="_blank" class="text-p-sm font-medium text-ink-gray-9 underline">{{ __('Baixar PDF') }}</a>
+          </div>
+        </div>
+      </div>
+
       <div class="mt-8">
         <EmptyState
           name="Arquivos"
@@ -65,6 +76,12 @@ import { useRouter } from 'vue-router'
 
 const router = useRouter()
 const health = createResource({ url: 'crm.api.saude.get_business_health', auto: true })
+const reports = createResource({
+  url: 'crm.api.automacoes.list_weekly_reports',
+  auto: true,
+  onError() {},
+})
+const fmt = (v) => (v ? v.split('-').reverse().slice(0, 2).join('/') : '')
 
 const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v || 0)
 

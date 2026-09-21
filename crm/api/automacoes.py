@@ -39,7 +39,7 @@ CONFIG_FIELDS = (
 	"cobranca_ativa cobranca_dias_antes cobranca_dias_atraso cobranca_assunto cobranca_mensagem "
 	"parcelas_padrao parcelas_intervalo onboarding_ativo posvenda_ativo posvenda_avaliacao_dias "
 	"posvenda_avaliacao_link posvenda_avaliacao_mensagem posvenda_indicacao_dias posvenda_indicacao_mensagem "
-	"relatorio_ativo relatorio_destinatarios agenda_ativa agenda_titulo agenda_duracao agenda_dias "
+	"relatorio_ativo relatorio_email relatorio_destinatarios agenda_ativa agenda_titulo agenda_duracao agenda_dias "
 	"agenda_inicio agenda_fim agenda_antecedencia agenda_dias_a_frente agenda_responsavel agenda_link "
 	"agenda_mensagem"
 ).split()
@@ -59,6 +59,7 @@ DEFAULTS = {
 	"posvenda_indicacao_dias": 30,
 	"posvenda_indicacao_mensagem": DEFAULT_INDICACAO,
 	"relatorio_ativo": 1,
+	"relatorio_email": 1,
 	"agenda_ativa": 0,
 	"agenda_titulo": "Conversa inicial",
 	"agenda_duracao": 30,
@@ -443,7 +444,14 @@ def run_posvenda():
 	frappe.db.commit()
 
 
-# ------------------------------------------------------------------ 11. relatório semanal
+# ------------------------------------------------------------------ 11. resumo semanal
+
+def _week_bounds(ref=None):
+	"""Semana anterior fechada: de segunda a domingo, contando a partir da data de referência."""
+	ref = getdate(ref or nowdate())
+	this_monday = ref - timedelta(days=ref.weekday())
+	return this_monday - timedelta(days=7), this_monday - timedelta(days=1)
+
 
 def _report_recipients(cfg) -> list[str]:
 	listed = [e.strip() for e in (cfg.relatorio_destinatarios or "").replace(",", "\n").split("\n") if "@" in e]
@@ -462,12 +470,10 @@ def _report_recipients(cfg) -> list[str]:
 	return list(dict.fromkeys(out))
 
 
-def build_weekly_report() -> dict:
+def _metrics(start, end) -> dict:
 	from crm.api import prospeccao
 
-	today = getdate(nowdate())
-	start = today - timedelta(days=7)
-	days = prospeccao._effective_days(str(start), str(today))
+	days = prospeccao._effective_days(str(start), str(end))
 
 	def total(key):
 		return sum(cint(d.get(key)) for d in days.values())
@@ -476,53 +482,90 @@ def build_weekly_report() -> dict:
 		return flt(frappe.get_all("CRM Honorario", filters=filters, fields=["sum(valor) as t"])[0].t)
 
 	won = frappe.get_all("CRM Deal Status", filters={"type": "Won"}, pluck="name")
+	span = ["between", [str(start), str(end)]]
 	return {
-		"periodo": f"{_date_br(start)} a {_date_br(today)}",
 		"abordados": total("abordados"),
 		"agendadas": total("agendadas"),
 		"propostas": total("propostas"),
 		"fechamentos": total("fechamentos"),
-		"leads_novos": frappe.db.count("CRM Lead", {"creation": [">=", f"{start} 00:00:00"]}),
-		"ganhos": frappe.db.count("CRM Deal", {"status": ["in", won], "closed_date": [">=", start]}) if won else 0,
-		"recebido": money({"status": "Pago", "data_pagamento": [">=", start]}),
-		"a_receber": money({"status": "Pendente", "data_vencimento": ["between", [today, today + timedelta(days=7)]]}),
-		"atrasado": money({"status": "Atrasado"}),
-		"followups": frappe.db.count(
-			"CRM Task", {"reference_doctype": "CRM Lead", "title": ["like", "Follow-up:%"], "status": OPEN_TASK}
-		),
-		"reunioes": frappe.db.count(
-			"CRM Reuniao", {"status": "Agendada", "inicio": ["between", [str(today), str(today + timedelta(days=7))]]}
-		),
-		"tarefas_atrasadas": frappe.db.count(
-			"CRM Task", {"status": ["in", ["Backlog", "Todo", "In Progress"]], "due_date": ["<", f"{today} 00:00:00"]}
-		),
+		"leads_novos": frappe.db.count("CRM Lead", {"creation": ["between", [f"{start} 00:00:00", f"{end} 23:59:59"]]}),
+		"ganhos": frappe.db.count("CRM Deal", {"status": ["in", won], "closed_date": span}) if won else 0,
+		"recebido": money({"status": "Pago", "data_pagamento": span}),
 	}
 
 
+def build_weekly_report(start=None, end=None) -> dict:
+	if not start:
+		start, end = _week_bounds()
+	today = getdate(nowdate())
+	previous = _metrics(start - timedelta(days=7), end - timedelta(days=7))
+	report = _metrics(start, end)
+	report["anterior"] = previous
+	report["periodo"] = f"{_date_br(start)} a {_date_br(end)}"
+
+	def money(filters):
+		return flt(frappe.get_all("CRM Honorario", filters=filters, fields=["sum(valor) as t"])[0].t)
+
+	report.update(
+		{
+			"a_receber": money({"status": "Pendente", "data_vencimento": ["between", [today, today + timedelta(days=7)]]}),
+			"atrasado": money({"status": "Atrasado"}),
+			"followups": frappe.db.count(
+				"CRM Task", {"reference_doctype": "CRM Lead", "title": ["like", "Follow-up:%"], "status": OPEN_TASK}
+			),
+			"reunioes": frappe.db.count(
+				"CRM Reuniao", {"status": "Agendada", "inicio": ["between", [str(today), str(today + timedelta(days=7))]]}
+			),
+			"tarefas_atrasadas": frappe.db.count(
+				"CRM Task", {"status": ["in", ["Backlog", "Todo", "In Progress"]], "due_date": ["<", f"{today} 00:00:00"]}
+			),
+		}
+	)
+	return report
+
+
+def _delta(now, before, money=False) -> str:
+	if not before:
+		return ""
+	pct = round((flt(now) - flt(before)) / flt(before) * 100)
+	if pct == 0:
+		return "<span style='color:#888;font-size:12px'> igual à semana anterior</span>"
+	color = "#1a7f4b" if pct > 0 else "#c0392b"
+	arrow = "▲" if pct > 0 else "▼"
+	return f"<span style='color:{color};font-size:12px'> {arrow} {abs(pct)}% vs. semana anterior</span>"
+
+
 def _report_html(r: dict) -> str:
-	def row(label, value):
+	prev = r.get("anterior") or {}
+
+	def row(label, value, delta=""):
 		return (
-			f"<tr><td style='padding:6px 12px;color:#555'>{label}</td>"
-			f"<td style='padding:6px 12px;text-align:right;font-weight:600;color:#042d3c'>{value}</td></tr>"
+			f"<tr><td style='padding:8px 12px;color:#555;border-bottom:1px solid #eef1f3'>{label}</td>"
+			f"<td style='padding:8px 12px;text-align:right;border-bottom:1px solid #eef1f3'>"
+			f"<b style='color:#042d3c'>{value}</b>{delta}</td></tr>"
 		)
 
 	def block(title, rows):
 		return (
-			f"<h3 style='margin:22px 0 6px;color:#042d3c;font-size:15px'>{title}</h3>"
+			f"<h3 style='margin:24px 0 8px;color:#042d3c;font-size:15px'>{title}</h3>"
 			f"<table style='width:100%;border-collapse:collapse;border:1px solid #e4e7ea'>{''.join(rows)}</table>"
 		)
 
 	return (
-		f"<div style='font-family:Arial,sans-serif;max-width:560px;margin:auto'>"
-		f"<h2 style='color:#042d3c;margin-bottom:0'>Resumo da semana</h2>"
-		f"<div style='color:#777;font-size:13px'>{_brand()} · {r['periodo']}</div>"
+		"<!DOCTYPE html><html><head><meta charset='utf-8'></head><body style='margin:0'>"
+		"<div style='font-family:Arial,sans-serif;max-width:640px;margin:auto;padding:8px'>"
+		"<div style='background:#042d3c;color:#fff;padding:18px 20px;border-radius:8px'>"
+		f"<div style='font-size:20px;font-weight:bold'>Resumo da semana</div>"
+		f"<div style='opacity:.8;font-size:13px;margin-top:2px'>{_brand()} · {r['periodo']}</div></div>"
 		+ block("Prospecção e vendas", [
-			row("Abordagens", r["abordados"]), row("Leads novos", r["leads_novos"]),
-			row("Reuniões agendadas", r["agendadas"]), row("Propostas enviadas", r["propostas"]),
-			row("Negócios ganhos", r["ganhos"]),
+			row("Abordagens", r["abordados"], _delta(r["abordados"], prev.get("abordados"))),
+			row("Leads novos", r["leads_novos"], _delta(r["leads_novos"], prev.get("leads_novos"))),
+			row("Reuniões agendadas", r["agendadas"], _delta(r["agendadas"], prev.get("agendadas"))),
+			row("Propostas enviadas", r["propostas"], _delta(r["propostas"], prev.get("propostas"))),
+			row("Negócios ganhos", r["ganhos"], _delta(r["ganhos"], prev.get("ganhos"))),
 		])
 		+ block("Financeiro", [
-			row("Recebido na semana", _brl(r["recebido"])),
+			row("Recebido na semana", _brl(r["recebido"]), _delta(r["recebido"], prev.get("recebido"))),
 			row("A receber nos próximos 7 dias", _brl(r["a_receber"])),
 			row("Em atraso", _brl(r["atrasado"])),
 		])
@@ -530,36 +573,80 @@ def _report_html(r: dict) -> str:
 			row("Follow-ups para enviar", r["followups"]), row("Tarefas atrasadas", r["tarefas_atrasadas"]),
 			row("Reuniões nos próximos 7 dias", r["reunioes"]),
 		])
-		+ "<p style='color:#999;font-size:12px;margin-top:22px'>Enviado automaticamente pelo CRM toda segunda-feira.</p></div>"
+		+ "<p style='color:#999;font-size:12px;margin-top:22px'>Gerado automaticamente pelo CRM toda segunda-feira, às 8h.</p>"
+		"</div></body></html>"
 	)
 
 
-def send_weekly_report(force: bool = False) -> int:
+def _render_report_pdf(html: str) -> bytes:
+	import subprocess
+
+	cmd = ["wkhtmltopdf", "-q", "--page-size", "A4", "-T", "12", "-B", "12", "-L", "12", "-R", "12",
+	       "--print-media-type", "--background", "--encoding", "UTF-8", "--disable-javascript", "-", "-"]
+	proc = subprocess.run(cmd, input=html.encode("utf-8"), capture_output=True, timeout=120)
+	if not proc.stdout.startswith(b"%PDF"):
+		frappe.log_error("Resumo semanal: falha ao gerar o PDF", proc.stderr.decode("utf-8", "ignore")[-1500:])
+		frappe.throw(_("Não foi possível gerar o PDF do resumo."))
+	return proc.stdout
+
+
+def generate_weekly_report(force: bool = False, send_email: bool | None = None) -> str | None:
+	"""Gera o PDF da semana anterior, guarda no CRM (para baixar) e, se ligado, manda por e-mail."""
 	cfg = get_config()
-	if not cint(cfg.relatorio_ativo) and not force:
-		return 0
-	recipients = _report_recipients(cfg)
-	if not recipients or not frappe.db.exists("Email Account", {"enable_outgoing": 1}):
-		return 0
-	frappe.sendmail(
-		recipients=recipients,
-		subject=f"Resumo da semana — {_brand() or 'CRM'}",
-		message=_report_html(build_weekly_report()),
-		delayed=False,
-	)
-	return len(recipients)
+	start, end = _week_bounds()
+	name = frappe.db.get_value("CRM Relatorio Semanal", {"inicio": start})
+	if name and not force:
+		return name
+	report = build_weekly_report(start, end)
+	pdf = _render_report_pdf(_report_html(report))
+	filename = f"Resumo da semana {start.strftime('%d-%m')} a {end.strftime('%d-%m-%Y')}.pdf"
+	if name:
+		doc = frappe.get_doc("CRM Relatorio Semanal", name)
+		for f in frappe.get_all("File", filters={"attached_to_doctype": "CRM Relatorio Semanal", "attached_to_name": name}, pluck="name"):
+			frappe.delete_doc("File", f, ignore_permissions=True, force=True)
+	else:
+		doc = frappe.get_doc({"doctype": "CRM Relatorio Semanal", "inicio": start, "fim": end}).insert(ignore_permissions=True)
+	file = frappe.get_doc(
+		{"doctype": "File", "file_name": filename, "attached_to_doctype": "CRM Relatorio Semanal",
+		 "attached_to_name": doc.name, "attached_to_field": "arquivo", "is_private": 1, "content": pdf}
+	).insert(ignore_permissions=True)
+	doc.db_set("arquivo", file.file_url)
+	want_email = cint(cfg.relatorio_email) if send_email is None else send_email
+	if want_email and frappe.db.exists("Email Account", {"enable_outgoing": 1}):
+		recipients = _report_recipients(cfg)
+		if recipients:
+			frappe.sendmail(
+				recipients=recipients,
+				subject=f"Resumo da semana — {_brand() or 'CRM'} ({report['periodo']})",
+				message=_report_html(report),
+				attachments=[{"fname": filename, "fcontent": pdf}],
+				delayed=False,
+			)
+			doc.db_set("enviado_por_email", 1)
+	frappe.db.commit()
+	return doc.name
 
 
 def weekly_job():
-	"""Roda todo dia às 8h; só age às segundas."""
-	if getdate(nowdate()).weekday() == 0:
-		send_weekly_report()
+	"""Toda segunda-feira às 8h (horário do site)."""
+	if cint(get_config().relatorio_ativo):
+		generate_weekly_report()
 
 
 @frappe.whitelist()
-def send_weekly_report_now():
+def list_weekly_reports(limit: int = 8) -> list:
 	_managers_only()
-	sent = send_weekly_report(force=True)
-	if not sent:
-		frappe.throw(_("Não foi possível enviar: configure o e-mail de envio em Configurações → E-mail."))
-	return {"enviado_para": sent}
+	return frappe.get_all(
+		"CRM Relatorio Semanal",
+		fields=["name", "inicio", "fim", "arquivo", "enviado_por_email", "creation"],
+		order_by="inicio desc",
+		limit=cint(limit) or 8,
+	)
+
+
+@frappe.whitelist()
+def generate_weekly_report_now():
+	"""Botão 'Gerar o resumo da última semana agora' (refaz o da semana anterior)."""
+	_managers_only()
+	name = generate_weekly_report(force=True, send_email=False)
+	return {"name": name, "arquivo": frappe.db.get_value("CRM Relatorio Semanal", name, "arquivo")}

@@ -31,6 +31,7 @@
   "posvenda_indicacao_dias",
   "posvenda_indicacao_mensagem",
   "relatorio_ativo",
+  "relatorio_email",
   "relatorio_destinatarios",
   "agenda_ativa",
   "agenda_titulo",
@@ -197,6 +198,12 @@
    "fieldname": "agenda_mensagem",
    "fieldtype": "Small Text",
    "label": "Aviso na página de agendamento"
+  },
+  {
+   "fieldname": "relatorio_email",
+   "fieldtype": "Check",
+   "label": "Enviar o resumo também por e-mail",
+   "default": "1"
   }
  ],
  "permissions": [
