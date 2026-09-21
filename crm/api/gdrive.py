@@ -258,24 +258,29 @@ def _find_or_create_folder(name: str, parent_id: str | None) -> str:
 
 
 def _folder_for(path: list[str]) -> str:
-	"""Garante a pasta raiz do CRM e as subpastas do caminho; guarda os ids para não procurar de novo."""
+	"""Garante a pasta raiz do CRM e as subpastas do caminho; guarda os ids para não procurar de novo.
+	Só grava a configuração quando algo mudou, e sem regravar o documento inteiro."""
 	doc = _settings()
 	mapa = json.loads(doc.pastas or "{}")
 	root_name = doc.pasta_nome or _default_root_name()
-	if not doc.pasta_id:
-		doc.pasta_id = _find_or_create_folder(root_name, None)
-		doc.pasta_nome = root_name
-		mapa = {}
-	parent = doc.pasta_id
+	pasta_id, changed = doc.pasta_id, False
+	if not pasta_id:
+		pasta_id = _find_or_create_folder(root_name, None)
+		mapa, changed = {}, True
+	parent = pasta_id
 	acumulado = ""
 	for part in [p for p in path if p]:
 		acumulado += "/" + part
 		if acumulado not in mapa:
 			mapa[acumulado] = _find_or_create_folder(part, parent)
+			changed = True
 		parent = mapa[acumulado]
-	doc.pastas = json.dumps(mapa, ensure_ascii=False)
-	doc.flags.ignore_permissions = True
-	doc.save()
+	if changed:
+		frappe.db.set_single_value(
+			DOCTYPE,
+			{"pasta_id": pasta_id, "pasta_nome": root_name, "pastas": json.dumps(mapa, ensure_ascii=False)},
+		)
+		frappe.db.commit()
 	return parent
 
 
@@ -380,9 +385,13 @@ def upload_file_doc(name: str):
 	"""Vários arquivos ao mesmo tempo disputam a configuração do Drive; nesse caso tenta de novo."""
 	import time
 
+	from frappe.utils.synchronization import filelock
+
 	for attempt in range(4):
 		try:
-			return _upload_file_doc(name)
+			# um envio por vez: vários arquivos juntos disputavam a configuração do Drive
+			with filelock("gdrive_upload", timeout=300):
+				return _upload_file_doc(name)
 		except (frappe.QueryDeadlockError, frappe.TimestampMismatchError):
 			frappe.db.rollback()
 			if attempt == 3:

@@ -144,13 +144,21 @@ def _posts(token: str) -> list[dict]:
 # ------------------------------------------------------------------ seguidores (histórico próprio)
 
 def _save_snapshot(followers: int):
+	"""O job diário e a tela de métricas podem gravar juntos; se o banco reclamar, tenta de novo."""
 	today = nowdate()
-	if frappe.db.exists("CRM Instagram Snapshot", today):
-		frappe.db.set_value("CRM Instagram Snapshot", today, "seguidores", followers)
-	else:
-		frappe.get_doc({"doctype": "CRM Instagram Snapshot", "data": today, "seguidores": followers}).insert(
-			ignore_permissions=True
-		)
+	for attempt in range(3):
+		try:
+			if frappe.db.exists("CRM Instagram Snapshot", today):
+				frappe.db.set_value("CRM Instagram Snapshot", today, "seguidores", followers)
+			else:
+				frappe.get_doc({"doctype": "CRM Instagram Snapshot", "data": today, "seguidores": followers}).insert(
+					ignore_permissions=True
+				)
+			return
+		except (frappe.QueryDeadlockError, frappe.TimestampMismatchError, frappe.DuplicateEntryError):
+			frappe.db.rollback()
+			if attempt == 2:
+				raise
 
 
 def _followers_delta(days: int, current: int) -> dict:

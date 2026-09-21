@@ -18,6 +18,7 @@ MODULES = [
     "interligacoes",
     "mapas",
     "saude_valor_antigo",
+    "drive_pastas",
 ]
 
 
