@@ -96,6 +96,23 @@
         <Field class="mt-3" :label="__('Aviso na página (opcional)')"><FormControl v-model="cfg.agenda_mensagem" type="textarea" :rows="2" /></Field>
       </section>
 
+      <!-- Inteligência artificial -->
+      <section class="rounded-lg border border-outline-gray-2 p-4">
+        <div class="text-base-semibold text-ink-gray-9">{{ __('Inteligência artificial (Claude)') }}</div>
+        <p class="mt-1 text-p-sm text-ink-gray-6">
+          {{ __('Com a chave da Anthropic cadastrada, a Ficha da reunião se preenche sozinha a partir da transcrição. A chave é sua: o uso é cobrado direto na sua conta da Anthropic, e cada transcrição custa centavos.') }}
+        </p>
+        <div class="mt-3 flex items-center gap-2 text-p-sm">
+          <span :class="ai.configurada ? 'text-ink-green-3' : 'text-ink-amber-3'">
+            {{ ai.configurada ? __('Chave cadastrada') : __('Nenhuma chave cadastrada') }}
+          </span>
+        </div>
+        <div class="mt-2 flex items-center gap-2">
+          <FormControl v-model="aiKey" class="flex-1" type="password" placeholder="sk-ant-..." autocomplete="off" />
+          <Button variant="subtle" :label="__('Salvar chave')" :disabled="!aiKey" :loading="aiSaving" @click="saveKey(aiKey)" />
+          <Button v-if="ai.configurada" variant="ghost" theme="red" :label="__('Remover')" @click="saveKey('')" />
+        </div>
+      </section>
       <!-- Resumo semanal -->
       <section class="rounded-lg border border-outline-gray-2 p-4">
         <div class="flex items-start justify-between gap-3">
@@ -162,6 +179,9 @@ const Toggle = defineComponent({
 })
 
 const cfg = ref(null)
+const ai = ref({ configurada: false })
+const aiKey = ref('')
+const aiSaving = ref(false)
 const reports = ref([])
 const fmt = (v) => (v ? v.split('-').reverse().slice(0, 2).join('/') : '')
 const saving = ref(false)
@@ -170,6 +190,7 @@ const sending = ref(false)
 onMounted(async () => {
   cfg.value = await call('crm.api.automacoes.get_settings')
   reports.value = await call('crm.api.automacoes.list_weekly_reports')
+  ai.value = await call('crm.api.ficha.get_ai_status')
 })
 
 async function save() {
@@ -197,6 +218,19 @@ async function sendNow() {
     sending.value = false
   }
 }
+async function saveKey(key) {
+  aiSaving.value = true
+  try {
+    ai.value = await call('crm.api.ficha.save_ai_key', { chave: key })
+    aiKey.value = ''
+    toast.success(key ? __('Chave salva') : __('Chave removida'))
+  } catch (e) {
+    toast.error(e?.messages?.[0] || __('Não foi possível salvar a chave.'))
+  } finally {
+    aiSaving.value = false
+  }
+}
+
 async function copy(text) {
   try {
     await navigator.clipboard.writeText(text)

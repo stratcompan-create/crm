@@ -259,6 +259,7 @@ import LinkIcon from '@/components/Icons/LinkIcon.vue'
 import AttachmentIcon from '@/components/Icons/AttachmentIcon.vue'
 import LostReasonModal from '@/components/Modals/LostReasonModal.vue'
 import LayoutHeader from '@/components/LayoutHeader.vue'
+import FichaIcon from '~icons/lucide/clipboard-list'
 import Activities from '@/components/Activities/Activities.vue'
 import AssignTo from '@/components/AssignTo.vue'
 import FilesUploader from '@/components/FilesUploader/FilesUploader.vue'
@@ -445,6 +446,11 @@ const tabs = computed(() => {
       name: 'Data',
       label: __('Data'),
       icon: DetailsIcon,
+    },
+    {
+      name: 'Ficha',
+      label: __('Ficha da reunião'),
+      icon: FichaIcon,
     },
     {
       name: 'Events',

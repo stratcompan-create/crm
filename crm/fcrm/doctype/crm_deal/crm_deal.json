@@ -90,7 +90,9 @@
   "posvenda_indicacao_em",
   "servico",
   "natureza",
-  "valor_recorrente"
+  "valor_recorrente",
+  "ficha",
+  "ficha_transcricao"
  ],
  "fields": [
   {
@@ -581,6 +583,18 @@
    "fieldtype": "Currency",
    "label": "Valor mensal (R$)",
    "description": "Só para tipo recorrente ou pontual e recorrente."
+  },
+  {
+   "fieldname": "ficha",
+   "fieldtype": "Long Text",
+   "label": "Ficha da reunião",
+   "hidden": 1
+  },
+  {
+   "fieldname": "ficha_transcricao",
+   "fieldtype": "Long Text",
+   "label": "Transcrição da reunião",
+   "hidden": 1
   }
  ],
  "grid_page_length": 50,

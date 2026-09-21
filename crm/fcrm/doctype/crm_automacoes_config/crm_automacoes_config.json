@@ -43,7 +43,8 @@
   "agenda_dias_a_frente",
   "agenda_responsavel",
   "agenda_link",
-  "agenda_mensagem"
+  "agenda_mensagem",
+  "anthropic_api_key"
  ],
  "fields": [
   {
@@ -204,6 +205,11 @@
    "fieldtype": "Check",
    "label": "Enviar o resumo também por e-mail",
    "default": "1"
+  },
+  {
+   "fieldname": "anthropic_api_key",
+   "fieldtype": "Password",
+   "label": "Chave da API da Anthropic"
   }
  ],
  "permissions": [

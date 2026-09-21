@@ -84,7 +84,9 @@
   "lost_reason",
   "lost_notes",
   "servico",
-  "natureza"
+  "natureza",
+  "ficha",
+  "ficha_transcricao"
  ],
  "fields": [
   {
@@ -535,6 +537,18 @@
    "fieldtype": "Select",
    "label": "Tipo de cobrança",
    "options": "\nPontual\nRecorrente\nPontual e recorrente"
+  },
+  {
+   "fieldname": "ficha",
+   "fieldtype": "Long Text",
+   "label": "Ficha da reunião",
+   "hidden": 1
+  },
+  {
+   "fieldname": "ficha_transcricao",
+   "fieldtype": "Long Text",
+   "label": "Transcrição da reunião",
+   "hidden": 1
   }
  ],
  "grid_page_length": 50,
