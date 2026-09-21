@@ -230,6 +230,7 @@ import BrushCleaningIcon from '~icons/lucide/brush-cleaning'
 import AccountsIcon from '~icons/lucide/building-2'
 import TeamIcon from '~icons/lucide/users'
 import TargetIcon from '~icons/lucide/target'
+import WorkflowIcon from '~icons/lucide/workflow'
 import ProspectIcon from '~icons/lucide/radar'
 import ReportIcon from '~icons/lucide/bar-chart-3'
 import CalculatorIcon from '~icons/lucide/calculator'
@@ -345,6 +346,7 @@ const CRM_ROUTE_NAMES = [
   'WhatsApp',
   'Equipe',
   'Prospeccao',
+  'Mapas',
 ]
 const isCrmSection = computed(() => CRM_ROUTE_NAMES.includes(route.name))
 
@@ -491,6 +493,12 @@ const links = [
     label: 'Deals',
     icon: DealsIcon,
     to: 'Deals',
+  },
+  {
+    label: 'Mapas',
+    icon: WorkflowIcon,
+    to: 'Mapas',
+    condition: () => isManager(),
   },
   {
     label: 'Contacts',

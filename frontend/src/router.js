@@ -60,6 +60,11 @@ const routes = [
     component: () => import('@/pages/WhatsAppMessages.vue'),
   },
   {
+    path: '/mapas',
+    name: 'Mapas',
+    component: () => import('@/pages/Mapas.vue'),
+  },
+  {
     path: '/prospeccao',
     name: 'Prospeccao',
     component: () => import('@/pages/Prospeccao.vue'),
