@@ -27,7 +27,7 @@ if (-not $DeployHost) { throw "Defina CRM_DEPLOY_HOST (ou use -DeployHost)." }
 if (-not (Test-Path $Key)) { throw "Chave SSH não encontrada em $Key" }
 
 function Step($text) { Write-Host "`n==> $text" -ForegroundColor Cyan }
-function Ssh($cmd) { & ssh -i $Key -o StrictHostKeyChecking=accept-new "root@$DeployHost" $cmd }
+function Invoke-Remote($cmd) { & ssh.exe -i $Key -o StrictHostKeyChecking=accept-new "root@$DeployHost" $cmd }
 
 # 1. testes
 if (-not $SkipTests) {
@@ -52,23 +52,23 @@ if ($code -ne 0) { throw "O git push falhou (código $code)." }
 
 # 3. backup + build
 Step "Backup do site e início do build da imagem"
-Ssh "docker exec frappe-backend-1 bench --site $Site backup 2>&1 | tail -1"
-Ssh "cd /root/frappe_docker && (nohup docker build --no-cache --build-arg=FRAPPE_BRANCH=version-15 --secret=id=apps_json,src=apps.json --tag=stratcompany-crm:custom --file=images/layered/Containerfile . > /root/build.log 2>&1 &); sleep 1; echo build iniciado"
+Invoke-Remote "docker exec frappe-backend-1 bench --site $Site backup 2>&1 | tail -1"
+Invoke-Remote "cd /root/frappe_docker && (nohup docker build --no-cache --build-arg=FRAPPE_BRANCH=version-15 --secret=id=apps_json,src=apps.json --tag=stratcompany-crm:custom --file=images/layered/Containerfile . > /root/build.log 2>&1 &); sleep 1; echo build iniciado"
 
 Step "Aguardando o build (cerca de 7 minutos)"
 $done = $false
 for ($i = 0; $i -lt 60; $i++) {
   Start-Sleep 30
-  $ok = Ssh "grep -c 'naming to' /root/build.log"
+  $ok = Invoke-Remote "grep -c 'naming to' /root/build.log"
   if ("$ok".Trim() -eq "1") { $done = $true; break }
-  $failed = Ssh "grep -c -E '^ERROR|failed to solve' /root/build.log"
+  $failed = Invoke-Remote "grep -c -E '^ERROR|failed to solve' /root/build.log"
   if ([int]("$failed".Trim()) -gt 0) { throw "O build falhou. Veja /root/build.log no servidor." }
 }
 if (-not $done) { throw "O build demorou demais." }
 
 # 4. redeploy + migração
 Step "Recriando os containers e migrando o banco"
-Ssh "cd /root && docker compose -f /root/frappe-compose.yml --env-file /root/frappe.env -p frappe up -d --force-recreate 2>&1 | tail -1; sleep 30; docker exec frappe-backend-1 bench --site $Site migrate 2>&1 | tr '\r' '\n' | grep -v 'Updating DocTypes' | tail -2; docker exec frappe-backend-1 bench --site $Site clear-cache"
+Invoke-Remote "cd /root && docker compose -f /root/frappe-compose.yml --env-file /root/frappe.env -p frappe up -d --force-recreate 2>&1 | tail -1; sleep 30; docker exec frappe-backend-1 bench --site $Site migrate 2>&1 | tr '\r' '\n' | grep -v 'Updating DocTypes' | tail -2; docker exec frappe-backend-1 bench --site $Site clear-cache"
 
 # 5. conferência
 Step "Conferindo o site"
