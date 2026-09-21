@@ -408,3 +408,138 @@ def _upload_file_doc(name: str):
 		content = content.encode("utf-8")
 	mime = mimetypes.guess_type(doc.file_name or "")[0] or "application/octet-stream"
 	upload_bytes(doc.file_name, content, mime, _path_for_file(doc))
+
+
+# ------------------------------------------------------------------ cópia de segurança no Drive
+
+BACKUP_ROOT = "Backups do CRM"
+BACKUP_KEEP = 10
+BACKUP_CHUNK = 8 * 1024 * 1024  # múltiplo de 256 KiB, como o Google exige
+KEY_ON = "crm_drive_backup_ativo"
+KEY_LAST_OK = "crm_drive_backup_ok_em"
+KEY_STATUS = "crm_drive_backup_status"
+
+
+def _backup_enabled() -> bool:
+	# ligado por padrão: quem conecta o Drive quer a reserva
+	return (frappe.db.get_default(KEY_ON) or "1") == "1"
+
+
+def _resumable_upload(path: str, name: str, parent_id: str):
+	"""Envia um arquivo grande em partes, sem carregá-lo inteiro na memória do servidor."""
+	import os
+
+	size = os.path.getsize(path)
+	if size == 0:
+		return
+	init = requests.post(
+		f"{UPLOAD_URL}?uploadType=resumable&fields=id",
+		headers={
+			**_headers(),
+			"Content-Type": "application/json; charset=UTF-8",
+			"X-Upload-Content-Length": str(size),
+		},
+		data=json.dumps({"name": name, "parents": [parent_id]}),
+		timeout=TIMEOUT,
+	)
+	if init.status_code >= 400 or not init.headers.get("Location"):
+		frappe.log_error("Drive backup: não foi possível iniciar o envio", init.text[:1000])
+		frappe.throw(_("O Google Drive recusou o envio da cópia."))
+	session = init.headers["Location"]
+	offset = 0
+	with open(path, "rb") as f:
+		while offset < size:
+			chunk = f.read(BACKUP_CHUNK)
+			end = offset + len(chunk) - 1
+			resp = requests.put(
+				session,
+				headers={"Content-Length": str(len(chunk)), "Content-Range": f"bytes {offset}-{end}/{size}"},
+				data=chunk,
+				timeout=300,
+			)
+			if resp.status_code in (200, 201):
+				return
+			if resp.status_code != 308:
+				frappe.log_error("Drive backup: falha no envio", resp.text[:1000])
+				frappe.throw(_("Falha ao enviar a cópia ao Google Drive."))
+			offset += len(chunk)
+
+
+def _backup_children(parent_id: str) -> list[dict]:
+	q = f"mimeType='application/vnd.google-apps.folder' and '{parent_id}' in parents and trashed=false"
+	data = _drive_call("GET", f"{DRIVE_URL}/files", params={"q": q, "fields": "files(id,name)", "pageSize": 200})
+	return sorted(data.get("files", []), key=lambda x: x["name"], reverse=True)
+
+
+def _delete_drive_item(file_id: str):
+	requests.delete(f"{DRIVE_URL}/files/{file_id}", headers=_headers(), timeout=TIMEOUT)
+
+
+def _prune_backups(parent_id: str):
+	"""Mantém só as últimas cópias (as mais novas primeiro)."""
+	for old in _backup_children(parent_id)[BACKUP_KEEP:]:
+		_delete_drive_item(old["id"])
+
+
+def _make_backup_files() -> list[str]:
+	from frappe.utils.backups import new_backup
+
+	backup = new_backup(ignore_files=False, force=True)
+	# a configuração do site (senhas e chaves do servidor) NÃO vai para o Drive: fica só no servidor
+	paths = [backup.backup_path_db, backup.backup_path_files, backup.backup_path_private_files]
+	return [p for p in paths if p]
+
+
+def daily_backup(force=0):
+	"""Job da noite: gera a cópia do site e guarda no Drive do escritório (banco, arquivos e configuração)."""
+	import os
+
+	if not is_connected() or (not cint(force) and not _backup_enabled()):
+		return
+	try:
+		files = _make_backup_files()
+		root = _folder_for([BACKUP_ROOT])
+		day = _find_or_create_folder(frappe.utils.nowdate(), root)
+		total = 0
+		for path in files:
+			if os.path.isfile(path):
+				total += os.path.getsize(path)
+				_resumable_upload(path, os.path.basename(path), day)
+		_prune_backups(root)
+		frappe.db.set_default(KEY_LAST_OK, str(frappe.utils.now_datetime()))
+		frappe.db.set_default(KEY_STATUS, f"ok:{total}")
+	except Exception:
+		frappe.log_error("Cópia de segurança no Drive falhou", frappe.get_traceback())
+		frappe.db.set_default(KEY_STATUS, "erro")
+	frappe.db.commit()
+
+
+@frappe.whitelist()
+def get_backup_status() -> dict:
+	_managers_only()
+	status = frappe.db.get_default(KEY_STATUS) or ""
+	return {
+		"conectado": is_connected(),
+		"ativo": _backup_enabled(),
+		"ultimo_ok": frappe.db.get_default(KEY_LAST_OK) or "",
+		"status": "erro" if status == "erro" else ("ok" if status.startswith("ok") else ""),
+		"tamanho_mb": round(cint(status.split(":")[1]) / 1048576, 1) if status.startswith("ok:") else 0,
+		"guarda": BACKUP_KEEP,
+	}
+
+
+@frappe.whitelist()
+def set_backup_enabled(ativo=1):
+	_managers_only()
+	frappe.db.set_default(KEY_ON, "1" if cint(ativo) else "0")
+	return {"ativo": bool(cint(ativo))}
+
+
+@frappe.whitelist()
+def run_backup_now():
+	_managers_only()
+	if not is_connected():
+		frappe.throw(_("Conecte o Google Drive antes de fazer a cópia."))
+	frappe.db.set_default(KEY_STATUS, "andamento")
+	frappe.enqueue("crm.api.gdrive.daily_backup", queue="long", timeout=3000, force=1)
+	return {"ok": True}

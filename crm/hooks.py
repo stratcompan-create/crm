@@ -260,7 +260,10 @@ scheduler_events = {
 		"crm.telemetry.capture_feature_state",
 	],
 	"weekly": ["crm.api.event.trigger_weekly_event_notifications"],
-	"daily_long": ["crm.lead_syncing.background_sync.sync_leads_from_sources_daily"],
+	"daily_long": [
+		"crm.lead_syncing.background_sync.sync_leads_from_sources_daily",
+		"crm.api.gdrive.daily_backup",
+	],
 	"hourly_long": ["crm.lead_syncing.background_sync.sync_leads_from_sources_hourly"],
 	"monthly_long": ["crm.lead_syncing.background_sync.sync_leads_from_sources_monthly"],
 	"cron": {

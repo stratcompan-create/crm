@@ -19,6 +19,7 @@ MODULES = [
     "mapas",
     "saude_valor_antigo",
     "drive_pastas",
+    "drive_backup",
 ]
 
 

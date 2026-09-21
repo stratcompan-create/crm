@@ -62,7 +62,7 @@ def run():
             ss.check_and_alert()
     frappe.db.set_default(ss.LAST_SIG, "")
     ck("alerta de falha: 1 aviso do problema e 1 de recuperação", sent == [(1, False), (0, True)], str(sent))
-    ck("painel de saúde do sistema devolve todos os itens", len(ss.get_system_health()["itens"]) == 8)
+    ck("painel de saúde do sistema devolve todos os itens", len(ss.get_system_health()["itens"]) == 9)
 
     # resumo semanal: o job horário gera uma vez só
     for x in frappe.get_all("CRM Relatorio Semanal", pluck="name"):

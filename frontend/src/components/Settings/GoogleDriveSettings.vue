@@ -59,6 +59,37 @@
       </div>
       <div class="h-px border-t border-outline-elevation-2" />
 
+      <!-- Cópia de segurança -->
+      <div class="flex flex-col gap-3">
+        <div class="flex items-start justify-between gap-6">
+          <div class="flex flex-col">
+            <div class="text-p-base-medium text-ink-gray-7">{{ __('Cópia de segurança no Google Drive') }}</div>
+            <div class="text-p-sm text-ink-gray-5">
+              {{ __('Toda noite o CRM guarda uma cópia completa (dados, documentos e configurações) na pasta "Backups do CRM" do seu Drive. Se algo acontecer com o servidor, é daí que tudo é recuperado. As últimas {0} cópias ficam guardadas.', [backup.data?.guarda || 10]) }}
+            </div>
+          </div>
+          <label class="flex shrink-0 items-center gap-2 text-p-sm text-ink-gray-7">
+            <input type="checkbox" :checked="backup.data?.ativo" @change="toggleBackup($event.target.checked)" />
+            {{ backup.data?.ativo ? __('Ligada') : __('Desligada') }}
+          </label>
+        </div>
+        <div class="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-surface-gray-2 px-3 py-2.5">
+          <span class="text-p-sm" :class="backup.data?.status === 'erro' ? 'text-ink-red-6' : 'text-ink-gray-7'">
+            <template v-if="backup.data?.status === 'erro'">{{ __('A última cópia falhou. Tente de novo em alguns minutos.') }}</template>
+            <template v-else-if="running">{{ __('Fazendo a cópia agora... isso pode levar alguns minutos.') }}</template>
+            <template v-else-if="backup.data?.ultimo_ok">
+              {{ __('Última cópia: {0} ({1} MB)', [formatDate(backup.data.ultimo_ok), backup.data.tamanho_mb]) }}
+            </template>
+            <template v-else>{{ __('A primeira cópia acontece esta noite.') }}</template>
+          </span>
+          <Button variant="subtle" :label="__('Fazer cópia agora')" :loading="running" @click="runBackup" />
+        </div>
+        <p class="text-xs text-ink-gray-5">
+          {{ __('Os arquivos ficam na sua conta do Google, protegidos por ela. Use verificação em duas etapas na conta para garantir a segurança.') }}
+        </p>
+      </div>
+
+
       <div class="flex items-center justify-between gap-8">
         <div class="flex flex-col">
           <div class="text-p-base-medium text-ink-gray-7">{{ __('Copiar automaticamente') }}</div>
@@ -78,7 +109,7 @@
 
 <script setup>
 import { Button, FormControl, call, createResource, toast } from 'frappe-ui'
-import { ref, watch } from 'vue'
+import { onBeforeUnmount, ref, watch } from 'vue'
 
 const status = createResource({ url: 'crm.api.gdrive.get_status', auto: true })
 const pasta = ref('')
@@ -128,4 +159,35 @@ async function toggleAuto(value) {
   await call('crm.api.gdrive.save_options', { envio_automatico: value ? 1 : 0 })
   await status.reload()
 }
+
+const backup = createResource({ url: 'crm.api.gdrive.get_backup_status', auto: true, onError() {} })
+const running = ref(false)
+let poll = null
+function formatDate(v) {
+  const [d, t] = String(v).split(' ')
+  return d.split('-').reverse().join('/') + (t ? ' às ' + t.slice(0, 5) : '')
+}
+async function toggleBackup(on) {
+  await call('crm.api.gdrive.set_backup_enabled', { ativo: on ? 1 : 0 })
+  backup.reload()
+}
+async function runBackup() {
+  running.value = true
+  try {
+    await call('crm.api.gdrive.run_backup_now')
+    toast.success(__('Cópia iniciada. Você pode continuar usando o CRM.'))
+    const before = backup.data?.ultimo_ok
+    poll = setInterval(async () => {
+      await backup.reload()
+      if (backup.data?.status === 'erro' || (backup.data?.ultimo_ok && backup.data.ultimo_ok !== before)) {
+        running.value = false
+        clearInterval(poll)
+      }
+    }, 8000)
+  } catch (e) {
+    running.value = false
+    toast.error(e?.messages?.[0] || __('Não foi possível iniciar a cópia.'))
+  }
+}
+onBeforeUnmount(() => clearInterval(poll))
 </script>

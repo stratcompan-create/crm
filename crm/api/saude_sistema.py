@@ -96,6 +96,24 @@ def _check_backup() -> tuple[bool, str]:
 	return True, "Backup em dia."
 
 
+def _check_drive_backup() -> tuple[bool, str]:
+	from crm.api import gdrive
+
+	if not gdrive.is_connected():
+		return True, "Cópia no Drive: Drive não conectado (opcional)."
+	if not gdrive._backup_enabled():
+		return True, "Cópia no Drive desligada."
+	if (frappe.db.get_default(gdrive.KEY_STATUS) or "") == "erro":
+		return False, "A última cópia de segurança no Drive falhou."
+	last = frappe.db.get_default(gdrive.KEY_LAST_OK)
+	if not last:
+		return True, "A primeira cópia no Drive acontece esta noite."
+	hours = (now_datetime() - get_datetime(last)).total_seconds() / 3600
+	if hours > 30:
+		return False, f"A última cópia no Drive tem {int(hours)} horas."
+	return True, "Cópia de segurança no Drive em dia."
+
+
 def _check_disk() -> tuple[bool, str]:
 	usage = shutil.disk_usage(frappe.get_site_path())
 	free = usage.free / usage.total * 100
@@ -127,6 +145,7 @@ def run_checks(since: str | None = None) -> list[dict]:
 		("drive", "Google Drive", _check_drive),
 		("instagram", "Instagram", _check_instagram),
 		("backup", "Backup", _check_backup),
+		("backup_drive", "Cópia no Google Drive", _check_drive_backup),
 		("disco", "Espaço em disco", _check_disk),
 		("resumo", "Resumo semanal", _check_weekly),
 	]
