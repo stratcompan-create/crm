@@ -100,7 +100,7 @@
       <section class="rounded-lg border border-outline-gray-2 p-4">
         <div class="text-base-semibold text-ink-gray-9">{{ __('Inteligência artificial (Claude)') }}</div>
         <p class="mt-1 text-p-sm text-ink-gray-6">
-          {{ __('Com a chave da Anthropic cadastrada, a Ficha da reunião se preenche sozinha a partir da transcrição. A chave é sua: o uso é cobrado direto na sua conta da Anthropic, e cada transcrição custa centavos.') }}
+          {{ __('Com a chave da Anthropic cadastrada, a Ficha da reunião se preenche sozinha a partir da transcrição e cada conversa do Instagram ganha três respostas escritas para ela. A chave é sua: o uso é cobrado direto na sua conta da Anthropic, e cada uso custa centavos.') }}
         </p>
         <div class="mt-3 flex items-center gap-2 text-p-sm">
           <span :class="ai.configurada ? 'text-ink-green-3' : 'text-ink-amber-3'">

@@ -16,7 +16,8 @@
   "timestamp",
   "section_break_1",
   "message",
-  "comment_id"
+  "comment_id",
+  "sugestoes"
  ],
  "fields": [
   {
@@ -70,6 +71,13 @@
    "fieldtype": "Data",
    "label": "Comentário de origem",
    "search_index": 1
+  },
+  {
+   "fieldname": "sugestoes",
+   "fieldtype": "Long Text",
+   "label": "Sugestões de resposta",
+   "hidden": 1,
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,

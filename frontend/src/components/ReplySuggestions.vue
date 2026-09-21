@@ -17,37 +17,70 @@
         </span>
       </button>
       <Button
-        v-if="open && data.ia"
+        v-if="open && data.ia && custom.length"
         variant="subtle"
         size="sm"
-        iconLeft="lucide-sparkles"
-        :label="__('Sob medida com IA')"
+        iconLeft="lucide-refresh-cw"
+        :label="__('Gerar outras')"
         :loading="loadingAi"
-        @click="generateAi"
+        @click="generate(true)"
       />
     </div>
 
-    <div v-if="open" class="mt-2 grid grid-cols-1 gap-2 md:grid-cols-3">
-      <div
-        v-for="(s, i) in all"
-        :key="i"
-        class="flex flex-col justify-between gap-2 rounded-lg border border-outline-gray-2 bg-surface-white p-2.5"
-      >
-        <div>
-          <div class="mb-1 flex items-center gap-1.5 text-xs font-medium text-ink-gray-6">
-            <span v-if="s.origem === 'ia'" class="lucide-sparkles size-3" aria-hidden="true" />
-            {{ s.titulo }}
-          </div>
-          <div class="line-clamp-5 text-p-sm text-ink-gray-8">{{ s.texto }}</div>
-        </div>
-        <Button variant="subtle" size="sm" :label="__('Usar e editar')" @click="$emit('usar', s.texto)" />
+    <template v-if="open">
+      <!-- gerando -->
+      <div v-if="loadingAi && !custom.length" class="mt-2 flex items-center gap-2 rounded-lg border border-outline-gray-2 bg-surface-white px-3 py-4 text-p-sm text-ink-gray-6">
+        <span class="lucide-sparkles size-4 animate-pulse" aria-hidden="true" />
+        {{ __('Escrevendo três respostas para esta conversa...') }}
       </div>
-    </div>
-    <p v-if="open" class="mt-2 text-xs text-ink-gray-5">
-      {{ __('Nada é enviado sozinho: a sugestão vai para a caixa de resposta e você ajusta antes de enviar.') }}
-      <span v-if="!data.ia">{{ __('Um gestor pode ligar a IA em Configurações → Automações para gerar respostas sob medida.') }}</span>
-    </p>
-    <ErrorMessage v-if="error" class="mt-1" :message="error" />
+
+      <!-- sob medida -->
+      <div v-if="custom.length" class="mt-2 grid grid-cols-1 gap-2 md:grid-cols-3">
+        <div
+          v-for="(s, i) in custom"
+          :key="'c' + i"
+          class="flex flex-col justify-between gap-2 rounded-lg border border-outline-gray-2 bg-surface-white p-2.5"
+        >
+          <div>
+            <div class="mb-1 flex items-center gap-1.5 text-xs font-medium text-ink-gray-6">
+              <span class="lucide-sparkles size-3" aria-hidden="true" />
+              {{ s.titulo }}
+            </div>
+            <div class="whitespace-pre-wrap text-p-sm text-ink-gray-8">{{ s.texto }}</div>
+          </div>
+          <Button variant="subtle" size="sm" :label="__('Usar e editar')" @click="$emit('usar', s.texto)" />
+        </div>
+      </div>
+
+      <!-- modelos prontos: só quando não há IA, ou se a pessoa quiser ver -->
+      <div v-if="showTemplates">
+        <div v-if="custom.length" class="mb-1 mt-3 text-xs font-medium text-ink-gray-5">{{ __('Modelos prontos') }}</div>
+        <div class="mt-2 grid grid-cols-1 gap-2 md:grid-cols-3">
+          <div
+            v-for="(s, i) in data.modelos"
+            :key="'m' + i"
+            class="flex flex-col justify-between gap-2 rounded-lg border border-outline-gray-2 bg-surface-white p-2.5"
+          >
+            <div>
+              <div class="mb-1 text-xs font-medium text-ink-gray-6">{{ s.titulo }}</div>
+              <div class="line-clamp-5 text-p-sm text-ink-gray-8">{{ s.texto }}</div>
+            </div>
+            <Button variant="subtle" size="sm" :label="__('Usar e editar')" @click="$emit('usar', s.texto)" />
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-gray-5">
+        <span>{{ __('Nada é enviado sozinho: a sugestão vai para a caixa de resposta e você ajusta antes de enviar.') }}</span>
+        <button v-if="custom.length" type="button" class="underline" @click="templatesOpen = !templatesOpen">
+          {{ templatesOpen ? __('Esconder modelos prontos') : __('Ver modelos prontos') }}
+        </button>
+      </div>
+      <p v-if="!data.ia" class="mt-1 text-xs text-ink-amber-3">
+        {{ __('Estes são modelos gerais. Para respostas escritas para cada conversa, um gestor precisa ligar a IA em Configurações → Automações.') }}
+      </p>
+      <ErrorMessage v-if="error" class="mt-1" :message="error" />
+    </template>
   </div>
 </template>
 
@@ -61,17 +94,25 @@ defineEmits(['usar'])
 const open = ref(true)
 const error = ref('')
 const loadingAi = ref(false)
-const aiOptions = ref([])
+const generated = ref([])
+const templatesOpen = ref(false)
 
 const suggestions = createResource({
   url: 'crm.api.sugestoes.get_suggestions',
   makeParams: () => ({ lead: props.lead }),
-  onSuccess() {
-    aiOptions.value = []
+  onSuccess(d) {
+    generated.value = []
+    error.value = ''
+    templatesOpen.value = false
+    // com a IA ligada, cada mensagem nova do lead ganha três respostas próprias
+    if (d?.ativo && d.ia && !d.sob_medida?.length) generate(false)
   },
 })
 const data = computed(() => suggestions.data)
-const all = computed(() => [...aiOptions.value, ...(data.value?.sugestoes || [])])
+const custom = computed(() => (generated.value.length ? generated.value : data.value?.sob_medida || []))
+const showTemplates = computed(
+  () => !!data.value?.modelos?.length && (!data.value.ia || templatesOpen.value || (!custom.value.length && !loadingAi.value)),
+)
 
 watch(
   () => [props.lead, props.version],
@@ -79,12 +120,13 @@ watch(
   { immediate: true },
 )
 
-async function generateAi() {
+async function generate(force) {
+  const lead = props.lead
   loadingAi.value = true
   error.value = ''
   try {
-    const r = await call('crm.api.sugestoes.generate_ai_suggestions', { lead: props.lead })
-    aiOptions.value = r.sugestoes
+    const r = await call('crm.api.sugestoes.generate_ai_suggestions', { lead, force: force ? 1 : 0 })
+    if (lead === props.lead) generated.value = r.sugestoes || []
   } catch (e) {
     error.value = e?.messages?.[0] || __('Não foi possível gerar as sugestões agora.')
   } finally {
