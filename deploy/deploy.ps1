@@ -42,8 +42,13 @@ Step "Enviando o código para o GitHub"
 $commit = docker exec -w /home/frappe/frappe-bench/apps/crm $LocalContainer git rev-parse --short HEAD
 $dirty = docker exec -w /home/frappe/frappe-bench/apps/crm $LocalContainer git status --porcelain
 if ($dirty) { throw "Há alterações sem commit. Faça o commit antes de publicar." }
+# o git escreve o progresso no canal de erro; isso não é falha
+$prev = $ErrorActionPreference; $ErrorActionPreference = "Continue"
 $push = docker exec -w /home/frappe/frappe-bench/apps/crm $LocalContainer git push upstream $Branch 2>&1 | Out-String
+$code = $LASTEXITCODE
+$ErrorActionPreference = $prev
 Write-Host ($push -replace 'https://[^@\s]+@', 'https://***@')
+if ($code -ne 0) { throw "O git push falhou (código $code)." }
 
 # 3. backup + build
 Step "Backup do site e início do build da imagem"
