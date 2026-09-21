@@ -244,6 +244,7 @@ scheduler_events = {
 		"crm.api.event.trigger_hourly_event_notifications",
 		"crm.api.followup.run_followups",
 		"crm.api.agenda.send_meeting_reminders",
+		"crm.api.automacoes.weekly_job",
 	],
 	"daily": [
 		"crm.api.financeiro.mark_overdue",
@@ -262,7 +263,6 @@ scheduler_events = {
 	"hourly_long": ["crm.lead_syncing.background_sync.sync_leads_from_sources_hourly"],
 	"monthly_long": ["crm.lead_syncing.background_sync.sync_leads_from_sources_monthly"],
 	"cron": {
-		"0 8 * * 1": ["crm.api.automacoes.weekly_job"],
 		"*/5 * * * *": ["crm.lead_syncing.background_sync.sync_leads_from_sources_5_minutes"],
 		"*/10 * * * *": ["crm.lead_syncing.background_sync.sync_leads_from_sources_10_minutes"],
 		"*/15 * * * *": ["crm.lead_syncing.background_sync.sync_leads_from_sources_15_minutes"],

@@ -336,6 +336,10 @@ def save_deal_document(deal: str, doc_type: str = "proposta"):
 
 def _path_for_file(file_doc) -> list[str]:
 	folder = (file_doc.folder or "").replace("Home/", "").replace("Home", "")
+	# documentos do cliente (RG, contratos assinados, fotos...) espelham a pasta Clientes/<nome>
+	proposal_like = (file_doc.file_name or "").startswith(("Proposta", "Orçamento", "Contrato"))
+	if (file_doc.folder or "").startswith("Home/Clientes/") and not proposal_like:
+		return [p for p in folder.split("/") if p]
 	if file_doc.attached_to_doctype == "CRM Deal" and file_doc.attached_to_name:
 		from crm.api.budget import _get_client_name
 
@@ -373,6 +377,20 @@ def on_file_insert(doc, method=None):
 
 
 def upload_file_doc(name: str):
+	"""Vários arquivos ao mesmo tempo disputam a configuração do Drive; nesse caso tenta de novo."""
+	import time
+
+	for attempt in range(4):
+		try:
+			return _upload_file_doc(name)
+		except (frappe.QueryDeadlockError, frappe.TimestampMismatchError):
+			frappe.db.rollback()
+			if attempt == 3:
+				raise
+			time.sleep(2 + attempt * 2)
+
+
+def _upload_file_doc(name: str):
 	import mimetypes
 
 	doc = frappe.get_doc("File", name)

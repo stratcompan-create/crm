@@ -701,8 +701,13 @@ def generate_weekly_report(force: bool = False, send_email: bool | None = None) 
 
 
 def weekly_job():
-	"""Toda segunda-feira às 8h (horário do site)."""
-	if cint(get_config().relatorio_ativo):
+	"""Roda de hora em hora. A partir das 8h, se o resumo da semana anterior ainda não existe, gera.
+	Assim, mesmo que um horário seja perdido (reinício do servidor, atualização), ele sai na hora seguinte."""
+	if not cint(get_config().relatorio_ativo):
+		return
+	now = frappe.utils.now_datetime()
+	start, _end = _week_bounds()
+	if now.hour >= 8 and not frappe.db.get_value("CRM Relatorio Semanal", {"inicio": start}):
 		generate_weekly_report()
 
 
