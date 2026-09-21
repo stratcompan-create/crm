@@ -88,6 +88,7 @@ class CRMDeal(Document):
 		self.set_sla()
 
 	def validate(self):
+		self.ensure_organization()
 		self.validate_status()
 		self.set_primary_contact()
 		self.set_primary_email_mobile_no()
@@ -118,6 +119,18 @@ class CRMDeal(Document):
 
 	def before_save(self):
 		self.apply_sla()
+
+	def ensure_organization(self):
+		"""Negócio criado direto, só com o nome da empresa, também ganha a organização ligada
+		(sem isso a coluna Organização da lista fica vazia)."""
+		name = (self.get("organization_name") or "").strip()
+		if self.get("organization") or not name:
+			return
+		if not frappe.db.exists("CRM Organization", name):
+			frappe.get_doc(
+				{"doctype": "CRM Organization", "organization_name": name, "website": self.get("website") or None}
+			).insert(ignore_permissions=True)
+		self.organization = name
 
 	def sync_budget_value(self):
 		"""O orçamento do negócio é a fonte do valor: salvar itens atualiza o valor do negócio."""
@@ -354,13 +367,6 @@ class CRMDeal(Document):
 				"width": "11rem",
 			},
 			{
-				"label": "Annual Revenue",
-				"type": "Currency",
-				"key": "annual_revenue",
-				"align": "right",
-				"width": "9rem",
-			},
-			{
 				"label": "Status",
 				"type": "Link",
 				"options": "CRM Deal Status",
@@ -395,7 +401,6 @@ class CRMDeal(Document):
 		rows = [
 			"name",
 			"organization",
-			"annual_revenue",
 			"status",
 			"email",
 			"currency",
@@ -417,7 +422,7 @@ class CRMDeal(Document):
 		return {
 			"column_field": "status",
 			"title_field": "organization",
-			"kanban_fields": '["annual_revenue", "email", "mobile_no", "_assign", "modified"]',
+			"kanban_fields": '["email", "mobile_no", "_assign", "modified"]',
 		}
 
 

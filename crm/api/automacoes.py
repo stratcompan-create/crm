@@ -745,10 +745,81 @@ def ensure_service_layouts():
 			doc.save(ignore_permissions=True)
 
 
+SIMPLE_HIDE = ["salutation", "last_name", "annual_revenue", "territory"]
+SIMPLE_MARK = "crm_forms_simplified_v1"
+
+
+def simplify_forms(force: bool = False):
+	"""Formulários enxutos: sem saudação, sobrenome, faturamento e território (Cidade / Estado no lugar).
+	Roda uma vez por site, para não desfazer o que o gestor ajustar depois."""
+	import json
+
+	from crm.provision import PROFILE_DOCTYPES, _prune_layout
+
+	if frappe.db.get_default(SIMPLE_MARK) and not force:
+		return
+	for dt in PROFILE_DOCTYPES:
+		for fieldname in SIMPLE_HIDE:
+			frappe.make_property_setter(
+				{"doctype": dt, "fieldname": fieldname, "property": "hidden", "value": "1", "property_type": "Check"}
+			)
+		for layout_type in ("Quick Entry", "Side Panel", "Data Fields"):
+			name = f"{dt}-{layout_type}"
+			raw = frappe.db.get_value("CRM Fields Layout", name, "layout")
+			if not raw:
+				continue
+			layout = json.loads(raw)
+			if '"cidade_estado"' not in raw:
+				# a cidade entra onde o território estava
+				def swap(node):
+					if isinstance(node, list):
+						return [swap(n) for n in node]
+					if isinstance(node, dict):
+						if isinstance(node.get("fields"), list):
+							node["fields"] = ["cidade_estado" if f == "territory" else f for f in node["fields"]]
+						for key in ("columns", "sections"):
+							if key in node:
+								node[key] = swap(node[key])
+					return node
+
+				layout = swap(layout)
+			frappe.db.set_value(
+				"CRM Fields Layout", name, "layout", json.dumps(_prune_layout(layout, set(SIMPLE_HIDE)))
+			)
+		qf = frappe.db.get_value("CRM Global Settings", {"dt": dt}, ["name", "json"], as_dict=True)
+		if qf and qf.json:
+			kept = [f for f in json.loads(qf.json) if f not in SIMPLE_HIDE]
+			frappe.db.set_value("CRM Global Settings", qf.name, "json", json.dumps(kept))
+	# listas já salvas: sem a coluna de faturamento
+	for row in frappe.get_all("CRM View Settings", fields=["name", "columns", "rows"]):
+		changed = {}
+		for key in ("columns", "rows"):
+			raw = row.get(key)
+			if raw and "annual_revenue" in raw:
+				data = json.loads(raw)
+				data = [c for c in data if (c.get("key") if isinstance(c, dict) else c) != "annual_revenue"]
+				changed[key] = json.dumps(data)
+		if changed:
+			frappe.db.set_value("CRM View Settings", row.name, changed)
+	# negócios criados só com o nome da empresa passam a ter a organização ligada
+	for deal in frappe.get_all(
+		"CRM Deal", filters={"organization": ["is", "not set"], "organization_name": ["is", "set"]}, pluck="name"
+	):
+		try:
+			doc = frappe.get_doc("CRM Deal", deal)
+			doc.ensure_organization()
+			frappe.db.set_value("CRM Deal", deal, "organization", doc.organization, update_modified=False)
+		except Exception:
+			frappe.log_error("Formulários: falha ao ligar a organização do negócio", frappe.get_traceback())
+	frappe.db.set_default(SIMPLE_MARK, "1")
+	frappe.clear_cache()
+
+
 def after_migrate():
 	try:
 		ensure_services()
 		ensure_service_layouts()
+		simplify_forms()
 		frappe.db.commit()
 	except Exception:
 		frappe.log_error("Serviços: falha ao preparar campos e layouts", frappe.get_traceback())

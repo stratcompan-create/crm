@@ -86,7 +86,8 @@
   "servico",
   "natureza",
   "ficha",
-  "ficha_transcricao"
+  "ficha_transcricao",
+  "cidade_estado"
  ],
  "fields": [
   {
@@ -105,7 +106,7 @@
   {
    "fieldname": "first_name",
    "fieldtype": "Data",
-   "label": "First Name",
+   "label": "Nome",
    "reqd": 1
   },
   {
@@ -549,6 +550,11 @@
    "fieldtype": "Long Text",
    "label": "Transcrição da reunião",
    "hidden": 1
+  },
+  {
+   "fieldname": "cidade_estado",
+   "fieldtype": "Data",
+   "label": "Cidade / Estado"
   }
  ],
  "grid_page_length": 50,
