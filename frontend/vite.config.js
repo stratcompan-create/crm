@@ -5,6 +5,66 @@ import path from 'path'
 import { VitePWA } from 'vite-plugin-pwa'
 
 
+
+// Textos fixos em inglês dentro dos componentes do frappe-ui (lista, seletor, calendário...).
+// Traduzidos na hora do build, pelo mesmo motivo do plugin abaixo.
+const UI_TEXT_PT = {
+  'Select all': 'Selecionar tudo',
+  'Select All': 'Selecionar tudo',
+  'Clear All': 'Limpar tudo',
+  Clear: 'Limpar',
+  'No results found': 'Nenhum resultado encontrado',
+  'No results': 'Nenhum resultado',
+  'No Data': 'Sem dados',
+  'Load More': 'Carregar mais',
+  Search: 'Buscar',
+  Today: 'Hoje',
+  Now: 'Agora',
+  Day: 'Dia',
+  Week: 'Semana',
+  Month: 'Mês',
+  'All day': 'Dia inteiro',
+  'Select date': 'Selecionar data',
+  'Select time': 'Selecionar hora',
+  'Select month': 'Selecionar mês',
+  'Select year': 'Selecionar ano',
+  'Select range': 'Selecionar período',
+  'Select option': 'Selecionar',
+  'Select an option': 'Selecione uma opção',
+  Shortcuts: 'Atalhos',
+  Close: 'Fechar',
+  Loading: 'Carregando',
+  Cancel: 'Cancelar',
+  Confirm: 'Confirmar',
+  Save: 'Salvar',
+  Submit: 'Enviar',
+  Edit: 'Editar',
+  Remove: 'Remover',
+  Copy: 'Copiar',
+  Back: 'Voltar',
+  Title: 'Título',
+  Date: 'Data',
+  Color: 'Cor',
+  Person: 'Pessoa',
+  Venue: 'Local',
+  'Start Time': 'Início',
+  'End Time': 'Fim',
+}
+
+function translateFrappeUiTemplate(code) {
+  const i = code.indexOf('<script')
+  const tpl = i === -1 ? code : code.slice(0, i)
+  const rest = i === -1 ? '' : code.slice(i)
+  let out = tpl
+  for (const [en, pt] of Object.entries(UI_TEXT_PT)) {
+    const e = en.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    out = out.replace(new RegExp('>(\\s*)' + e + '(\\s*)<', 'g'), '>$1' + pt + '$2<')
+    out = out.replace(new RegExp('((?:label|placeholder|title|text|tooltip|aria-label)=")' + e + '"', 'g'), '$1' + pt + '"')
+  }
+  out = out.replace('<div>of</div>', '<div>de</div>')
+  return out + rest
+}
+
 // frappe-ui hardcodes English month/day/hour labels in its Calendar and
 // DatePicker sources, so dayjs.locale() alone cannot translate them. Patch the
 // strings at build time instead of editing node_modules (lost on reinstall).
@@ -26,6 +86,16 @@ function frappeUiPtBrPlugin() {
     transform(code, id) {
       const file = id.replace(/\\/g, '/')
       if (!file.includes('frappe-ui/src/components/')) return null
+      if (file.endsWith('.vue') && !/playground|stories|\.story/.test(file)) {
+        let out = translateFrappeUiTemplate(code)
+        if (file.endsWith('/ListView/ListView.vue')) {
+          out = out
+            .replace("'1 row selected'", "'1 linha selecionada'")
+            .replace('`${val} rows selected`', '`${val} linhas selecionadas`')
+        }
+        if (out !== code) return { code: out, map: null }
+        return null
+      }
       if (file.endsWith('/Calendar/calendarUtils.ts')) {
         code = swapArray(code, 'monthList', MONTHS_LONG)
         code = swapArray(code, 'daysList', DAYS_SHORT)

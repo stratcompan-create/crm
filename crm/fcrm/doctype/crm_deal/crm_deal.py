@@ -112,6 +112,11 @@ class CRMDeal(Document):
 				self.share_with_agent(self.deal_owner)
 			self.assign_agent(self.deal_owner)
 
+		if self.get("ficha"):
+			from crm.api.ficha import auto_apply
+
+			auto_apply(self.name)
+
 		# Auto-enrich a new Deal from its website (best-effort, background job).
 		from crm.domain_enrichment.tasks import auto_enrich_on_create
 

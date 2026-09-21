@@ -39,9 +39,16 @@ SYSTEM_PROMPT = (
 	"começando com '- '. Não prometa resultado e não use linguagem de vendedor. "
 	"Responda apenas com um objeto JSON com estas chaves (todas strings): "
 	+ ", ".join(KEYS)
-	+ ". Significado: dor_objetivo = problema e objetivo do cliente; alinhado = o que ficou combinado entre as partes; "
+	+ ", proposta. Significado: dor_objetivo = problema e objetivo do cliente; alinhado = o que ficou combinado entre as partes; "
 	"escopo = o que será entregue; prazo = datas ou tempo combinados; valor = investimento e forma de pagamento; "
-	"objecoes = dúvidas ou resistências do cliente; proximos = próximos passos e responsáveis."
+	"objecoes = dúvidas ou resistências do cliente; proximos = próximos passos e responsáveis. "
+	"proposta = objeto JSON com o rascunho de uma proposta comercial, usando SOMENTE o que foi dito na reunião: "
+	"intro_texto (2 a 4 frases apresentando o projeto), diagnostico_texto (a situação do cliente em 2 a 3 frases), "
+	"diagnostico_cartoes (até 4 objetos {titulo, texto} com os principais problemas ou pontos de atenção), "
+	"escopo_itens (até 8 objetos {titulo, texto} com o que será entregue), "
+	"cronograma_etapas (até 5 objetos {marco, titulo, texto}, só se etapas ou datas foram combinadas), "
+	"cronograma_nota (prazo geral combinado). Lista sem base na conversa = lista vazia; texto sem base = string vazia. "
+	"Nunca inclua preços que não foram ditos e nunca prometa resultado."
 )
 
 
@@ -65,8 +72,19 @@ def _load(doc) -> dict:
 	return {k: str(data.get(k) or "") for k in KEYS}
 
 
-def _store(doc, data: dict, transcript: str | None = None):
-	values = {"ficha": json.dumps({k: data.get(k, "") for k in KEYS}, ensure_ascii=False)}
+def _draft(doc) -> dict:
+	try:
+		return (json.loads(doc.get("ficha") or "{}").get("_proposta")) or {}
+	except ValueError:
+		return {}
+
+
+def _store(doc, data: dict, transcript: str | None = None, draft: dict | None = None):
+	payload = {k: data.get(k, "") for k in KEYS}
+	keep = draft if draft is not None else _draft(doc)
+	if keep:
+		payload["_proposta"] = keep
+	values = {"ficha": json.dumps(payload, ensure_ascii=False)}
 	if transcript is not None:
 		values["ficha_transcricao"] = transcript
 	frappe.db.set_value(doc.doctype, doc.name, values)
@@ -131,6 +149,8 @@ def save_ficha(doctype: str, name: str, campos):
 		if k in campos:
 			data[k] = str(campos[k] or "").strip()[:MAX_FIELD]
 	_store(doc, data)
+	if doc.doctype == "CRM Deal":
+		auto_apply(doc.name)
 	return {"ok": True}
 
 
@@ -192,7 +212,34 @@ def _ask_claude(transcript: str) -> dict:
 		data = json.loads(match.group(0)) if match else {}
 	except ValueError:
 		data = {}
-	return {k: str(data.get(k) or "").strip()[:MAX_FIELD] for k in KEYS}
+	campos = {k: str(data.get(k) or "").strip()[:MAX_FIELD] for k in KEYS}
+	return campos, _clean_draft(data.get("proposta"))
+
+
+def _s(value, size=1200) -> str:
+	return str(value or "").strip()[:size]
+
+
+def _clean_draft(raw) -> dict:
+	raw = raw if isinstance(raw, dict) else {}
+
+	def items(key, fields, limit):
+		out = []
+		for it in (raw.get(key) or [])[:limit]:
+			if isinstance(it, dict):
+				row = {f: _s(it.get(f), 600) for f in fields}
+				if any(row.values()):
+					out.append(row)
+		return out
+
+	return {
+		"intro_texto": _s(raw.get("intro_texto")),
+		"diagnostico_texto": _s(raw.get("diagnostico_texto")),
+		"diagnostico_cartoes": items("diagnostico_cartoes", ("titulo", "texto"), 4),
+		"escopo_itens": items("escopo_itens", ("titulo", "texto"), 8),
+		"cronograma_etapas": items("cronograma_etapas", ("marco", "titulo", "texto"), 5),
+		"cronograma_nota": _s(raw.get("cronograma_nota"), 400),
+	}
 
 
 @frappe.whitelist()
@@ -201,14 +248,14 @@ def fill_from_transcript(doctype: str, name: str, transcricao: str, sobrescrever
 	transcricao = (transcricao or "").strip()
 	if len(transcricao) < 80:
 		frappe.throw(_("Cole a transcrição completa da reunião (o texto está muito curto)."))
-	extracted = _ask_claude(transcricao[:MAX_TRANSCRIPT])
+	extracted, draft = _ask_claude(transcricao[:MAX_TRANSCRIPT])
 	current = _load(doc)
 	filled = []
 	for k in KEYS:
 		if extracted.get(k) and (cint(sobrescrever) or not current.get(k)):
 			current[k] = extracted[k]
 			filled.append(k)
-	_store(doc, current, transcricao[:MAX_TRANSCRIPT])
+	_store(doc, current, transcricao[:MAX_TRANSCRIPT], draft=draft or None)
 	frappe.get_doc(
 		{
 			"doctype": "Comment",
@@ -218,10 +265,14 @@ def fill_from_transcript(doctype: str, name: str, transcricao: str, sobrescrever
 			"content": "Ficha da reunião preenchida a partir da transcrição.",
 		}
 	).insert(ignore_permissions=True)
+	proposta = 0
+	if doc.doctype == "CRM Deal":
+		proposta = auto_apply(doc.name).get("alterados", 0)
 	return {
 		"campos": current,
 		"preenchidos": filled,
 		"faltando": [k for k in KEYS if not current.get(k)],
+		"proposta": proposta,
 	}
 
 
@@ -231,16 +282,32 @@ def _lines(text: str) -> list[str]:
 	return [re.sub(r"^[\-•*\d.)\s]+", "", ln).strip() for ln in (text or "").splitlines() if ln.strip()]
 
 
+def auto_apply(deal: str) -> dict:
+	"""Preenche a proposta com a ficha, só onde ela ainda está vazia. Silencioso: nunca derruba quem chamou."""
+	try:
+		return _apply(frappe.get_doc("CRM Deal", deal))
+	except Exception:
+		frappe.log_error("Ficha: falha ao preencher a proposta", frappe.get_traceback())
+		return {"ok": False, "alterados": 0}
+
+
 @frappe.whitelist()
 def apply_to_proposal(deal: str):
-	"""Preenche a proposta com a ficha, sem sobrescrever o que já foi escrito nela."""
+	"""Botão 'Levar para a proposta'."""
+	doc = _doc("CRM Deal", deal, "write")
+	if not any(_load(doc).values()):
+		frappe.throw(_("A ficha ainda está vazia."))
+	return _apply(doc)
+
+
+def _apply(doc) -> dict:
 	from crm.api.proposta import get_proposal, save_proposal
 
-	doc = _doc("CRM Deal", deal, "write")
 	ficha = _load(doc)
-	if not any(ficha.values()):
-		frappe.throw(_("A ficha ainda está vazia."))
-	p = get_proposal(deal)
+	draft = _draft(doc)
+	if not any(ficha.values()) and not draft:
+		return {"ok": True, "alterados": 0}
+	p = get_proposal(doc.name)
 	changed = []
 
 	def put(section, key, value):
@@ -248,15 +315,23 @@ def apply_to_proposal(deal: str):
 			p[section][key] = value
 			changed.append(f"{section}.{key}")
 
-	put("diagnostico", "faixa_titulo", "O que entendemos da sua situação" if ficha["dor_objetivo"] else "")
-	put("diagnostico", "faixa_texto", ficha["dor_objetivo"])
-	put("intro", "texto", ficha["alinhado"])
-	if not p["escopo"].get("itens") and ficha["escopo"]:
-		p["escopo"]["itens"] = [{"titulo": ln[:90], "texto": ""} for ln in _lines(ficha["escopo"])[:8]]
-		changed.append("escopo.itens")
-	put("cronograma", "nota", f"Prazo combinado: {ficha['prazo']}" if ficha["prazo"] else "")
+	def put_list(section, key, items):
+		if items and not p[section].get(key):
+			p[section][key] = items
+			changed.append(f"{section}.{key}")
+
+	dor = draft.get("diagnostico_texto") or ficha["dor_objetivo"]
+	put("diagnostico", "faixa_titulo", "O que entendemos da sua situação" if dor else "")
+	put("diagnostico", "faixa_texto", dor)
+	put_list("diagnostico", "cartoes", draft.get("diagnostico_cartoes"))
+	put("intro", "texto", draft.get("intro_texto") or ficha["alinhado"])
+	escopo = draft.get("escopo_itens") or [{"titulo": ln[:90], "texto": ""} for ln in _lines(ficha["escopo"])[:8]]
+	put_list("escopo", "itens", escopo)
+	put_list("cronograma", "etapas", draft.get("cronograma_etapas"))
+	nota = draft.get("cronograma_nota") or (f"Prazo combinado: {ficha['prazo']}" if ficha["prazo"] else "")
+	put("cronograma", "nota", nota)
 	put("investimento", "plano_texto", ficha["valor"])
 	if not changed:
 		return {"ok": True, "alterados": 0}
-	res = save_proposal(deal, p)
+	res = save_proposal(doc.name, p)
 	return {"ok": True, "alterados": len(changed), "avisos": res.get("avisos", [])}

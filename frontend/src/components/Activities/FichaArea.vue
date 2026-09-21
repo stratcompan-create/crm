@@ -72,7 +72,7 @@
       <template #body-content>
         <div class="flex flex-col gap-3">
           <p class="text-p-sm text-ink-gray-6">
-            {{ __('Cole aqui a transcrição. O CRM preenche só os pontos que foram realmente conversados; o que não foi tratado fica como "Falta alinhar".') }}
+            {{ __('Cole aqui a transcrição. O CRM preenche só os pontos que foram realmente conversados; o que não foi tratado fica como "Falta alinhar". No negócio, a proposta (introdução, diagnóstico, escopo e cronograma) também é preenchida.') }}
           </p>
           <div v-if="!ficha.data?.ia" class="rounded-md bg-surface-amber-1 px-3 py-2 text-p-sm text-ink-amber-3">
             {{
@@ -158,11 +158,10 @@ async function fill() {
     showTranscript.value = false
     transcript.value = ''
     const labels = Object.fromEntries((ficha.data.rotulos || []).map((f) => [f.chave, f.rotulo]))
-    toast.success(
-      r.faltando.length
-        ? __('Ficha preenchida. Falta alinhar: {0}', [r.faltando.map((k) => labels[k]).join(', ')])
-        : __('Ficha preenchida por completo.'),
-    )
+    const base = r.faltando.length
+      ? __('Ficha preenchida. Falta alinhar: {0}', [r.faltando.map((k) => labels[k]).join(', ')])
+      : __('Ficha preenchida por completo.')
+    toast.success(r.proposta ? base + ' ' + __('A proposta também foi preenchida (aba Orçamento).') : base)
   } catch (e) {
     error.value = e?.messages?.[0] || __('Não foi possível preencher a ficha.')
   } finally {
