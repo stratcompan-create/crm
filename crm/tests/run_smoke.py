@@ -20,6 +20,7 @@ MODULES = [
     "saude_valor_antigo",
     "drive_pastas",
     "drive_backup",
+    "modelos_e_estilos",
 ]
 
 

@@ -82,7 +82,29 @@
           class="flex flex-col gap-4 border-t border-outline-gray-2 px-4 py-4"
         >
           <template v-for="field in section.fields" :key="field.k">
-            <div v-if="field.type === 'list'" class="flex flex-col gap-2">
+            <div v-if="field.type === 'estilo'" class="flex flex-col gap-2">
+              <div class="text-p-sm font-medium text-ink-gray-7">{{ field.label }}</div>
+              <div class="grid grid-cols-2 gap-2 sm:grid-cols-5">
+                <button
+                  v-for="s in STYLE_OPTIONS"
+                  :key="s.key"
+                  type="button"
+                  class="rounded-lg border p-2 text-left"
+                  :class="(data.capa.tema || '') === s.key ? 'border-ink-gray-9 bg-surface-gray-2' : 'border-outline-gray-2'"
+                  @click="data.capa.tema = s.key"
+                >
+                  <div class="mb-1.5 flex h-10 overflow-hidden rounded" :style="{ background: preview(s.key || 'escuro').page, border: '1px solid #d7dde0' }">
+                    <div class="w-1/3" :style="{ background: preview(s.key || 'escuro').block }" />
+                  </div>
+                  <div class="text-xs font-medium text-ink-gray-8">{{ s.label }}</div>
+                </button>
+              </div>
+              <p class="text-xs text-ink-gray-5">
+                {{ __('Escolha qual cor predomina neste documento. "Padrão do escritório" usa o estilo definido em Configurações → Marca.') }}
+              </p>
+            </div>
+
+            <div v-else-if="field.type === 'list'" class="flex flex-col gap-2">
               <div class="text-p-sm font-medium text-ink-gray-7">
                 {{ field.label }}
               </div>
@@ -141,6 +163,7 @@
 <script setup>
 import { Badge, Button, Dropdown, FormControl, call, toast } from 'frappe-ui'
 import { computed, onMounted, reactive, ref } from 'vue'
+import { getSettings } from '@/stores/settings'
 
 const props = defineProps({
   deal: { type: String, required: true },
@@ -149,6 +172,25 @@ const props = defineProps({
 const RICH = __(
   'Use uma linha em branco para separar parágrafos e **texto** para negrito.',
 )
+
+const STYLE_OPTIONS = [
+  { key: '', label: __('Padrão do escritório') },
+  { key: 'escuro', label: __('Cor da marca nos destaques') },
+  { key: 'claro', label: __('Fundo neutro') },
+  { key: 'branco', label: __('Fundo branco') },
+  { key: 'cor', label: __('Cor da marca em tudo') },
+]
+const { _settings: brand } = getSettings()
+function preview(key) {
+  const C = brand.doc?.brand_color || '#042d3c'
+  const N = brand.doc?.brand_neutral || '#f4f2ed'
+  return {
+    escuro: { page: N, block: C },
+    claro: { page: N, block: `color-mix(in srgb, ${C} 10%, ${N})` },
+    branco: { page: '#ffffff', block: `color-mix(in srgb, ${C} 10%, #ffffff)` },
+    cor: { page: C, block: `color-mix(in srgb, #000000 28%, ${C})` },
+  }[key]
+}
 
 const CARD = [
   { k: 'titulo', label: __('Título') },
@@ -167,7 +209,10 @@ const SECTIONS = [
   {
     key: 'capa',
     label: __('Capa'),
-    fields: [{ k: 'subtitulo', label: __('Subtítulo'), type: 'text' }],
+    fields: [
+      { k: 'subtitulo', label: __('Subtítulo'), type: 'text' },
+      { k: 'tema', label: __('Estilo de cor do documento'), type: 'estilo' },
+    ],
   },
   {
     key: 'intro',

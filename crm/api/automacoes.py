@@ -618,6 +618,15 @@ def _delta(now, before, money=False) -> str:
 
 
 def _report_html(r: dict) -> str:
+	from crm.api import estilo
+
+	pal = estilo.resolve(frappe.get_single("FCRM Settings"))
+	dark = pal["estilo"] in ("escuro", "cor")
+	_head = {
+		"bg": pal["cor"] if dark else (pal["neutra"] if pal["estilo"] == "claro" else "#ffffff"),
+		"ink": "#ffffff" if dark else pal["cor"],
+		"rule": pal["destaque"],
+	}
 	prev = r.get("anterior") or {}
 
 	def row(label, value, delta=""):
@@ -636,7 +645,7 @@ def _report_html(r: dict) -> str:
 	return (
 		"<!DOCTYPE html><html><head><meta charset='utf-8'></head><body style='margin:0'>"
 		"<div style='font-family:Arial,sans-serif;max-width:640px;margin:auto;padding:8px'>"
-		"<div style='background:#042d3c;color:#fff;padding:18px 20px;border-radius:8px'>"
+		f"<div style='background:{_head['bg']};color:{_head['ink']};padding:18px 20px;border-radius:8px;border-bottom:3px solid {_head['rule']}'>"
 		f"<div style='font-size:20px;font-weight:bold'>Resumo da semana</div>"
 		f"<div style='opacity:.8;font-size:13px;margin-top:2px'>{_brand()} · {r['periodo']}</div></div>"
 		+ block("Prospecção e vendas", [
@@ -870,6 +879,9 @@ def after_migrate():
 		ensure_services()
 		ensure_service_layouts()
 		simplify_forms()
+		from crm.api.modelos_documentos import ensure_example
+
+		ensure_example()
 		from crm.api.clientes import ensure_all_folders
 
 		ensure_all_folders()

@@ -117,6 +117,51 @@
       </div>
       <div class="h-px border-t border-outline-elevation-2" />
 
+      <div class="flex items-center justify-between gap-8">
+        <div class="flex flex-col">
+          <div class="text-p-base-medium text-ink-gray-7">{{ __('Cor de fundo neutra') }}</div>
+          <div class="text-p-sm text-ink-gray-5">
+            {{ __('O bege, o cinza ou o off-white da marca. Usada como fundo das páginas dos documentos.') }}
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <input
+            type="color"
+            :value="settings.doc.brand_neutral || '#f4f2ed'"
+            class="h-8 w-12 cursor-pointer rounded border border-outline-gray-2 bg-transparent"
+            @input="settings.doc.brand_neutral = $event.target.value"
+          />
+          <Button
+            v-if="settings.doc.brand_neutral"
+            variant="ghost"
+            :label="__('Restaurar')"
+            @click="settings.doc.brand_neutral = ''"
+          />
+        </div>
+      </div>
+      <div class="h-px border-t border-outline-elevation-2" />
+
+      <div class="flex items-center justify-between gap-8">
+        <div class="flex flex-col">
+          <div class="text-p-base-medium text-ink-gray-7">{{ __('Estilo padrão dos documentos') }}</div>
+          <div class="text-p-sm text-ink-gray-5">
+            {{ __('Qual cor predomina nas propostas, contratos e relatórios. Cada proposta pode escolher outro estilo.') }}
+          </div>
+        </div>
+        <FormControl
+          v-model="settings.doc.documento_estilo"
+          class="w-64"
+          type="select"
+          :options="[
+            { label: __('Cor da marca nos destaques'), value: 'escuro' },
+            { label: __('Fundo neutro'), value: 'claro' },
+            { label: __('Fundo branco'), value: 'branco' },
+            { label: __('Cor da marca em tudo'), value: 'cor' },
+          ]"
+        />
+      </div>
+      <div class="h-px border-t border-outline-elevation-2" />
+
       <!-- logo -->
       <div class="flex flex-col justify-between gap-4">
         <div class="flex items-center flex-1 gap-5">

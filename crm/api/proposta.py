@@ -46,7 +46,7 @@ CONDICOES_PADRAO = [
 def default_proposal() -> dict:
 	"""Estrutura de partida da proposta. Seções sem conteúdo ficam de fora do PDF."""
 	return {
-		"capa": {"subtitulo": ""},
+		"capa": {"subtitulo": "", "tema": ""},
 		"intro": {"titulo": "", "destaque": "", "texto": "", "cartoes_titulo": "", "cartoes": [], "numeros": []},
 		"diagnostico": {
 			"titulo": "", "destaque": "", "subtitulo": "", "numeros": [],
@@ -444,7 +444,7 @@ def _css(color, accent):
 	body {{ font-family:'Poppins', Arial, sans-serif; color:#1f2d33; font-size:7pt; }}
 	table {{ border-collapse:collapse; }}
 	p {{ margin:0 0 2.2mm 0; }}
-	.page {{ width:298mm; height:210.15mm; position:relative; overflow:hidden; page-break-after:always; background:#f4f2ed; }}
+	.page {{ width:298mm; height:210.05mm; position:relative; overflow:hidden; page-break-after:always; background:#f4f2ed; }}
 	.hdr {{ position:absolute; top:9mm; left:16mm; width:265mm; font-size:5.6pt; letter-spacing:0.35em; color:#6b7c82; font-weight:600; }}
 	.hdr .r, .ftr .r {{ text-align:right; letter-spacing:0.2em; font-weight:400; }}
 	.dia {{ display:inline-block; width:2.4mm; height:2.4mm; border:0.3mm solid {accent}; margin-right:2.5mm; -webkit-transform:rotate(45deg); }}
@@ -515,10 +515,10 @@ def _css(color, accent):
 	table.items td {{ padding:1.8mm 1mm; border-bottom:0.2mm solid #e3e7e7; }}
 	.c {{ text-align:center; }} .r {{ text-align:right; }}
 	table.items th.c {{ text-align:center; }} table.items th.r {{ text-align:right; }}
-	.cover {{ width:298mm; height:210.15mm; position:relative; overflow:hidden; page-break-after:always; }}
-	.cover-bg {{ position:absolute; top:0; left:0; width:298mm; height:210.15mm; }}
-	.cover-mid {{ position:absolute; top:0; left:0; width:298mm; height:210.15mm; text-align:center; }}
-	.cover-mid table {{ width:298mm; height:210.15mm; }}
+	.cover {{ width:298mm; height:210.05mm; position:relative; overflow:hidden; page-break-after:always; }}
+	.cover-bg {{ position:absolute; top:0; left:0; width:298mm; height:210.05mm; }}
+	.cover-mid {{ position:absolute; top:0; left:0; width:298mm; height:210.05mm; text-align:center; }}
+	.cover-mid table {{ width:298mm; height:210.05mm; }}
 	.cover-name {{ font-family:'Lora', Georgia, serif; font-size:30pt; letter-spacing:0.03em; color:{_mix(accent, '#ffffff', 0.55)}; display:inline-block; border-bottom:0.6mm solid {_mix(accent, '#ffffff', 0.55)}; padding-bottom:1.2mm; }}
 	.cover-logo {{ max-height:38mm; max-width:120mm; margin-bottom:6mm; }}
 	.cover-k {{ font-size:6pt; letter-spacing:0.5em; color:{_mix(accent, '#000000', 0.05)}; font-weight:700; margin-top:9mm; }}
@@ -614,8 +614,10 @@ def check_fit(settings, items, total, client_name, data) -> list[str]:
 
 
 def render_proposal_html(deal_doc, settings, items, total, client_name, data, logo_url=""):
-	color = _valid_color(settings.get("brand_color"), DEFAULT_COLOR)
-	accent = _valid_color(settings.get("brand_accent"), DEFAULT_ACCENT)
+	from crm.api import estilo
+
+	pal = estilo.resolve(settings, (data.get("capa") or {}).get("tema"))
+	color, accent, neutral, style = pal["cor"], pal["destaque"], pal["neutra"], pal["estilo"]
 	brand = settings.get("brand_name") or ""
 
 	sections = [html for _key, html in _build_sections(data, items, total)]
@@ -624,21 +626,25 @@ def render_proposal_html(deal_doc, settings, items, total, client_name, data, lo
 	pages = "".join(_page(s, i + 2, total_pages, client_name, brand) for i, s in enumerate(sections))
 
 	logo_uri = _logo_data_uri(logo_url)
-	if logo_uri:
-		emblem = f'<img class="cover-logo" src="{logo_uri}"><br>'
-		name_html = f'<div class="cover-name">{_spaced(client_name)}</div>'
-	else:
-		emblem, name_html = "", f'<div class="cover-name">{_spaced(client_name)}</div>'
+	emblem = f'<img class="cover-logo" src="{logo_uri}"><br>' if logo_uri else ""
+	name_html = f'<div class="cover-name">{_spaced(client_name)}</div>'
 	subtitulo = data["capa"].get("subtitulo") or ""
+	# capa escura: fundo com brilho da cor da marca; capa clara: fundo neutro com moldura
+	backdrop = (
+		f'<img class="cover-bg" src="{_cover_background(color)}">'
+		if estilo.is_dark_cover(style)
+		else '<div class="cover-frame"></div>'
+	)
 	cover = (
-		f'<div class="cover"><img class="cover-bg" src="{_cover_background(color)}">'
+		f'<div class="cover">{backdrop}'
 		f'<div class="cover-n">01 / {total_pages:02d}</div>'
 		f'<div class="cover-mid"><table><tr><td style="vertical-align:middle;text-align:center">{emblem}{name_html}'
 		f'<div class="cover-k">PROPOSTA COMERCIAL</div>'
 		f'<div class="cover-s">{_e(subtitulo)}</div></td></tr></table></div>'
 		f'<div class="cover-f">{_spaced(brand)} &nbsp;×&nbsp; {_spaced(client_name)}</div></div>'
 	)
-	return f'<html><head><meta charset="utf-8"><style>{_css(color, accent)}</style></head><body>{cover}{pages}</body></html>'
+	css = _css(color, accent) + estilo.theme_css(style, color, accent, neutral)
+	return f'<html><head><meta charset="utf-8"><style>{css}</style></head><body>{cover}{pages}</body></html>'
 
 
 def render_pdf(html: str) -> bytes:

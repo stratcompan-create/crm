@@ -27,6 +27,8 @@
   "brand_name",
   "brand_color",
   "brand_accent",
+  "brand_neutral",
+  "documento_estilo",
   "brand_logo",
   "favicon",
   "website_url",
@@ -239,6 +241,17 @@
    "fieldname": "brand_accent",
    "fieldtype": "Data",
    "label": "Cor de destaque da marca"
+  },
+  {
+   "fieldname": "brand_neutral",
+   "fieldtype": "Data",
+   "label": "Cor de fundo neutra"
+  },
+  {
+   "fieldname": "documento_estilo",
+   "fieldtype": "Select",
+   "label": "Estilo padrão dos documentos",
+   "options": "\nescuro\nclaro\nbranco\ncor"
   }
  ],
  "index_web_pages_for_search": 1,

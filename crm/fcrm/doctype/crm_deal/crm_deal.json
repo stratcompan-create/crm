@@ -95,7 +95,8 @@
   "ficha_transcricao",
   "cidade_estado",
   "pasta_cliente",
-  "lancamento_antigo"
+  "lancamento_antigo",
+  "dados_cliente"
  ],
  "fields": [
   {
@@ -618,6 +619,13 @@
    "label": "Valor antigo (anterior ao CRM)",
    "description": "Só registra a cobrança. Não conta como venda nova nem gera contrato, tarefas de início ou pós-venda.",
    "default": "0"
+  },
+  {
+   "fieldname": "dados_cliente",
+   "fieldtype": "Long Text",
+   "label": "Dados do cliente para documentos",
+   "hidden": 1,
+   "no_copy": 0
   }
  ],
  "grid_page_length": 50,

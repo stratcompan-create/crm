@@ -12,6 +12,52 @@
         </p>
       </div>
 
+      <!-- Gerar documento a partir de um modelo -->
+      <section v-if="models.data?.length" class="rounded-lg border border-outline-gray-2 p-4">
+        <div class="text-base-semibold text-ink-gray-9">{{ __('Gerar documento') }}</div>
+        <p class="mt-1 text-p-sm text-ink-gray-6">
+          {{ __('Escolha um modelo (contrato, procuração...). O CRM preenche com os dados deste negócio e gera o PDF com a marca do escritório.') }}
+        </p>
+        <div class="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div class="flex flex-col gap-1">
+            <span class="text-p-sm text-ink-gray-6">{{ __('Modelo') }}</span>
+            <FormControl v-model="modelo" type="select" :options="modelOptions" />
+          </div>
+          <div class="flex flex-col gap-1">
+            <span class="text-p-sm text-ink-gray-6">{{ __('Estilo de cor') }}</span>
+            <FormControl v-model="estilo" type="select" :options="styleOptions" />
+          </div>
+        </div>
+
+        <button type="button" class="mt-3 flex items-center gap-1 text-p-sm text-ink-gray-7 underline" @click="showClient = !showClient">
+          {{ showClient ? __('Esconder dados do cliente') : __('Dados do cliente para o documento') }}
+        </button>
+        <div v-if="showClient" class="mt-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div v-for="f in clientFields" :key="f.k" class="flex flex-col gap-1" :class="f.wide ? 'sm:col-span-2' : ''">
+            <span class="text-xs text-ink-gray-5">{{ f.label }}</span>
+            <FormControl v-model="client[f.k]" type="text" :placeholder="f.label" />
+          </div>
+        </div>
+
+        <div v-if="missing.length" class="mt-3 rounded-md bg-surface-amber-1 px-3 py-2 text-p-sm text-ink-amber-3">
+          {{ __('Faltam dados para este modelo: {0}.', [missing.map((m) => m.descricao.replace(/ \(.*\)/, '')).join(', ')]) }}
+          <span class="block text-xs">{{ __('Preencha em "Dados do cliente" e gere de novo, ou gere assim mesmo: os campos vazios ficam como linhas para preencher à mão.') }}</span>
+        </div>
+
+        <div class="mt-3 flex flex-wrap items-center gap-2">
+          <Button variant="solid" :label="__('Gerar PDF')" :loading="generating" :disabled="!modelo" @click="generate(false)" />
+          <Button v-if="missing.length" variant="subtle" :label="__('Gerar assim mesmo')" :loading="generating" @click="generate(true)" />
+        </div>
+
+        <div v-if="generated" class="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-md bg-surface-green-1 px-3 py-2">
+          <span class="text-p-sm text-ink-green-3">{{ __('Documento gerado: {0}', [generated.nome]) }}</span>
+          <span class="flex gap-2">
+            <a :href="generated.url" target="_blank"><Button variant="subtle" :label="__('Abrir')" /></a>
+            <Button v-if="docs.data.tem_email" variant="subtle" :label="__('Enviar por e-mail')" @click="sendGenerated" />
+          </span>
+        </div>
+      </section>
+
       <!-- Pedir documentos -->
       <section class="rounded-lg border border-outline-gray-2 p-4">
         <div class="text-base-semibold text-ink-gray-9">{{ __('Pedir documentos ao cliente') }}</div>
@@ -93,7 +139,7 @@
 
 <script setup>
 import { Button, ErrorMessage, FormControl, call, createResource, toast } from 'frappe-ui'
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, reactive, ref, watch } from 'vue'
 
 const props = defineProps({ doctype: String, docname: String })
 
@@ -179,4 +225,80 @@ function whatsLink(p) {
 const received = (p, item) => (p.recebidos || []).filter((r) => r.item === item).length
 const dateBr = (v) => (v ? String(v).slice(0, 10).split('-').reverse().join('/') : '')
 const size = (b) => (!b ? '' : b > 1048576 ? (b / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(b / 1024)) + ' KB')
+
+// ---- documentos a partir de modelos
+const models = createResource({ url: 'crm.api.modelos_documentos.list_models', auto: true, onError() {} })
+const modelo = ref('')
+const estilo = ref('')
+const showClient = ref(false)
+const generating = ref(false)
+const generated = ref(null)
+const missing = ref([])
+const client = reactive({ cpf_cnpj: '', rg: '', estado_civil: '', profissao: '', nacionalidade: '', endereco: '' })
+const clientFields = [
+  { k: 'cpf_cnpj', label: __('CPF ou CNPJ') },
+  { k: 'rg', label: __('RG') },
+  { k: 'nacionalidade', label: __('Nacionalidade') },
+  { k: 'estado_civil', label: __('Estado civil') },
+  { k: 'profissao', label: __('Profissão') },
+  { k: 'endereco', label: __('Endereço completo'), wide: true },
+]
+const modelOptions = computed(() => [
+  { label: __('Escolha um modelo'), value: '' },
+  ...(models.data || []).map((m) => ({ label: `${m.tipo} · ${m.name}`, value: m.name })),
+])
+const styleOptions = [
+  { label: __('Padrão do escritório'), value: '' },
+  { label: __('Cor da marca nos destaques'), value: 'escuro' },
+  { label: __('Fundo neutro'), value: 'claro' },
+  { label: __('Fundo branco'), value: 'branco' },
+  { label: __('Cor da marca em tudo'), value: 'cor' },
+]
+onMounted(async () => {
+  try {
+    Object.assign(client, await call('crm.api.modelos_documentos.get_client_data', { deal: props.docname }))
+  } catch (e) {}
+})
+watch(modelo, async (m) => {
+  generated.value = null
+  missing.value = []
+  if (m) await refreshMissing()
+})
+async function refreshMissing() {
+  await call('crm.api.modelos_documentos.save_client_data', { deal: props.docname, dados: { ...client } })
+  const r = await call('crm.api.modelos_documentos.check_model', { deal: props.docname, modelo: modelo.value })
+  missing.value = r.faltando
+}
+async function generate(force) {
+  generating.value = true
+  try {
+    await call('crm.api.modelos_documentos.save_client_data', { deal: props.docname, dados: { ...client } })
+    const r = await call('crm.api.modelos_documentos.generate', {
+      deal: props.docname,
+      modelo: modelo.value,
+      estilo: estilo.value,
+      forcar: force ? 1 : 0,
+    })
+    if (!r.ok) {
+      missing.value = r.faltando
+      return
+    }
+    missing.value = r.faltando
+    generated.value = r
+    toast.success(__('Documento gerado e guardado na pasta do cliente'))
+    docs.reload()
+  } catch (e) {
+    toast.error(e?.messages?.[0] || __('Não foi possível gerar o documento.'))
+  } finally {
+    generating.value = false
+  }
+}
+async function sendGenerated() {
+  try {
+    await call('crm.api.modelos_documentos.send_generated', { deal: props.docname, arquivo: generated.value.arquivo })
+    toast.success(__('E-mail enviado ao cliente'))
+  } catch (e) {
+    toast.error(e?.messages?.[0] || __('Não foi possível enviar o e-mail.'))
+  }
+}
 </script>
