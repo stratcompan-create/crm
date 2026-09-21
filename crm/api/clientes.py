@@ -272,6 +272,8 @@ def get_public_request(t: str = "") -> dict:
 	return {
 		"marca": frappe.db.get_single_value("FCRM Settings", "brand_name") or "",
 		"logo": frappe.db.get_single_value("FCRM Settings", "brand_logo") or "",
+		"cor": frappe.db.get_single_value("FCRM Settings", "brand_color") or "",
+		"destaque": frappe.db.get_single_value("FCRM Settings", "brand_accent") or "",
 		"nome": client.nome,
 		"mensagem": doc.mensagem or "",
 		"itens": [{"nome": i, "enviados": done.get(i, 0)} for i in json.loads(doc.itens or "[]")],

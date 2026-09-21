@@ -5,7 +5,10 @@
 # A marca tem três cores: principal (ex.: verde escuro), destaque e fundo neutro (ex.: bege).
 # O estilo define QUAL delas predomina no documento.
 
+import base64
 import re
+
+import frappe
 
 DEFAULT_NEUTRAL = "#f4f2ed"
 
@@ -104,3 +107,37 @@ def theme_css(style: str, C: str, A: str, N: str) -> str:
 	table.items td {{ border-bottom:0.2mm solid {line}; color:{ink}; }}
 	.cover-name {{ color:{N}; border-bottom:0.6mm solid {A}; }}
 	"""
+
+
+@frappe.whitelist()
+def preview_pdf(cor: str = "", destaque: str = "", neutra: str = "", estilo: str = "", nome: str = "") -> dict:
+	"""PDF de exemplo com as cores informadas (ainda não salvas), para ver o resultado exato antes de aplicar."""
+	frappe.only_for(("System Manager", "Sales Manager"))
+	from crm.api import proposta
+
+	settings = {"brand_color": cor, "brand_accent": destaque, "brand_neutral": neutra, "brand_name": nome or "Seu Escritório"}
+	data = proposta._merge(
+		proposta.default_proposal(),
+		{
+			"capa": {"subtitulo": "Site institucional e CRM", "tema": estilo if estilo in STYLES else ""},
+			"intro": {
+				"titulo": "Um projeto para", "destaque": "Cliente Exemplo",
+				"texto": "Um texto de exemplo para mostrar como os parágrafos aparecem no documento.\n\nO segundo parágrafo também.",
+				"cartoes_titulo": "Pontos do projeto",
+				"cartoes": [{"titulo": "Site", "texto": "Cinco páginas"}, {"titulo": "CRM", "texto": "Funil e follow-up"}],
+				"numeros": [{"valor": "60", "rotulo": "DIAS"}, {"valor": "2", "rotulo": "ENTREGAS"}, {"valor": "100%", "rotulo": "SOB MEDIDA"}],
+			},
+			"diagnostico": {
+				"titulo": "O que", "destaque": "encontramos", "faixa_titulo": "SITUAÇÃO",
+				"faixa_texto": "Texto de exemplo da situação do cliente.",
+				"cartoes": [{"titulo": "Ponto 1", "texto": "Descrição"}, {"titulo": "Ponto 2", "texto": "Descrição"}],
+			},
+			"investimento": {
+				"titulo": "Investimento", "plano_rotulo": "PLANO", "plano_titulo": "Site + CRM",
+				"plano_texto": "Projeto completo", "condicoes": [{"titulo": "O que está incluso", "texto": "Site e CRM"}],
+			},
+		},
+	)
+	items = [frappe._dict(description="Site institucional", qty=1, unit_price=3000), frappe._dict(description="CRM", qty=1, unit_price=6000)]
+	html = proposta.render_proposal_html(None, settings, items, 9000, "Cliente Exemplo", data, "")
+	return {"pdf": base64.b64encode(proposta.render_pdf(html)).decode()}

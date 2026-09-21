@@ -81,6 +81,9 @@ def run():
             html = proposta.render_proposal_html(None, settings, items, 100, "Cliente", data, "")
             counts[st] = len(PdfReader(io.BytesIO(proposta.render_pdf(html))).pages)
         ck("proposta: 4 estilos, sem página em branco (capa + 3 seções = 4 páginas)", set(counts.values()) == {4}, str(counts))
+        for st in ("escuro", "claro", "branco", "cor"):
+            pdf = base64.b64decode(estilo.preview_pdf("#1f4d3a", "#b89b5e", "#f1ead9", st, "Escritório X")["pdf"])
+            ck(f"prévia em PDF das cores digitadas (estilo '{st}')", pdf.startswith(b"%PDF") and len(PdfReader(io.BytesIO(pdf)).pages) >= 4)
         ck("estilo inválido volta ao padrão", estilo.resolve({}, "xyz")["estilo"] == "escuro")
     finally:
         frappe.db.rollback()

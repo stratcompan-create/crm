@@ -21,8 +21,9 @@
       </div>
     </div>
 
+    <div class="grid min-h-0 flex-1 gap-6 overflow-y-auto lg:grid-cols-[minmax(0,1fr)_340px]">
     <!-- Fields -->
-    <div class="flex flex-1 flex-col p-2 gap-4 overflow-y-auto">
+    <div class="flex flex-col p-2 gap-4">
       <!-- Brand Anm -->
       <div class="flex items-center justify-between gap-8">
         <div class="flex flex-col">
@@ -232,10 +233,23 @@
         </div>
       </div>
     </div>
+    <aside class="p-2">
+      <div class="sticky top-2">
+        <DocumentPreview
+          :cor="settings.doc.brand_color"
+          :destaque="settings.doc.brand_accent"
+          :neutra="settings.doc.brand_neutral"
+          :estilo="settings.doc.documento_estilo"
+          :nome="settings.doc.brand_name"
+        />
+      </div>
+    </aside>
+    </div>
   </div>
 </template>
 <script setup>
 import ImageIcon from '~icons/lucide/image'
+import DocumentPreview from '@/components/DocumentPreview.vue'
 import ImageUploader from '@/components/Controls/ImageUploader.vue'
 import { Button, FormControl } from 'frappe-ui'
 import { getSettings } from '@/stores/settings'

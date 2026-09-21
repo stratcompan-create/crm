@@ -102,6 +102,16 @@
               <p class="text-xs text-ink-gray-5">
                 {{ __('Escolha qual cor predomina neste documento. "Padrão do escritório" usa o estilo definido em Configurações → Marca.') }}
               </p>
+              <div class="max-w-sm">
+                <DocumentPreview
+                  :cor="brand.doc?.brand_color"
+                  :destaque="brand.doc?.brand_accent"
+                  :neutra="brand.doc?.brand_neutral"
+                  :estilo="data.capa.tema || brand.doc?.documento_estilo"
+                  :nome="brand.doc?.brand_name"
+                  :show-pdf="false"
+                />
+              </div>
             </div>
 
             <div v-else-if="field.type === 'list'" class="flex flex-col gap-2">
@@ -164,6 +174,7 @@
 import { Badge, Button, Dropdown, FormControl, call, toast } from 'frappe-ui'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { getSettings } from '@/stores/settings'
+import DocumentPreview from '@/components/DocumentPreview.vue'
 
 const props = defineProps({
   deal: { type: String, required: true },
