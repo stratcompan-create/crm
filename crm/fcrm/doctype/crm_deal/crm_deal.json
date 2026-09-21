@@ -93,7 +93,8 @@
   "valor_recorrente",
   "ficha",
   "ficha_transcricao",
-  "cidade_estado"
+  "cidade_estado",
+  "pasta_cliente"
  ],
  "fields": [
   {
@@ -601,6 +602,14 @@
    "fieldname": "cidade_estado",
    "fieldtype": "Data",
    "label": "Cidade / Estado"
+  },
+  {
+   "fieldname": "pasta_cliente",
+   "fieldtype": "Data",
+   "label": "Pasta do cliente",
+   "hidden": 1,
+   "read_only": 1,
+   "no_copy": 1
   }
  ],
  "grid_page_length": 50,

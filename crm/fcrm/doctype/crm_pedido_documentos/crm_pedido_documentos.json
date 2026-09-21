@@ -1,0 +1,89 @@
+{
+ "actions": [],
+ "autoname": "hash",
+ "naming_rule": "Random",
+ "creation": "2026-09-21 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "deal",
+  "token",
+  "itens",
+  "recebidos",
+  "mensagem",
+  "expira_em",
+  "ativo"
+ ],
+ "fields": [
+  {
+   "fieldname": "deal",
+   "fieldtype": "Link",
+   "label": "Negócio",
+   "options": "CRM Deal",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "token",
+   "fieldtype": "Data",
+   "label": "Código do link",
+   "unique": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "itens",
+   "fieldtype": "Long Text",
+   "label": "Documentos pedidos"
+  },
+  {
+   "fieldname": "recebidos",
+   "fieldtype": "Long Text",
+   "label": "Recebidos",
+   "read_only": 1
+  },
+  {
+   "fieldname": "mensagem",
+   "fieldtype": "Small Text",
+   "label": "Mensagem"
+  },
+  {
+   "fieldname": "expira_em",
+   "fieldtype": "Date",
+   "label": "Válido até",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "ativo",
+   "fieldtype": "Check",
+   "label": "Ativo",
+   "default": "1"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-09-21 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "FCRM",
+ "name": "CRM Pedido Documentos",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "write": 1,
+   "role": "System Manager"
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "write": 1,
+   "role": "Sales Manager"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

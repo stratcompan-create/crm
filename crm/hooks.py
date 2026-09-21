@@ -171,7 +171,7 @@ override_doctype_class = {
 
 doc_events = {
 	"File": {
-		"after_insert": ["crm.api.gdrive.on_file_insert"],
+		"after_insert": ["crm.api.gdrive.on_file_insert", "crm.api.clientes.on_file_insert"],
 	},
 	"Contact": {
 		"validate": ["crm.api.contact.validate"],
@@ -196,6 +196,7 @@ doc_events = {
 		"on_update": ["crm.api.whatsapp.on_update"],
 	},
 	"CRM Deal": {
+		"after_insert": ["crm.api.clientes.on_deal_insert"],
 		"on_update": [
 			"crm.fcrm.doctype.erpnext_crm_settings.erpnext_crm_settings.create_customer_in_erpnext"
 		],

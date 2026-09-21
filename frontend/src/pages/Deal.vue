@@ -363,6 +363,7 @@ import ArrowUpRightIcon from '@/components/Icons/ArrowUpRightIcon.vue'
 import SuccessIcon from '@/components/Icons/SuccessIcon.vue'
 import AttachmentIcon from '@/components/Icons/AttachmentIcon.vue'
 import LayoutHeader from '@/components/LayoutHeader.vue'
+import DocumentosIcon from '~icons/lucide/folder-open'
 import FichaIcon from '~icons/lucide/clipboard-list'
 import Activities from '@/components/Activities/Activities.vue'
 import OrganizationModal from '@/components/Modals/OrganizationModal.vue'
@@ -600,6 +601,11 @@ const tabs = computed(() => {
       name: 'Ficha',
       label: __('Ficha da reunião'),
       icon: FichaIcon,
+    },
+    {
+      name: 'Documentos',
+      label: __('Documentos'),
+      icon: DocumentosIcon,
     },
     {
       name: 'Budget',

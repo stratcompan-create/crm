@@ -820,6 +820,9 @@ def after_migrate():
 		ensure_services()
 		ensure_service_layouts()
 		simplify_forms()
+		from crm.api.clientes import ensure_all_folders
+
+		ensure_all_folders()
 		frappe.db.commit()
 	except Exception:
 		frappe.log_error("Serviços: falha ao preparar campos e layouts", frappe.get_traceback())

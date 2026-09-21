@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Envio de documentos</title>
+<style>
+  :root { --bg:#f6f8f9; --card:#fff; --ink:#0f2530; --mute:#5f7480; --line:#dfe6ea; --brand:#042d3c; --ok:#1a7f4b; --err:#c0392b; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#04202b; --card:#0a2f3d; --ink:#eaf1f4; --mute:#9db3bd; --line:#1c4757; --brand:#8aa1a9; --ok:#4cc38a; --err:#ff8a7a; } }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: Inter, system-ui, Arial, sans-serif; background:var(--bg); color:var(--ink); }
+  .wrap { max-width: 560px; margin: 0 auto; padding: 24px 16px 60px; }
+  header { display:flex; align-items:center; gap:12px; margin-bottom:18px; }
+  header img { max-height:42px; }
+  h1 { font-size: 21px; margin: 0 0 6px; }
+  .sub { color:var(--mute); font-size:14px; margin:0 0 16px; line-height:1.5; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:14px 16px; margin-bottom:10px; }
+  .row { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .name { font-weight:600; font-size:15px; }
+  .state { font-size:13px; color:var(--mute); margin-top:2px; }
+  .state.ok { color:var(--ok); }
+  .pick { display:inline-block; background:var(--brand); color:#fff; border-radius:10px; padding:10px 14px; font-size:14px; font-weight:600; cursor:pointer; white-space:nowrap; }
+  @media (prefers-color-scheme: dark) { .pick { color:#04202b; } }
+  .pick input { display:none; }
+  .msg { font-size:13px; margin-top:8px; }
+  .msg.err { color:var(--err); }
+  .note { background:rgba(138,161,169,.15); border-radius:10px; padding:10px 12px; font-size:14px; margin-bottom:14px; line-height:1.5; }
+  .priv { color:var(--mute); font-size:12px; margin-top:18px; line-height:1.5; }
+  .hide { display:none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><img id="logo" class="hide" alt=""><strong id="marca"></strong></header>
+  <div id="erro" class="card hide"></div>
+  <div id="app" class="hide">
+    <h1 id="titulo">Envio de documentos</h1>
+    <p class="sub" id="sub"></p>
+    <div id="nota" class="note hide"></div>
+    <div id="lista"></div>
+    <p class="priv">Seus arquivos são enviados de forma segura e ficam guardados apenas na pasta do seu atendimento, acessível somente à equipe do escritório. Aceitamos PDF e fotos (JPG, PNG, HEIC), até 15 MB cada.</p>
+  </div>
+</div>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var token = new URLSearchParams(location.search).get('t') || '';
+  function errText(j) {
+    try { var m = JSON.parse(j._server_messages || '[]'); if (m.length) return JSON.parse(m[0]).message.replace(/<[^>]+>/g, ''); } catch (e) {}
+    return 'Não foi possível concluir. Tente novamente.';
+  }
+  function fail(msg) { $('erro').textContent = msg; $('erro').classList.remove('hide'); }
+  function render(data) {
+    $('marca').textContent = data.marca || '';
+    if (data.logo) { $('logo').src = data.logo; $('logo').classList.remove('hide'); }
+    document.title = 'Envio de documentos' + (data.marca ? ' — ' + data.marca : '');
+    $('sub').textContent = 'Olá' + (data.nome ? ', ' + data.nome : '') + '! Toque em "Enviar" em cada documento e escolha a foto ou o arquivo. Pode tirar a foto na hora.';
+    if (data.mensagem) { $('nota').textContent = data.mensagem; $('nota').classList.remove('hide'); }
+    var box = $('lista'); box.innerHTML = '';
+    data.itens.forEach(function (it) { box.appendChild(card(it)); });
+    $('app').classList.remove('hide');
+  }
+  function card(it) {
+    var c = document.createElement('div'); c.className = 'card';
+    var row = document.createElement('div'); row.className = 'row';
+    var left = document.createElement('div');
+    var n = document.createElement('div'); n.className = 'name'; n.textContent = it.nome;
+    var s = document.createElement('div'); s.className = 'state';
+    function setState(count) { s.textContent = count ? '✓ ' + count + (count > 1 ? ' arquivos enviados' : ' arquivo enviado') : 'Ainda não enviado'; s.className = 'state' + (count ? ' ok' : ''); }
+    setState(it.enviados);
+    left.appendChild(n); left.appendChild(s);
+    var label = document.createElement('label'); label.className = 'pick';
+    label.appendChild(document.createTextNode('Enviar'));
+    var input = document.createElement('input'); input.type = 'file'; input.multiple = true; input.accept = 'image/*,application/pdf,.heic,.doc,.docx';
+    label.appendChild(input);
+    row.appendChild(left); row.appendChild(label); c.appendChild(row);
+    var msg = document.createElement('div'); msg.className = 'msg hide'; c.appendChild(msg);
+    var count = it.enviados;
+    input.onchange = function () {
+      var files = Array.prototype.slice.call(input.files); input.value = '';
+      msg.className = 'msg'; msg.textContent = 'Enviando...';
+      (function next(i) {
+        if (i >= files.length) { msg.classList.add('hide'); return; }
+        var fd = new FormData(); fd.append('file', files[i]); fd.append('t', token); fd.append('item', it.nome);
+        fetch('/api/method/crm.api.clientes.upload_public_document', { method: 'POST', body: fd })
+          .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+          .then(function (res) {
+            if (!res.ok) { msg.className = 'msg err'; msg.textContent = errText(res.j); return; }
+            count = res.j.message.enviados; setState(count);
+            msg.textContent = 'Enviando... (' + (i + 1) + ' de ' + files.length + ')';
+            next(i + 1);
+          })
+          .catch(function () { msg.className = 'msg err'; msg.textContent = 'Falha de conexão. Tente de novo.'; });
+      })(0);
+    };
+    return c;
+  }
+  if (!token) { fail('Link inválido. Peça um novo ao escritório.'); return; }
+  fetch('/api/method/crm.api.clientes.get_public_request?t=' + encodeURIComponent(token))
+    .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+    .then(function (res) { if (!res.ok) fail(errText(res.j)); else render(res.j.message); })
+    .catch(function () { fail('Não foi possível carregar. Tente novamente.'); });
+})();
+</script>
+</body>
+</html>
