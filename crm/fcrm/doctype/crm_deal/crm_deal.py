@@ -143,18 +143,9 @@ class CRMDeal(Document):
 		valor = flt(self.deal_value) or flt(self.net_total) or flt(self.expected_deal_value)
 		if valor <= 0:
 			return
-		tipos = (frappe.get_meta("CRM Honorario").get_field("tipo_honorario").options or "").split("\n")
-		frappe.get_doc(
-			{
-				"doctype": "CRM Honorario",
-				"deal": self.name,
-				"status": "Pendente",
-				"tipo_honorario": tipos[0] if tipos and tipos[0] else None,
-				"servico": self._guess_service(),
-				"valor": valor,
-				"data_vencimento": frappe.utils.add_days(frappe.utils.nowdate(), 30),
-			}
-		).insert(ignore_permissions=True)
+		from crm.api.automacoes import on_deal_won
+
+		on_deal_won(self, valor)
 
 	def _guess_service(self):
 		"""Deduz o serviço pelo texto dos itens do orçamento (só usa opções que existem no campo)."""

@@ -227,6 +227,7 @@ doc_events = {
 	"User": {
 		"before_validate": ["crm.api.live_demo.validate_user"],
 		"validate_reset_password": ["crm.api.live_demo.validate_reset_password"],
+		"on_update": ["crm.api.automacoes.on_user_change"],
 	},
 }
 
@@ -235,9 +236,17 @@ doc_events = {
 
 scheduler_events = {
 	"all": ["crm.api.event.trigger_offset_event_notifications"],
-	"hourly": ["crm.api.event.trigger_hourly_event_notifications", "crm.api.followup.run_followups"],
+	"hourly": [
+		"crm.api.event.trigger_hourly_event_notifications",
+		"crm.api.followup.run_followups",
+		"crm.api.agenda.send_meeting_reminders",
+	],
 	"daily": [
 		"crm.api.financeiro.mark_overdue",
+		"crm.api.automacoes.send_billing_reminders",
+		"crm.api.automacoes.run_posvenda",
+		"crm.api.automacoes.sync_lead_distribution",
+		"crm.api.automacoes.weekly_job",
 		"crm.api.event.trigger_daily_event_notifications",
 		"crm.fcrm.doctype.crm_invitation.crm_invitation.expire_invitations",
 		"crm.api.instagram.refresh_token_if_needed",

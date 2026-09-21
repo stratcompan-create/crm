@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Agendar reunião</title>
+<style>
+  :root { --bg:#f6f8f9; --card:#fff; --ink:#0f2530; --mute:#5f7480; --line:#dfe6ea; --brand:#042d3c; --accent:#8aa1a9; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#04202b; --card:#0a2f3d; --ink:#eaf1f4; --mute:#9db3bd; --line:#1c4757; --brand:#8aa1a9; --accent:#8aa1a9; } }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family: Inter, system-ui, Arial, sans-serif; background:var(--bg); color:var(--ink); }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 28px 16px 60px; }
+  header { display:flex; align-items:center; gap:12px; margin-bottom:22px; }
+  header img { max-height:44px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color:var(--mute); font-size:14px; margin:0 0 20px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:14px; padding:18px; }
+  .days { display:flex; gap:8px; overflow-x:auto; padding-bottom:8px; }
+  .day { flex:0 0 auto; border:1px solid var(--line); background:transparent; color:var(--ink); border-radius:10px; padding:8px 12px; cursor:pointer; text-align:center; min-width:64px; }
+  .day small { display:block; color:var(--mute); font-size:11px; text-transform:uppercase; }
+  .day.on { background:var(--brand); border-color:var(--brand); color:#fff; }
+  @media (prefers-color-scheme: dark) { .day.on { color:#04202b; } }
+  .times { display:grid; grid-template-columns: repeat(auto-fill, minmax(84px,1fr)); gap:8px; margin-top:12px; }
+  .time { border:1px solid var(--line); background:transparent; color:var(--ink); border-radius:10px; padding:10px 0; cursor:pointer; font-size:15px; }
+  .time.on { background:var(--brand); border-color:var(--brand); color:#fff; }
+  @media (prefers-color-scheme: dark) { .time.on { color:#04202b; } }
+  label { display:block; font-size:13px; color:var(--mute); margin:14px 0 4px; }
+  input, textarea { width:100%; border:1px solid var(--line); background:transparent; color:var(--ink); border-radius:10px; padding:11px 12px; font-size:15px; font-family:inherit; }
+  button.go { margin-top:18px; width:100%; background:var(--brand); color:#fff; border:0; border-radius:10px; padding:13px; font-size:16px; font-weight:600; cursor:pointer; }
+  @media (prefers-color-scheme: dark) { button.go { color:#04202b; } }
+  button.go:disabled { opacity:.6; cursor:default; }
+  .err { color:#c0392b; font-size:14px; margin-top:12px; }
+  .ok { text-align:center; padding:26px 8px; }
+  .ok h2 { margin:0 0 8px; }
+  .hide { display:none; }
+  .note { background:rgba(138,161,169,.15); border-radius:10px; padding:10px 12px; font-size:14px; margin-bottom:16px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header><img id="logo" class="hide" alt=""><strong id="marca"></strong></header>
+  <div id="off" class="card hide">O agendamento online não está disponível no momento.</div>
+  <div id="app" class="hide">
+    <h1 id="titulo"></h1>
+    <p class="sub" id="sub"></p>
+    <div id="aviso" class="note hide"></div>
+    <div class="card" id="step1">
+      <strong>1. Escolha o dia e o horário</strong>
+      <div class="days" id="days" style="margin-top:12px"></div>
+      <div class="times" id="times"></div>
+      <div id="semhorario" class="sub hide">Não há horários livres nos próximos dias. Tente novamente mais tarde.</div>
+    </div>
+    <div class="card hide" id="step2" style="margin-top:14px">
+      <strong>2. Seus dados</strong>
+      <div id="escolhido" class="sub" style="margin:6px 0 0"></div>
+      <label for="nome">Nome</label><input id="nome" autocomplete="name">
+      <label for="email">E-mail</label><input id="email" type="email" autocomplete="email">
+      <label for="tel">WhatsApp com DDD</label><input id="tel" type="tel" autocomplete="tel" placeholder="(87) 99999-0000">
+      <label for="msg">Quer adiantar algum assunto? (opcional)</label><textarea id="msg" rows="3"></textarea>
+      <div class="err hide" id="err"></div>
+      <button class="go" id="go">Confirmar agendamento</button>
+    </div>
+    <div class="card ok hide" id="done">
+      <h2>Agendamento confirmado!</h2>
+      <p id="quando"></p>
+      <p class="sub">Enviamos a confirmação para o seu e-mail, com o botão para adicionar à sua agenda.</p>
+    </div>
+  </div>
+</div>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var state = { data: null, hora: null, dias: [] };
+  var wd = ['dom','seg','ter','qua','qui','sex','sáb'];
+  function api(method, args) {
+    var opts = { method: 'POST', headers: { 'Content-Type': 'application/json', 'X-Frappe-CSRF-Token': window.csrf_token || '' }, body: JSON.stringify(args || {}) };
+    return fetch('/api/method/crm.api.agenda.' + method, opts).then(function (r) {
+      return r.json().then(function (j) {
+        if (!r.ok) {
+          var msg = 'Não foi possível concluir. Tente novamente.';
+          try { var m = JSON.parse(j._server_messages || '[]'); if (m.length) msg = JSON.parse(m[0]).message.replace(/<[^>]+>/g, ''); } catch (e) {}
+          throw new Error(msg);
+        }
+        return j.message;
+      });
+    });
+  }
+  function fmtDay(s) { var p = s.split('-'); var d = new Date(+p[0], +p[1] - 1, +p[2]); return { w: wd[d.getDay()], d: p[2] + '/' + p[1] }; }
+  function pickDay(i) {
+    state.data = state.dias[i].data; state.hora = null;
+    $('step2').classList.add('hide');
+    Array.prototype.forEach.call($('days').children, function (b, j) { b.classList.toggle('on', j === i); });
+    var t = $('times'); t.innerHTML = '';
+    state.dias[i].horarios.forEach(function (h) {
+      var b = document.createElement('button'); b.className = 'time'; b.textContent = h;
+      b.onclick = function () {
+        state.hora = h;
+        Array.prototype.forEach.call(t.children, function (x) { x.classList.toggle('on', x === b); });
+        var f = fmtDay(state.data);
+        $('escolhido').textContent = f.w + ', ' + f.d + ' às ' + h;
+        $('step2').classList.remove('hide');
+        $('step2').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      };
+      t.appendChild(b);
+    });
+  }
+  api('get_public_info').then(function (info) {
+    if (!info.ativa) { $('off').classList.remove('hide'); return; }
+    $('marca').textContent = info.marca || '';
+    if (info.logo) { $('logo').src = info.logo; $('logo').classList.remove('hide'); }
+    document.title = info.titulo + (info.marca ? ' — ' + info.marca : '');
+    $('titulo').textContent = info.titulo;
+    $('sub').textContent = 'Reunião de ' + info.duracao + ' minutos. Escolha um horário que fique bom para você.';
+    if (info.mensagem) { $('aviso').textContent = info.mensagem; $('aviso').classList.remove('hide'); }
+    state.dias = info.dias;
+    $('app').classList.remove('hide');
+    if (!info.dias.length) { $('semhorario').classList.remove('hide'); return; }
+    info.dias.forEach(function (d, i) {
+      var f = fmtDay(d.data); var b = document.createElement('button'); b.className = 'day';
+      b.innerHTML = '<small>' + f.w + '</small>' + f.d; b.onclick = function () { pickDay(i); };
+      $('days').appendChild(b);
+    });
+    pickDay(0);
+  }).catch(function () { $('off').classList.remove('hide'); });
+  $('go').onclick = function () {
+    $('err').classList.add('hide'); $('go').disabled = true;
+    api('book', { nome: $('nome').value, email: $('email').value, telefone: $('tel').value, data: state.data, horario: state.hora, mensagem: $('msg').value })
+      .then(function (r) {
+        $('step1').classList.add('hide'); $('step2').classList.add('hide');
+        $('quando').textContent = r.inicio; $('done').classList.remove('hide');
+      })
+      .catch(function (e) { $('err').textContent = e.message; $('err').classList.remove('hide'); $('go').disabled = false; });
+  };
+})();
+</script>
+</body>
+</html>

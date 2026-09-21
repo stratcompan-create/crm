@@ -85,7 +85,9 @@
   "budget_tab",
   "budget_items",
   "budget_discount",
-  "proposal_data"
+  "proposal_data",
+  "posvenda_avaliacao_em",
+  "posvenda_indicacao_em"
  ],
  "fields": [
   {
@@ -541,6 +543,22 @@
    "fieldname": "proposal_data",
    "fieldtype": "Long Text",
    "label": "Conteúdo da proposta",
+   "hidden": 1
+  },
+  {
+   "fieldname": "posvenda_avaliacao_em",
+   "fieldtype": "Date",
+   "label": "Avaliação pedida em",
+   "read_only": 1,
+   "no_copy": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "posvenda_indicacao_em",
+   "fieldtype": "Date",
+   "label": "Indicação pedida em",
+   "read_only": 1,
+   "no_copy": 1,
    "hidden": 1
   }
  ],

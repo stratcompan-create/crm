@@ -1,0 +1,218 @@
+{
+ "actions": [],
+ "creation": "2026-09-21 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-09-21 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "FCRM",
+ "owner": "Administrator",
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "issingle": 1,
+ "name": "CRM Automacoes Config",
+ "field_order": [
+  "cobranca_ativa",
+  "cobranca_dias_antes",
+  "cobranca_dias_atraso",
+  "cobranca_assunto",
+  "cobranca_mensagem",
+  "parcelas_padrao",
+  "parcelas_intervalo",
+  "onboarding_ativo",
+  "posvenda_ativo",
+  "posvenda_avaliacao_dias",
+  "posvenda_avaliacao_link",
+  "posvenda_avaliacao_mensagem",
+  "posvenda_indicacao_dias",
+  "posvenda_indicacao_mensagem",
+  "relatorio_ativo",
+  "relatorio_destinatarios",
+  "agenda_ativa",
+  "agenda_titulo",
+  "agenda_duracao",
+  "agenda_dias",
+  "agenda_inicio",
+  "agenda_fim",
+  "agenda_antecedencia",
+  "agenda_dias_a_frente",
+  "agenda_responsavel",
+  "agenda_link",
+  "agenda_mensagem"
+ ],
+ "fields": [
+  {
+   "fieldname": "cobranca_ativa",
+   "fieldtype": "Check",
+   "label": "Cobrança automática ligada",
+   "default": "1"
+  },
+  {
+   "fieldname": "cobranca_dias_antes",
+   "fieldtype": "Int",
+   "label": "Avisar quantos dias antes do vencimento",
+   "default": "3"
+  },
+  {
+   "fieldname": "cobranca_dias_atraso",
+   "fieldtype": "Data",
+   "label": "Cobrar depois do vencimento (dias, separados por vírgula)",
+   "default": "1,7,15"
+  },
+  {
+   "fieldname": "cobranca_assunto",
+   "fieldtype": "Data",
+   "label": "Assunto do lembrete"
+  },
+  {
+   "fieldname": "cobranca_mensagem",
+   "fieldtype": "Text",
+   "label": "Mensagem do lembrete"
+  },
+  {
+   "fieldname": "parcelas_padrao",
+   "fieldtype": "Int",
+   "label": "Parcelas ao ganhar um negócio",
+   "default": "1"
+  },
+  {
+   "fieldname": "parcelas_intervalo",
+   "fieldtype": "Int",
+   "label": "Dias entre parcelas",
+   "default": "30"
+  },
+  {
+   "fieldname": "onboarding_ativo",
+   "fieldtype": "Check",
+   "label": "Criar tarefas de início ao ganhar um negócio",
+   "default": "1"
+  },
+  {
+   "fieldname": "posvenda_ativo",
+   "fieldtype": "Check",
+   "label": "Pós-venda automático ligado",
+   "default": "1"
+  },
+  {
+   "fieldname": "posvenda_avaliacao_dias",
+   "fieldtype": "Int",
+   "label": "Pedir avaliação depois de (dias)",
+   "default": "7"
+  },
+  {
+   "fieldname": "posvenda_avaliacao_link",
+   "fieldtype": "Data",
+   "label": "Link para avaliação (Google, por exemplo)"
+  },
+  {
+   "fieldname": "posvenda_avaliacao_mensagem",
+   "fieldtype": "Text",
+   "label": "Mensagem do pedido de avaliação"
+  },
+  {
+   "fieldname": "posvenda_indicacao_dias",
+   "fieldtype": "Int",
+   "label": "Pedir indicação depois de (dias)",
+   "default": "30"
+  },
+  {
+   "fieldname": "posvenda_indicacao_mensagem",
+   "fieldtype": "Text",
+   "label": "Mensagem do pedido de indicação"
+  },
+  {
+   "fieldname": "relatorio_ativo",
+   "fieldtype": "Check",
+   "label": "Relatório semanal por e-mail ligado",
+   "default": "1"
+  },
+  {
+   "fieldname": "relatorio_destinatarios",
+   "fieldtype": "Small Text",
+   "label": "Receber o relatório (e-mails, um por linha; vazio = gestores)"
+  },
+  {
+   "fieldname": "agenda_ativa",
+   "fieldtype": "Check",
+   "label": "Agendamento online ligado",
+   "default": "0"
+  },
+  {
+   "fieldname": "agenda_titulo",
+   "fieldtype": "Data",
+   "label": "Título da reunião"
+  },
+  {
+   "fieldname": "agenda_duracao",
+   "fieldtype": "Int",
+   "label": "Duração (minutos)",
+   "default": "30"
+  },
+  {
+   "fieldname": "agenda_dias",
+   "fieldtype": "Data",
+   "label": "Dias da semana (1=segunda ... 7=domingo)",
+   "default": "1,2,3,4,5"
+  },
+  {
+   "fieldname": "agenda_inicio",
+   "fieldtype": "Data",
+   "label": "Começa às",
+   "default": "09:00"
+  },
+  {
+   "fieldname": "agenda_fim",
+   "fieldtype": "Data",
+   "label": "Termina às",
+   "default": "18:00"
+  },
+  {
+   "fieldname": "agenda_antecedencia",
+   "fieldtype": "Int",
+   "label": "Antecedência mínima (horas)",
+   "default": "4"
+  },
+  {
+   "fieldname": "agenda_dias_a_frente",
+   "fieldtype": "Int",
+   "label": "Mostrar quantos dias à frente",
+   "default": "14"
+  },
+  {
+   "fieldname": "agenda_responsavel",
+   "fieldtype": "Link",
+   "label": "Responsável pelas reuniões",
+   "options": "User"
+  },
+  {
+   "fieldname": "agenda_link",
+   "fieldtype": "Data",
+   "label": "Link da reunião (Meet, Zoom...)"
+  },
+  {
+   "fieldname": "agenda_mensagem",
+   "fieldtype": "Small Text",
+   "label": "Aviso na página de agendamento"
+  }
+ ],
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "write": 1,
+   "role": "System Manager"
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "write": 1,
+   "role": "Sales Manager"
+  }
+ ]
+}

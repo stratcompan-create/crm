@@ -1,0 +1,114 @@
+{
+ "actions": [],
+ "creation": "2026-09-21 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-09-21 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "FCRM",
+ "owner": "Administrator",
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "autoname": "hash",
+ "naming_rule": "Random",
+ "name": "CRM Reuniao",
+ "field_order": [
+  "lead",
+  "nome",
+  "email",
+  "telefone",
+  "inicio",
+  "fim",
+  "status",
+  "responsavel",
+  "observacoes",
+  "lembrete_enviado"
+ ],
+ "fields": [
+  {
+   "fieldname": "lead",
+   "fieldtype": "Link",
+   "label": "Lead",
+   "options": "CRM Lead",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "nome",
+   "fieldtype": "Data",
+   "label": "Nome",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "E-mail"
+  },
+  {
+   "fieldname": "telefone",
+   "fieldtype": "Data",
+   "label": "Telefone"
+  },
+  {
+   "fieldname": "inicio",
+   "fieldtype": "Datetime",
+   "label": "Início",
+   "in_list_view": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "fim",
+   "fieldtype": "Datetime",
+   "label": "Fim"
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Situação",
+   "options": "Agendada\nRealizada\nCancelada",
+   "default": "Agendada"
+  },
+  {
+   "fieldname": "responsavel",
+   "fieldtype": "Link",
+   "label": "Responsável",
+   "options": "User"
+  },
+  {
+   "fieldname": "observacoes",
+   "fieldtype": "Small Text",
+   "label": "Observações"
+  },
+  {
+   "fieldname": "lembrete_enviado",
+   "fieldtype": "Check",
+   "label": "Lembrete enviado",
+   "default": "0",
+   "read_only": 1
+  }
+ ],
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "write": 1,
+   "role": "System Manager"
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "write": 1,
+   "role": "Sales Manager"
+  },
+  {
+   "read": 1,
+   "write": 1,
+   "role": "Sales User"
+  }
+ ]
+}
