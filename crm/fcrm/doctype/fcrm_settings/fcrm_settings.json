@@ -29,6 +29,10 @@
   "brand_accent",
   "brand_neutral",
   "documento_estilo",
+  "fonte_titulo",
+  "fonte_subtitulo",
+  "fonte_texto",
+  "fonte_numeros",
   "brand_logo",
   "favicon",
   "website_url",
@@ -252,6 +256,26 @@
    "fieldtype": "Select",
    "label": "Estilo padrão dos documentos",
    "options": "\nescuro\nclaro\nbranco\ncor"
+  },
+  {
+   "fieldname": "fonte_titulo",
+   "fieldtype": "Data",
+   "label": "Fonte dos títulos"
+  },
+  {
+   "fieldname": "fonte_subtitulo",
+   "fieldtype": "Data",
+   "label": "Fonte dos subtítulos"
+  },
+  {
+   "fieldname": "fonte_texto",
+   "fieldtype": "Data",
+   "label": "Fonte do texto"
+  },
+  {
+   "fieldname": "fonte_numeros",
+   "fieldtype": "Data",
+   "label": "Fonte dos números"
   }
  ],
  "index_web_pages_for_search": 1,

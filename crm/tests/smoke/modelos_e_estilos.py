@@ -9,11 +9,20 @@ import io
 import frappe
 from pypdf import PdfReader
 
-from crm.api import estilo, modelos_documentos as md, proposta
+from crm.api import estilo, modelos_documentos as md, proposta, tipografia
 
 
 def _text(pdf: bytes) -> str:
     return "\n".join(p.extract_text() or "" for p in PdfReader(io.BytesIO(pdf)).pages)
+
+
+def _fonts_in(pdf: bytes) -> str:
+    names = set()
+    for page in PdfReader(io.BytesIO(pdf)).pages:
+        fonts = (page.get("/Resources") or {}).get("/Font") or {}
+        for ref in fonts.values():
+            names.add(str(ref.get_object().get("/BaseFont", "")))
+    return " ".join(names).lower()
 
 
 def run():
@@ -84,6 +93,16 @@ def run():
         for st in ("escuro", "claro", "branco", "cor"):
             pdf = base64.b64decode(estilo.preview_pdf("#1f4d3a", "#b89b5e", "#f1ead9", st, "Escritório X")["pdf"])
             ck(f"prévia em PDF das cores digitadas (estilo '{st}')", pdf.startswith(b"%PDF") and len(PdfReader(io.BytesIO(pdf)).pages) >= 4)
+        # tipografia: catálogo completo, padrões e cada par pronto embutido no PDF
+        cat = tipografia.get_catalog()
+        ck("catálogo: todas as fontes têm os arquivos", all(f["arquivos"] for f in cat["fontes"]) and len(cat["fontes"]) >= 14)
+        ck("função sem escolha usa o padrão; fonte inválida também", tipografia.resolve({}, "proposta")["titulo"] == "lora" and tipografia.resolve({"fonte_texto": "xyz"}, "documento")["texto"] == "lora")
+        sample = {"classico": "playfair", "moderno": "montserrat", "elegante": "cormorant", "tradicional": "baskerville", "tecnologia": "space"}
+        for key, marker in sample.items():
+            f = tipografia.PRESETS[key][2]
+            pdf = base64.b64decode(estilo.preview_pdf("#1f4d3a", "#b89b5e", "#f1ead9", "claro", "X", f["titulo"], f["subtitulo"], f["texto"], f["numeros"])["pdf"])
+            used = _fonts_in(pdf)
+            ck(f"par '{key}': fonte {marker} embutida no PDF, mesmo número de páginas", marker in used.replace(" ", "") and len(PdfReader(io.BytesIO(pdf)).pages) >= 4, used[:80])
         ck("estilo inválido volta ao padrão", estilo.resolve({}, "xyz")["estilo"] == "escuro")
     finally:
         frappe.db.rollback()

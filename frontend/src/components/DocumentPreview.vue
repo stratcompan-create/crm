@@ -9,33 +9,33 @@
     <div class="pv" :style="coverBox">
       <div v-if="!dark" class="absolute rounded-sm" :style="frame" />
       <div class="absolute inset-0 flex flex-col items-center justify-center text-center">
-        <div class="pv-name" :style="coverName">{{ name }}</div>
-        <div class="pv-label" :style="{ color: pal.A }">{{ __('PROPOSTA COMERCIAL') }}</div>
-        <div class="pv-sub" :style="{ color: dark ? '#dfe7ea' : muted }">{{ __('Site institucional e CRM') }}</div>
+        <div class="pv-name" :style="{ ...coverName, fontFamily: fam.titulo }">{{ name }}</div>
+        <div class="pv-label" :style="{ color: pal.A, fontFamily: fam.subtitulo }">{{ __('PROPOSTA COMERCIAL') }}</div>
+        <div class="pv-sub" :style="{ color: dark ? '#dfe7ea' : muted, fontFamily: fam.subtitulo }">{{ __('Site institucional e CRM') }}</div>
       </div>
-      <div class="pv-foot" :style="{ color: dark ? pal.A : muted }">{{ brand }} × {{ name }}</div>
+      <div class="pv-foot" :style="{ color: dark ? pal.A : muted, fontFamily: fam.subtitulo }">{{ brand }} × {{ name }}</div>
     </div>
 
     <!-- página interna -->
     <div class="pv" :style="{ background: pageBg }">
-      <div class="pv-head" :style="{ color: headInk }">
+      <div class="pv-head" :style="{ color: headInk, fontFamily: fam.subtitulo }">
         <span><i class="pv-dia" :style="{ borderColor: pal.A }" />{{ name }}</span><span>02 / 06</span>
       </div>
       <div class="pv-body">
-        <div class="pv-eyebrow" :style="{ color: headInk }">{{ __('INTRODUÇÃO AO PROJETO') }}</div>
-        <div class="pv-title" :style="{ color: titleInk }">{{ __('Um projeto para') }} <i :style="{ color: muted }">{{ name }}</i></div>
-        <div class="pv-lines">
-          <div v-for="w in [92, 84, 60]" :key="w" :style="{ width: w + '%', background: inkFade }" />
-        </div>
+        <div class="pv-eyebrow" :style="{ color: headInk, fontFamily: fam.subtitulo }">{{ __('INTRODUÇÃO AO PROJETO') }}</div>
+        <div class="pv-title" :style="{ color: titleInk, fontFamily: fam.titulo }">{{ __('Um projeto para') }} <i :style="{ color: muted }">{{ name }}</i></div>
+        <p class="pv-text" :style="{ color: style === 'cor' ? '#f2efe8' : '#1f2d33', fontFamily: fam.texto }">
+          {{ __('Um texto de exemplo para mostrar como os parágrafos aparecem no documento, com a fonte escolhida.') }}
+        </p>
         <div class="pv-cards">
           <div v-for="t in [__('Site'), __('CRM')]" :key="t" class="pv-card" :style="cardStyle">
-            <b :style="{ color: titleInk }">{{ t }}</b>
+            <b :style="{ color: titleInk, fontFamily: fam.titulo }">{{ t }}</b>
             <div :style="{ background: inkFade }" />
           </div>
         </div>
-        <div class="pv-band" :style="bandStyle">
+        <div class="pv-band" :style="{ ...bandStyle, fontFamily: fam.numeros }">
           <div v-for="n in [['60', __('DIAS')], ['2', __('ENTREGAS')], ['100%', __('SOB MEDIDA')]]" :key="n[1]">
-            <b>{{ n[0] }}</b><small :style="{ color: bandLabel }">{{ n[1] }}</small>
+            <b>{{ n[0] }}</b><small :style="{ color: bandLabel, fontFamily: fam.subtitulo }">{{ n[1] }}</small>
           </div>
         </div>
       </div>
@@ -45,8 +45,26 @@
 </template>
 
 <script setup>
-import { Button, call, toast } from 'frappe-ui'
+import { Button, call, createResource, toast } from 'frappe-ui'
 import { computed, ref } from 'vue'
+
+// carrega as fontes dos documentos uma vez só, no navegador
+let fontsLoaded = false
+function loadFonts(catalog) {
+  if (fontsLoaded || !catalog?.fontes) return
+  fontsLoaded = true
+  const css = catalog.fontes
+    .flatMap((f) =>
+      f.arquivos.map(
+        (a) => `@font-face{font-family:'${f.css}';font-weight:${a.peso};font-style:${a.estilo};src:url('${a.url}') format('truetype');font-display:swap}`,
+      ),
+    )
+    .join('\n')
+  const el = document.createElement('style')
+  el.textContent = css
+  document.head.appendChild(el)
+}
+const catalog = createResource({ url: 'crm.api.tipografia.get_catalog', auto: true, onSuccess: loadFonts })
 
 const props = defineProps({
   cor: { type: String, default: '' },
@@ -55,6 +73,7 @@ const props = defineProps({
   estilo: { type: String, default: '' },
   nome: { type: String, default: '' },
   showPdf: { type: Boolean, default: true },
+  fontes: { type: Object, default: () => ({}) },
 })
 
 function mix(a, b, r) {
@@ -108,6 +127,17 @@ const bandStyle = computed(() => {
 })
 const bandLabel = computed(() => (style.value === 'escuro' ? pal.value.A : muted.value))
 
+const fam = computed(() => {
+  const data = catalog.data
+  const pick = (role) => {
+    const key = props.fontes?.[role] || data?.padrao?.[role]
+    const f = data?.fontes?.find((x) => x.chave === key)
+    const serif = f ? f.categoria.startsWith('Serifada') : ['titulo', 'numeros'].includes(role)
+    return f ? `'${f.css}', ${serif ? 'Georgia, serif' : 'Arial, sans-serif'}` : serif ? 'Georgia, serif' : 'Arial, sans-serif'
+  }
+  return { titulo: pick('titulo'), subtitulo: pick('subtitulo'), texto: pick('texto'), numeros: pick('numeros') }
+})
+
 const loading = ref(false)
 async function openPdf() {
   loading.value = true
@@ -118,6 +148,10 @@ async function openPdf() {
       neutra: props.neutra,
       estilo: props.estilo,
       nome: props.nome,
+      fonte_titulo: props.fontes?.titulo || '',
+      fonte_subtitulo: props.fontes?.subtitulo || '',
+      fonte_texto: props.fontes?.texto || '',
+      fonte_numeros: props.fontes?.numeros || '',
     })
     const bytes = Uint8Array.from(atob(r.pdf), (c) => c.charCodeAt(0))
     window.open(URL.createObjectURL(new Blob([bytes], { type: 'application/pdf' })), '_blank')
@@ -149,7 +183,7 @@ async function openPdf() {
 .pv-eyebrow { font-size: 1.5cqw; letter-spacing: 0.3em; font-family: Arial, sans-serif; margin-bottom: 1.6cqw; }
 .pv-title { font-size: 5cqw; font-weight: 700; line-height: 1.1; margin-bottom: 3cqw; }
 .pv-title i { font-weight: 400; }
-.pv-lines > div { height: 1.3cqw; border-radius: 1cqw; margin-bottom: 1.4cqw; }
+.pv-text { font-size: 2.1cqw; line-height: 1.55; margin: 0 0 1cqw; max-width: 62%; }
 .pv-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 2cqw; margin: 3cqw 0; }
 .pv-card { padding: 2cqw 2.4cqw; font-family: Arial, sans-serif; }
 .pv-card b { font-size: 2.3cqw; display: block; margin-bottom: 1.2cqw; }

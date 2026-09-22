@@ -614,9 +614,10 @@ def check_fit(settings, items, total, client_name, data) -> list[str]:
 
 
 def render_proposal_html(deal_doc, settings, items, total, client_name, data, logo_url=""):
-	from crm.api import estilo
+	from crm.api import estilo, tipografia
 
 	pal = estilo.resolve(settings, (data.get("capa") or {}).get("tema"))
+	fonts = tipografia.resolve(settings, "proposta")
 	color, accent, neutral, style = pal["cor"], pal["destaque"], pal["neutra"], pal["estilo"]
 	brand = settings.get("brand_name") or ""
 
@@ -643,7 +644,12 @@ def render_proposal_html(deal_doc, settings, items, total, client_name, data, lo
 		f'<div class="cover-s">{_e(subtitulo)}</div></td></tr></table></div>'
 		f'<div class="cover-f">{_spaced(brand)} &nbsp;×&nbsp; {_spaced(client_name)}</div></div>'
 	)
-	css = _css(color, accent) + estilo.theme_css(style, color, accent, neutral)
+	css = (
+		_css(color, accent)
+		+ estilo.theme_css(style, color, accent, neutral)
+		+ tipografia.faces_css(fonts.values())
+		+ tipografia.css_proposal(fonts)
+	)
 	return f'<html><head><meta charset="utf-8"><style>{css}</style></head><body>{cover}{pages}</body></html>'
 
 

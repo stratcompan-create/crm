@@ -313,7 +313,8 @@ def _body_html(text: str) -> str:
 	return "".join(out)
 
 
-def _document_css(pal: dict) -> str:
+def _document_css(pal: dict, fonts: dict) -> str:
+	from crm.api import tipografia
 	from crm.api.proposta import _font_faces
 
 	C, A, N = pal["cor"], pal["destaque"], pal["neutra"]
@@ -336,6 +337,8 @@ def _document_css(pal: dict) -> str:
 	p {{ margin:0 0 3.2mm 0; text-align:justify; }}
 	ul {{ margin:0 0 3.2mm 5mm; padding:0; }}
 	li {{ margin-bottom:1.2mm; }}
+	{tipografia.faces_css(fonts.values())}
+	{tipografia.css_document(fonts)}
 	"""
 
 
@@ -360,16 +363,18 @@ def _render_pdf(body_html: str, css: str, logo: str, brand: str, title: str) -> 
 
 
 def _build(corpo: str, values: dict, tipo: str, titulo: str, estilo_key: str, blank_missing: bool) -> bytes:
+	from crm.api import tipografia
 	from crm.api.proposta import _logo_data_uri
 
 	settings = frappe.get_single("FCRM Settings")
 	pal = estilo.resolve(settings, estilo_key or None)
+	fonts = tipografia.resolve(settings, "documento")
 	text = corpo
 	for key in set(re.findall(r"\{(\w+)\}", corpo)):
 		val = values.get(key, "")
 		text = text.replace("{" + key + "}", val if val else ("__________" if blank_missing else ""))
 	logo = _logo_data_uri(settings.get("brand_logo") or "") if settings.get("brand_logo") else ""
-	return _render_pdf(_body_html(text), _document_css(pal), logo, settings.get("brand_name") or "", titulo or tipo)
+	return _render_pdf(_body_html(text), _document_css(pal, fonts), logo, settings.get("brand_name") or "", titulo or tipo)
 
 
 @frappe.whitelist()

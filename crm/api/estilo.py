@@ -110,12 +110,18 @@ def theme_css(style: str, C: str, A: str, N: str) -> str:
 
 
 @frappe.whitelist()
-def preview_pdf(cor: str = "", destaque: str = "", neutra: str = "", estilo: str = "", nome: str = "") -> dict:
+def preview_pdf(
+	cor: str = "", destaque: str = "", neutra: str = "", estilo: str = "", nome: str = "",
+	fonte_titulo: str = "", fonte_subtitulo: str = "", fonte_texto: str = "", fonte_numeros: str = "",
+) -> dict:
 	"""PDF de exemplo com as cores informadas (ainda não salvas), para ver o resultado exato antes de aplicar."""
 	frappe.only_for(("System Manager", "Sales Manager"))
 	from crm.api import proposta
 
-	settings = {"brand_color": cor, "brand_accent": destaque, "brand_neutral": neutra, "brand_name": nome or "Seu Escritório"}
+	settings = {
+		"brand_color": cor, "brand_accent": destaque, "brand_neutral": neutra, "brand_name": nome or "Seu Escritório",
+		"fonte_titulo": fonte_titulo, "fonte_subtitulo": fonte_subtitulo, "fonte_texto": fonte_texto, "fonte_numeros": fonte_numeros,
+	}
 	data = proposta._merge(
 		proposta.default_proposal(),
 		{

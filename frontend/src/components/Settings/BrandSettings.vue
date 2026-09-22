@@ -161,6 +161,37 @@
           ]"
         />
       </div>
+
+      <div class="h-px border-t border-outline-elevation-2" />
+
+      <!-- tipografia -->
+      <div class="flex flex-col gap-3">
+        <div class="flex flex-col">
+          <div class="text-p-base-medium text-ink-gray-7">{{ __('Tipografia dos documentos') }}</div>
+          <div class="text-p-sm text-ink-gray-5">
+            {{ __('Escolha um par pronto ou ajuste a fonte de cada função. A prévia ao lado mostra o resultado.') }}
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-1.5">
+          <button
+            v-for="p in fontCatalog.data?.pares || []"
+            :key="p.chave"
+            type="button"
+            :title="p.descricao"
+            class="rounded-full border px-3 py-1 text-p-sm"
+            :class="presetActive(p) ? 'border-ink-gray-9 bg-surface-gray-2 font-medium text-ink-gray-9' : 'border-outline-gray-2 text-ink-gray-7'"
+            @click="applyPreset(p)"
+          >
+            {{ p.nome }}
+          </button>
+        </div>
+        <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div v-for="r in fontRoles" :key="r.chave" class="flex flex-col gap-1">
+            <span class="text-p-sm text-ink-gray-6">{{ r.nome }} <span class="text-xs text-ink-gray-4">· {{ r.ajuda }}</span></span>
+            <FormControl v-model="settings.doc['fonte_' + r.chave]" type="select" :options="fontOptions" />
+          </div>
+        </div>
+      </div>
       <div class="h-px border-t border-outline-elevation-2" />
 
       <!-- logo -->
@@ -241,6 +272,7 @@
           :neutra="settings.doc.brand_neutral"
           :estilo="settings.doc.documento_estilo"
           :nome="settings.doc.brand_name"
+          :fontes="fontesAtuais"
         />
       </div>
     </aside>
@@ -251,11 +283,39 @@
 import ImageIcon from '~icons/lucide/image'
 import DocumentPreview from '@/components/DocumentPreview.vue'
 import ImageUploader from '@/components/Controls/ImageUploader.vue'
-import { Button, FormControl } from 'frappe-ui'
+import { Button, FormControl, createResource } from 'frappe-ui'
+import { computed } from 'vue'
 import { getSettings } from '@/stores/settings'
 import { showSettings } from '@/composables/settings'
 
 const { _settings: settings, setupBrand } = getSettings()
+
+const fontCatalog = createResource({ url: 'crm.api.tipografia.get_catalog', auto: true })
+const fontRoles = [
+  { chave: 'titulo', nome: __('Título'), ajuda: __('nomes e títulos') },
+  { chave: 'subtitulo', nome: __('Subtítulo'), ajuda: __('legendas e faixas') },
+  { chave: 'texto', nome: __('Texto'), ajuda: __('parágrafos') },
+  { chave: 'numeros', nome: __('Números'), ajuda: __('valores em destaque') },
+]
+const fontOptions = computed(() => [
+  { label: __('Padrão'), value: '' },
+  ...(fontCatalog.data?.fontes || []).map((f) => ({ label: `${f.nome} · ${__(f.categoria)}`, value: f.chave })),
+])
+const fontesAtuais = computed(() => ({
+  titulo: settings.doc?.fonte_titulo,
+  subtitulo: settings.doc?.fonte_subtitulo,
+  texto: settings.doc?.fonte_texto,
+  numeros: settings.doc?.fonte_numeros,
+}))
+function applyPreset(p) {
+  for (const r of ['titulo', 'subtitulo', 'texto', 'numeros']) settings.doc['fonte_' + r] = p.fontes[r]
+}
+function presetActive(p) {
+  const def = fontCatalog.data?.padrao || {}
+  return ['titulo', 'subtitulo', 'texto', 'numeros'].every(
+    (r) => (settings.doc?.['fonte_' + r] || def[r]) === p.fontes[r],
+  )
+}
 
 function updateSettings() {
   settings.save.submit(null, {
