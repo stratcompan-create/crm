@@ -147,3 +147,15 @@ def preview_pdf(
 	items = [frappe._dict(description="Site institucional", qty=1, unit_price=3000), frappe._dict(description="CRM", qty=1, unit_price=6000)]
 	html = proposta.render_proposal_html(None, settings, items, 9000, "Cliente Exemplo", data, "")
 	return {"pdf": base64.b64encode(proposta.render_pdf(html)).decode()}
+
+
+# ------------------------------------------------------------------ favicon nas páginas públicas
+
+def sync_website_favicon(doc=None, method=None):
+	"""Login, /agendar, /documentos e as demais páginas públicas usam o favicon de
+	"Website Settings", não o de "FCRM Settings" (o da marca, configurado em Configurações).
+	Sem isso, essas páginas mostram o ícone padrão do Frappe. Roda sozinho sempre que a marca
+	é salva; chamamos também uma vez à parte para acertar o que já estava configurado antes."""
+	favicon = frappe.db.get_single_value("FCRM Settings", "favicon")
+	if favicon and frappe.db.get_single_value("Website Settings", "favicon") != favicon:
+		frappe.db.set_single_value("Website Settings", "favicon", favicon)

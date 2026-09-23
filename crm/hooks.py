@@ -198,6 +198,9 @@ doc_events = {
 	"CRM Task": {
 		"on_update": ["crm.api.automacoes.on_task_update"],
 	},
+	"FCRM Settings": {
+		"on_update": ["crm.api.estilo.sync_website_favicon"],
+	},
 	"CRM Deal": {
 		"after_insert": ["crm.api.clientes.on_deal_insert"],
 		"on_update": [

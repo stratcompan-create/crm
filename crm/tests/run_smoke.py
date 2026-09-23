@@ -21,6 +21,7 @@ MODULES = [
     "drive_pastas",
     "drive_backup",
     "modelos_e_estilos",
+    "favicon_marca",
 ]
 
 
