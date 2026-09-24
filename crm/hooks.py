@@ -232,7 +232,7 @@ doc_events = {
 		"on_trash": ["crm.integrations.erpnext.doc_share.on_trash"],
 	},
 	"User": {
-		"before_validate": ["crm.api.live_demo.validate_user"],
+		"before_validate": ["crm.api.live_demo.validate_user", "crm.api.automacoes.ensure_user_language"],
 		"validate_reset_password": ["crm.api.live_demo.validate_reset_password"],
 		"on_update": ["crm.api.automacoes.on_user_change"],
 	},

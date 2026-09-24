@@ -23,6 +23,7 @@ MODULES = [
     "modelos_e_estilos",
     "favicon_marca",
     "favicon_crm_spa",
+    "idioma_usuario",
 ]
 
 

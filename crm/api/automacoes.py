@@ -288,6 +288,16 @@ def on_user_change(doc, method=None):
 		frappe.log_error("Distribuição de leads: falha ao atualizar a regra", frappe.get_traceback())
 
 
+def ensure_user_language(doc, method=None):
+	"""O CRM é só em português. Sem isso, um usuário com o campo de idioma em branco (comum em
+	convites e em contas que nunca abriram Configurações) recebe e-mails e avisos do Frappe em
+	inglês (o resto do CRM continua em português, porque é traduzido de outro jeito, mas esses
+	textos do próprio Frappe seguem o idioma salvo no usuário). Só preenche quando está vazio;
+	nunca troca um idioma que a pessoa já escolheu."""
+	if not doc.get("language"):
+		doc.language = "pt-BR"
+
+
 # ------------------------------------------------------------------ 2. negócio ganho
 
 NATUREZA_RECORRENTE = "Recorrente"
