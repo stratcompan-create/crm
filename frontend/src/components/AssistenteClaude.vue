@@ -1,6 +1,5 @@
 <template>
-  <div class="flex h-full shrink-0" :class="aberto ? 'w-96 border-l border-outline-gray-1' : 'w-0'">
-    <button
+  <button
       v-if="!aberto"
       type="button"
       class="fixed bottom-6 right-6 z-20 flex size-12 items-center justify-center rounded-full shadow-lg"
@@ -10,7 +9,7 @@
       <LucideBot class="size-6 text-white" />
     </button>
 
-    <div v-else class="flex h-full w-96 flex-col">
+    <div v-else class="fixed inset-y-0 right-0 z-30 flex w-full flex-col border-l border-outline-gray-1 bg-white shadow-xl sm:w-96">
       <div class="flex items-center justify-between border-b border-outline-gray-1 px-3 py-2.5">
         <div class="flex items-center gap-2">
           <LucideBot class="size-4" :style="{ color: corDestaque }" />
@@ -89,7 +88,6 @@
         </div>
       </div>
     </div>
-  </div>
 </template>
 
 <script setup>
