@@ -26,6 +26,7 @@ MODULES = [
     "idioma_usuario",
     "gerador_conteudo",
     "pagamento_link",
+    "assistente_geral",
 ]
 
 

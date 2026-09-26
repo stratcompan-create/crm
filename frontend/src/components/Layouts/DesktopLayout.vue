@@ -8,6 +8,7 @@
         <slot />
       </div>
     </div>
+    <AssistenteClaude />
     <GlobalModals />
   </div>
 </template>
@@ -16,6 +17,7 @@ import TopNav from '@/components/Layouts/TopNav.vue'
 import AppSidebar from '@/components/Layouts/AppSidebar.vue'
 import AppHeader from '@/components/Layouts/AppHeader.vue'
 import GlobalModals from '@/components/Modals/GlobalModals.vue'
+import AssistenteClaude from '@/components/AssistenteClaude.vue'
 
 // $route is available here the same way App.vue already used it directly in
 // its template with no import — Vue Router injects it as a global template
