@@ -7,13 +7,13 @@
       :style="{ background: corDestaque }"
       @click="abrir"
     >
-      <MascoteIcon class="size-6" cor="white" />
+      <LucideBot class="size-6 text-white" />
     </button>
 
     <div v-else class="flex h-full w-96 flex-col">
       <div class="flex items-center justify-between border-b border-outline-gray-1 px-3 py-2.5">
         <div class="flex items-center gap-2">
-          <MascoteIcon class="size-4" :cor="corDestaque" />
+          <LucideBot class="size-4" :style="{ color: corDestaque }" />
           <span class="text-base-medium text-ink-gray-9">{{ __('Claude') }}</span>
           <span class="truncate text-xs text-ink-gray-5">· {{ contexto.tela }}</span>
         </div>
@@ -25,7 +25,7 @@
 
       <div ref="scroller" class="flex flex-1 flex-col gap-2 overflow-y-auto px-3 py-3">
         <div v-if="!mensagens.length" class="flex flex-col items-center gap-3 px-4 py-8 text-center">
-          <MascoteIcon class="size-9" :cor="corDestaque" />
+          <LucideBot class="size-9" :style="{ color: corDestaque }" />
           <div class="text-base-medium text-ink-gray-8">{{ __('Converse com o Claude') }}</div>
           <div class="text-p-sm text-ink-gray-5">
             {{ __('Ele sabe em qual tela você está. Pergunte algo ou escolha uma opção abaixo.') }}
@@ -72,9 +72,19 @@
             class="flex-1"
             type="textarea"
             :rows="2"
-            :placeholder="__('Pergunte algo...')"
+            :placeholder="gravando ? __('Ouvindo...') : __('Pergunte algo...')"
             @keydown.enter.exact.prevent="enviar"
           />
+          <button
+            v-if="reconhecimentoDisponivel"
+            type="button"
+            class="flex size-8 shrink-0 items-center justify-center rounded-full"
+            :class="gravando ? 'bg-red-500 text-white' : 'bg-surface-gray-3 text-ink-gray-7 hover:bg-surface-gray-4'"
+            :title="gravando ? __('Parar gravação') : __('Gravar áudio')"
+            @click="alternarGravacao"
+          >
+            <LucideMic class="size-4" />
+          </button>
           <Button variant="solid" :label="__('Enviar')" :loading="enviando" @click="enviar" />
         </div>
       </div>
@@ -83,7 +93,8 @@
 </template>
 
 <script setup>
-import MascoteIcon from '@/components/Icons/MascoteIcon.vue'
+import LucideBot from '~icons/lucide/bot'
+import LucideMic from '~icons/lucide/mic'
 import { Button, ErrorMessage, FormControl, call, toast } from 'frappe-ui'
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
@@ -190,6 +201,38 @@ const enviando = ref(false)
 const erro = ref('')
 const scroller = ref(null)
 let carregado = false
+
+// Ditar por voz: usa o reconhecimento de fala do próprio navegador (Chrome/Edge),
+// sem chave nem serviço novo - só não funciona em navegadores sem suporte (ex.: Firefox).
+const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition
+const reconhecimentoDisponivel = !!SpeechRecognitionAPI
+const gravando = ref(false)
+let reconhecimento = null
+
+function alternarGravacao() {
+  if (!reconhecimentoDisponivel) return
+  if (gravando.value) {
+    reconhecimento?.stop()
+    return
+  }
+  reconhecimento = new SpeechRecognitionAPI()
+  reconhecimento.lang = 'pt-BR'
+  reconhecimento.interimResults = false
+  reconhecimento.continuous = false
+  reconhecimento.onresult = (ev) => {
+    const texto = Array.from(ev.results).map((r) => r[0].transcript).join(' ')
+    mensagem.value = mensagem.value ? `${mensagem.value} ${texto}` : texto
+  }
+  reconhecimento.onerror = () => {
+    erro.value = __('Não consegui ouvir. Confira a permissão do microfone.')
+  }
+  reconhecimento.onend = () => {
+    gravando.value = false
+  }
+  erro.value = ''
+  gravando.value = true
+  reconhecimento.start()
+}
 
 function scrollToEnd() {
   nextTick(() => {
