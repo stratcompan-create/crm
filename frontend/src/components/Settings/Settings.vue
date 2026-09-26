@@ -76,6 +76,7 @@ import InstagramIcon from '@/components/Icons/InstagramIcon.vue'
 import LeadSyncSourcePage from '@/components/Settings/LeadSyncing/LeadSyncSourcePage.vue'
 import DefaultsSettings from '@/components/Settings/DefaultsSettings.vue'
 import BrandSettings from '@/components/Settings/BrandSettings.vue'
+import IaPagamentosSettings from '@/components/Settings/IaPagamentosSettings.vue'
 import CalendarSettings from '@/components/Settings/CalendarSettings.vue'
 import HomeActions from '@/components/Settings/HomeActions.vue'
 import FormsSettings from '@/components/Settings/Forms/FormsSettings.vue'
@@ -269,6 +270,12 @@ const tabs = computed(() => {
           label: __('Google Drive'),
           icon: 'hard-drive',
           component: markRaw(GoogleDriveSettings),
+          condition: () => isManager(),
+        },
+        {
+          label: __('IA & Pagamentos'),
+          icon: 'sparkles',
+          component: markRaw(IaPagamentosSettings),
           condition: () => isManager(),
         },
         {

@@ -21,6 +21,8 @@
   "column_break_2",
   "data_vencimento",
   "data_pagamento",
+  "section_break_cobranca",
+  "link_pagamento",
   "section_break_2",
   "observacoes",
   "ultimo_lembrete",
@@ -127,6 +129,19 @@
    "read_only": 1,
    "no_copy": 1,
    "default": "0"
+  },
+  {
+   "fieldname": "section_break_cobranca",
+   "fieldtype": "Section Break",
+   "label": "Cobrança online"
+  },
+  {
+   "description": "Gerado automaticamente pelo botão \"Gerar link\" no Financeiro (InfinitePay).",
+   "fieldname": "link_pagamento",
+   "fieldtype": "Small Text",
+   "label": "Link de pagamento",
+   "read_only": 1,
+   "no_copy": 1
   }
  ],
  "grid_page_length": 50,

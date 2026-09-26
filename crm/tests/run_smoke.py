@@ -24,6 +24,8 @@ MODULES = [
     "favicon_marca",
     "favicon_crm_spa",
     "idioma_usuario",
+    "gerador_conteudo",
+    "pagamento_link",
 ]
 
 

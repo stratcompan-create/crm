@@ -31,6 +31,8 @@
 
   <InstagramMetrics v-else-if="tab === 'metricas' && isManager()" />
 
+  <InstagramConteudo v-else-if="tab === 'conteudo'" />
+
   <div v-else class="flex min-h-0 flex-1">
     <!-- Conversas -->
     <div
@@ -156,6 +158,7 @@ import InstagramMetrics from '@/components/InstagramMetrics.vue'
 import InstagramAutomacao from '@/components/InstagramAutomacao.vue'
 import ReplySuggestions from '@/components/ReplySuggestions.vue'
 import InstagramProspeccao from '@/components/InstagramProspeccao.vue'
+import InstagramConteudo from '@/components/InstagramConteudo.vue'
 import { usersStore } from '@/stores/users'
 import { showSettings, activeSettingsPage } from '@/composables/settings'
 import { Avatar, Button, ErrorMessage, FormControl, call, createResource } from 'frappe-ui'
@@ -169,6 +172,7 @@ const tabs = [
   { key: 'mensagens', label: __('Mensagens') },
   { key: 'prospeccao', label: __('Prospecção') },
   { key: 'automacoes', label: __('Automações'), manager: true },
+  { key: 'conteudo', label: __('Gerador de conteúdo') },
   { key: 'metricas', label: __('Perfil'), manager: true },
 ]
 const visibleTabs = computed(() => tabs.filter((t) => !t.manager || isManager()))

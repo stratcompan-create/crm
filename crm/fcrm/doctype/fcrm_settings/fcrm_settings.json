@@ -41,6 +41,10 @@
   "default_calendar_view",
   "event_notifications",
   "all_day_event_notifications",
+  "integracoes_ia_tab",
+  "claude_api_key",
+  "column_break_ia1",
+  "infinitepay_handle",
   "dropdown_items_tab",
   "dropdown_items",
   "persona_captured"
@@ -276,6 +280,27 @@
    "fieldname": "fonte_numeros",
    "fieldtype": "Data",
    "label": "Fonte dos números"
+  },
+  {
+   "fieldname": "integracoes_ia_tab",
+   "fieldtype": "Tab Break",
+   "label": "IA & Pagamentos"
+  },
+  {
+   "description": "Usada pelo Gerador de conteúdo do Instagram para escrever os posts. Sem custo fixo: cobra só pelo uso.",
+   "fieldname": "claude_api_key",
+   "fieldtype": "Password",
+   "label": "Chave da API do Claude"
+  },
+  {
+   "fieldname": "column_break_ia1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Sua InfiniteTag no app InfinitePay (sem o $ do início). Usada para gerar links de pagamento no Financeiro.",
+   "fieldname": "infinitepay_handle",
+   "fieldtype": "Data",
+   "label": "InfiniteTag (InfinitePay)"
   }
  ],
  "index_web_pages_for_search": 1,
