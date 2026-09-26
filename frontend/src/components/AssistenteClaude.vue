@@ -3,7 +3,8 @@
     <button
       v-if="!aberto"
       type="button"
-      class="fixed bottom-6 right-6 z-20 flex size-12 items-center justify-center rounded-full bg-surface-gray-9 text-ink-white shadow-lg"
+      class="fixed bottom-6 right-6 z-20 flex size-12 items-center justify-center rounded-full text-white shadow-lg"
+      :style="{ background: corDestaque }"
       @click="abrir"
     >
       <SparkleIcon class="size-5" />
@@ -12,7 +13,7 @@
     <div v-else class="flex h-full w-96 flex-col">
       <div class="flex items-center justify-between border-b border-outline-gray-1 px-3 py-2.5">
         <div class="flex items-center gap-2">
-          <SparkleIcon class="size-4 text-ink-gray-7" />
+          <SparkleIcon class="size-4" :style="{ color: corDestaque }" />
           <span class="text-base-medium text-ink-gray-9">{{ __('Claude') }}</span>
           <span class="truncate text-xs text-ink-gray-5">· {{ contexto.tela }}</span>
         </div>
@@ -74,8 +75,11 @@ import SparkleIcon from '@/components/Icons/SparkleIcon.vue'
 import { Button, ErrorMessage, FormControl, call, toast } from 'frappe-ui'
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
+import { getSettings } from '@/stores/settings'
 
 const route = useRoute()
+const { _settings: brandSettings } = getSettings()
+const corDestaque = computed(() => brandSettings.doc?.brand_accent || '#8aa1a9')
 
 // Mapa tela -> doctype/param, para o assistente saber automaticamente qual
 // registro está aberto sem precisar instrumentar cada página do CRM.
