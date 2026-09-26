@@ -11,6 +11,7 @@ import json
 import frappe
 
 from crm.api.conteudo import _call_claude
+from crm.api.ficha import _api_key as _claude_api_key
 
 MANAGER_ROLES = ("System Manager", "Sales Manager")
 
@@ -75,9 +76,9 @@ def enviar_mensagem(mensagem: str, tela: str = "", doctype: str = "", registro: 
 	if not mensagem:
 		frappe.throw("Escreva sua pergunta.")
 
-	api_key = frappe.get_single("FCRM Settings").get_password("claude_api_key", raise_exception=False)
+	api_key = _claude_api_key()
 	if not api_key:
-		frappe.throw("Configure a chave da API do Claude em Configurações → Integrações → IA & Pagamentos antes de usar o assistente.")
+		frappe.throw("Configure a chave da API do Claude em Configurações → Automações antes de usar o assistente.")
 
 	doc = _get_or_create_conversa()
 	historico = json.loads(doc.mensagens or "[]")

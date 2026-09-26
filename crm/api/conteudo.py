@@ -85,9 +85,11 @@ def enviar_mensagem(mensagem: str, conversa: str = None, tipo: str = "Carrossel"
 	if not mensagem:
 		frappe.throw("Escreva o que você quer criar.")
 
-	api_key = frappe.get_single("FCRM Settings").get_password("claude_api_key", raise_exception=False)
+	from crm.api.ficha import _api_key as _claude_api_key
+
+	api_key = _claude_api_key()
 	if not api_key:
-		frappe.throw("Configure a chave da API do Claude em Configurações → Integrações → IA & Pagamentos antes de usar o gerador de conteúdo.")
+		frappe.throw("Configure a chave da API do Claude em Configurações → Automações antes de usar o gerador de conteúdo.")
 
 	if conversa:
 		doc = frappe.get_doc("CRM Conteudo Conversa", conversa)

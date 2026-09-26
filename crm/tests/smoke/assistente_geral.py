@@ -9,6 +9,7 @@ from unittest import mock
 import frappe
 
 from crm.api import assistente as asst
+from crm.api import ficha
 
 
 def run():
@@ -24,8 +25,7 @@ def run():
 	if frappe.db.exists("CRM Assistente Conversa", "Administrator"):
 		frappe.delete_doc("CRM Assistente Conversa", "Administrator", force=True, ignore_permissions=True)
 
-	settings = frappe.get_single("FCRM Settings")
-	chave_original = settings.get_password("claude_api_key", raise_exception=False)
+	chave_original = ficha._api_key()
 	try:
 		# _resumo_registro: com registro válido, com permissão
 		lead = frappe.get_doc({
@@ -44,8 +44,7 @@ def run():
 		ck("sem doctype/registro não quebra, devolve vazio", resumo_sem_doctype == "")
 
 		# sem chave: recusa com mensagem clara
-		settings.claude_api_key = ""
-		settings.save()
+		ficha.save_ai_key("")
 		erro_sem_chave = None
 		try:
 			asst.enviar_mensagem(mensagem="oi", tela="Dashboard")
@@ -54,8 +53,7 @@ def run():
 		ck("sem chave configurada, recusa com mensagem clara", erro_sem_chave and "chave" in erro_sem_chave.lower())
 
 		# com chave (fake) e _call_claude substituído
-		settings.claude_api_key = "sk-ant-teste-fake"
-		settings.save()
+		ficha.save_ai_key("sk-ant-teste-fake")
 
 		with mock.patch.object(asst, "_call_claude", side_effect=["Isso é um lead novo, ainda sem negócio.", "Beleza, qualquer coisa chama."]):
 			r1 = asst.enviar_mensagem(
@@ -99,8 +97,7 @@ def run():
 			frappe.delete_doc("CRM Assistente Conversa", "Administrator", force=True, ignore_permissions=True)
 		for dt, name in reversed(made):
 			frappe.delete_doc(dt, name, force=True, ignore_permissions=True)
-		settings.claude_api_key = chave_original or ""
-		settings.save()
+		ficha.save_ai_key(chave_original or "")
 		frappe.db.commit()
 
 	return res

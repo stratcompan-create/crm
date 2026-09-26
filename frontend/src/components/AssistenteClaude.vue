@@ -3,17 +3,17 @@
     <button
       v-if="!aberto"
       type="button"
-      class="fixed bottom-6 right-6 z-20 flex size-12 items-center justify-center rounded-full text-white shadow-lg"
+      class="fixed bottom-6 right-6 z-20 flex size-12 items-center justify-center rounded-full shadow-lg"
       :style="{ background: corDestaque }"
       @click="abrir"
     >
-      <SparkleIcon class="size-5" />
+      <MascoteIcon class="size-6" cor="white" />
     </button>
 
     <div v-else class="flex h-full w-96 flex-col">
       <div class="flex items-center justify-between border-b border-outline-gray-1 px-3 py-2.5">
         <div class="flex items-center gap-2">
-          <SparkleIcon class="size-4" :style="{ color: corDestaque }" />
+          <MascoteIcon class="size-4" :cor="corDestaque" />
           <span class="text-base-medium text-ink-gray-9">{{ __('Claude') }}</span>
           <span class="truncate text-xs text-ink-gray-5">· {{ contexto.tela }}</span>
         </div>
@@ -24,10 +24,22 @@
       </div>
 
       <div ref="scroller" class="flex flex-1 flex-col gap-2 overflow-y-auto px-3 py-3">
-        <div v-if="!mensagens.length" class="flex flex-col items-center gap-2 px-4 py-10 text-center text-ink-gray-5">
-          <SparkleIcon class="size-6" />
-          <div class="text-p-sm">
-            {{ __('Pergunte alguma coisa. Ele sabe em qual tela você está.') }}
+        <div v-if="!mensagens.length" class="flex flex-col items-center gap-3 px-4 py-8 text-center">
+          <MascoteIcon class="size-9" :cor="corDestaque" />
+          <div class="text-base-medium text-ink-gray-8">{{ __('Converse com o Claude') }}</div>
+          <div class="text-p-sm text-ink-gray-5">
+            {{ __('Ele sabe em qual tela você está. Pergunte algo ou escolha uma opção abaixo.') }}
+          </div>
+          <div class="flex w-full flex-col gap-2 pt-2">
+            <button
+              v-for="s in sugestoes"
+              :key="s.texto"
+              type="button"
+              class="w-full rounded-full border border-outline-gray-2 px-4 py-2 text-p-sm text-ink-gray-7 hover:bg-surface-gray-2"
+              @click="enviarSugestao(s.texto)"
+            >
+              {{ s.label }}
+            </button>
           </div>
         </div>
         <div v-for="(m, i) in mensagens" :key="i" class="flex" :class="m.role === 'user' ? 'justify-end' : 'justify-start'">
@@ -71,7 +83,7 @@
 </template>
 
 <script setup>
-import SparkleIcon from '@/components/Icons/SparkleIcon.vue'
+import MascoteIcon from '@/components/Icons/MascoteIcon.vue'
 import { Button, ErrorMessage, FormControl, call, toast } from 'frappe-ui'
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
@@ -111,6 +123,55 @@ const ROTA_CONTEXTO = {
   Equipe: { label: 'Equipe' },
 }
 
+// Três perguntas prontas por tela, pra quem não sabe por onde começar.
+const SUGESTOES_POR_ROTA = {
+  Dashboard: [
+    { label: __('Como estão os negócios esse mês?'), texto: 'Como estão os negócios esse mês?' },
+    { label: __('Tem alguma tarefa atrasada?'), texto: 'Tem alguma tarefa atrasada?' },
+    { label: __('Resume o que mudou essa semana'), texto: 'Resume o que mudou essa semana' },
+  ],
+  Leads: [
+    { label: __('Quantos leads novos essa semana?'), texto: 'Quantos leads novos entraram essa semana?' },
+    { label: __('Quais leads preciso responder?'), texto: 'Quais leads eu ainda preciso responder?' },
+    { label: __('Como funciona a distribuição de leads?'), texto: 'Como funciona a distribuição automática de leads?' },
+  ],
+  Lead: [
+    { label: __('Resume esse lead'), texto: 'Resume esse lead pra mim' },
+    { label: __('Ele já respondeu alguma mensagem?'), texto: 'Esse lead já respondeu alguma mensagem?' },
+    { label: __('Que abordagem eu uso aqui?'), texto: 'Que abordagem eu uso com esse tipo de lead?' },
+  ],
+  Deals: [
+    { label: __('Quais negócios estão parados?'), texto: 'Quais negócios estão parados sem movimento?' },
+    { label: __('Quanto tenho em negociação?'), texto: 'Quanto eu tenho em negociação agora, somando tudo?' },
+    { label: __('Como marco um negócio como ganho?'), texto: 'Como eu marco um negócio como ganho?' },
+  ],
+  Deal: [
+    { label: __('Resume esse negócio'), texto: 'Resume esse negócio pra mim' },
+    { label: __('Falta algo pra fechar?'), texto: 'Falta alguma coisa pra eu fechar esse negócio?' },
+    { label: __('Como gero a proposta?'), texto: 'Como eu gero a proposta pra esse negócio?' },
+  ],
+  Financeiro: [
+    { label: __('Quanto tenho a receber esse mês?'), texto: 'Quanto eu tenho a receber esse mês?' },
+    { label: __('Tem pagamento atrasado?'), texto: 'Tem algum pagamento atrasado agora?' },
+    { label: __('Como gero um link de pagamento?'), texto: 'Como eu gero um link de pagamento pra um cliente?' },
+  ],
+  Instagram: [
+    { label: __('Como funciona a automação de comentários?'), texto: 'Como funciona a automação de comentários do Instagram?' },
+    { label: __('Tenho mensagens sem resposta?'), texto: 'Eu tenho mensagens do Instagram sem resposta?' },
+    { label: __('Como uso o gerador de conteúdo?'), texto: 'Como eu uso o gerador de conteúdo do Instagram?' },
+  ],
+  MeuSite: [
+    { label: __('Como eu edito o meu site?'), texto: 'Como eu edito o meu site institucional?' },
+    { label: __('Onde configuro o domínio?'), texto: 'Onde eu configuro o domínio do meu site?' },
+    { label: __('Pra que serve essa aba?'), texto: 'Pra que serve a aba Meu Site?' },
+  ],
+}
+const SUGESTOES_PADRAO = [
+  { label: __('O que eu posso fazer nessa tela?'), texto: 'O que eu posso fazer nessa tela?' },
+  { label: __('Como funciona o CRM no geral?'), texto: 'Como funciona o CRM no geral?' },
+  { label: __('Me explica essa parte do sistema'), texto: 'Me explica pra que serve essa parte do sistema' },
+]
+
 const contexto = computed(() => {
   const info = ROTA_CONTEXTO[route.name] || {}
   return {
@@ -119,6 +180,8 @@ const contexto = computed(() => {
     registro: info.param ? route.params?.[info.param] || '' : '',
   }
 })
+
+const sugestoes = computed(() => SUGESTOES_POR_ROTA[route.name] || SUGESTOES_PADRAO)
 
 const aberto = ref(false)
 const mensagens = ref([])
@@ -155,12 +218,10 @@ watch(aberto, (v) => {
   if (v) carregarHistorico()
 })
 
-async function enviar() {
-  const texto = mensagem.value.trim()
+async function enviarTexto(texto) {
   if (!texto || enviando.value) return
   erro.value = ''
   mensagens.value.push({ role: 'user', content: texto })
-  mensagem.value = ''
   scrollToEnd()
   enviando.value = true
   try {
@@ -178,6 +239,16 @@ async function enviar() {
   } finally {
     enviando.value = false
   }
+}
+
+function enviar() {
+  const texto = mensagem.value.trim()
+  mensagem.value = ''
+  enviarTexto(texto)
+}
+
+function enviarSugestao(texto) {
+  enviarTexto(texto)
 }
 
 async function novaConversa() {

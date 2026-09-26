@@ -273,8 +273,8 @@ const tabs = computed(() => {
           condition: () => isManager(),
         },
         {
-          label: __('IA & Pagamentos'),
-          icon: 'sparkles',
+          label: __('Pagamentos'),
+          icon: 'credit-card',
           component: markRaw(IaPagamentosSettings),
           condition: () => isManager(),
         },

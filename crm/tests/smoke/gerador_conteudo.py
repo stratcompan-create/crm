@@ -9,6 +9,7 @@ from unittest import mock
 import frappe
 
 from crm.api import conteudo as gc
+from crm.api import ficha
 
 
 def run():
@@ -30,11 +31,9 @@ def run():
 	ck("texto que não é JSON vira resposta sem quebrar", texto_livre["slides"] == [] and texto_livre["resposta"])
 
 	# sem chave configurada: deve recusar com mensagem clara, não com erro cru
-	settings = frappe.get_single("FCRM Settings")
-	chave_original = settings.get_password("claude_api_key", raise_exception=False)
+	chave_original = ficha._api_key()
 	try:
-		settings.claude_api_key = ""
-		settings.save()
+		ficha.save_ai_key("")
 		erro_sem_chave = None
 		try:
 			gc.enviar_mensagem(mensagem="cria um post", tipo="Post")
@@ -43,8 +42,7 @@ def run():
 		ck("sem chave configurada, recusa com mensagem clara", erro_sem_chave and "chave" in erro_sem_chave.lower())
 
 		# com chave (fake) e o _call_claude substituído: fluxo completo, incluindo 2º turno
-		settings.claude_api_key = "sk-ant-teste-fake"
-		settings.save()
+		ficha.save_ai_key("sk-ant-teste-fake")
 
 		resposta_1 = json.dumps({
 			"resposta": "Criei o post sobre o lançamento.",
@@ -80,8 +78,7 @@ def run():
 
 			frappe.delete_doc("CRM Conteudo Conversa", conversa_criada, force=True, ignore_permissions=True)
 	finally:
-		settings.claude_api_key = chave_original or ""
-		settings.save()
+		ficha.save_ai_key(chave_original or "")
 		frappe.db.commit()
 
 	return res
