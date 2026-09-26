@@ -161,3 +161,19 @@ def marcar_agendado(conversa: str, data_agendada: str) -> dict:
 	doc.data_agendada = data_agendada
 	doc.save()
 	return {"ok": True}
+
+
+@frappe.whitelist()
+def salvar_slide(conversa: str, indice, canvas: str) -> dict:
+	"""Guarda o estado do editor visual (Fabric.js) daquele slide especifico -
+	o resto do slide (titulo/corpo gerados pela IA) continua junto, so ganha
+	a chave "canvas" com o que a pessoa desenhou/ajustou."""
+	doc = frappe.get_doc("CRM Conteudo Conversa", conversa)
+	slides = json.loads(doc.slides or "[]")
+	indice = int(indice)
+	if indice < 0 or indice >= len(slides):
+		frappe.throw("Esse slide não existe mais nessa conversa.")
+	slides[indice]["canvas"] = json.loads(canvas)
+	doc.slides = json.dumps(slides)
+	doc.save()
+	return {"ok": True}

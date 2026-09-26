@@ -89,31 +89,44 @@
         </div>
       </div>
 
-      <!-- Preview -->
-      <div class="hidden min-w-0 flex-1 flex-col overflow-y-auto p-6 md:flex">
+      <!-- Editor -->
+      <div class="hidden min-w-0 flex-1 flex-col md:flex">
         <div v-if="!slides.length" class="flex flex-1 items-center justify-center text-center text-p-sm text-ink-gray-5">
-          {{ __('Descreva no chat o que você quer. Quando o conteúdo ficar pronto, o preview aparece aqui.') }}
+          {{ __('Descreva no chat o que você quer. Quando o conteúdo ficar pronto, o editor aparece aqui.') }}
         </div>
-        <div v-else class="flex flex-col gap-4">
-          <div class="flex items-center justify-between">
-            <div class="text-p-sm text-ink-gray-5">{{ slides.length }} {{ slides.length === 1 ? __('slide') : __('slides') }}</div>
+        <template v-else>
+          <div class="flex items-center justify-between border-b border-outline-gray-1 px-4 py-2">
+            <div class="flex items-center gap-1">
+              <button
+                v-for="(s, i) in slides"
+                :key="i"
+                type="button"
+                class="flex size-7 items-center justify-center rounded-full border text-p-sm"
+                :class="i === slideAtivo ? 'border-ink-gray-9 bg-surface-gray-2 font-medium text-ink-gray-9' : 'border-outline-gray-2 text-ink-gray-6'"
+                @click="slideAtivo = i"
+              >
+                {{ i + 1 }}
+              </button>
+            </div>
             <Button
               variant="outline"
+              size="sm"
               :label="statusConversa === 'Agendado' ? __('Reagendar') : __('Agendar')"
               @click="mostrarAgendar = true"
             />
           </div>
-          <div
-            v-for="(s, i) in slides"
-            :key="i"
-            class="flex aspect-square w-full max-w-sm flex-col justify-center gap-3 rounded-lg p-8 shadow-sm"
-            :style="{ background: corFundo, color: corTexto }"
-          >
-            <div class="text-sm font-medium opacity-70">{{ brandName }} · {{ i + 1 }}/{{ slides.length }}</div>
-            <div class="text-2xl font-bold leading-tight">{{ s.titulo }}</div>
-            <div class="whitespace-pre-wrap text-base opacity-90">{{ s.corpo }}</div>
-          </div>
-        </div>
+          <InstagramEditor
+            :key="conversa + '-' + slideAtivo"
+            :conversa="conversa"
+            :indice="slideAtivo"
+            :slide="slides[slideAtivo]"
+            :tipo="tipo"
+            :cor-marca="corFundo"
+            :cor-destaque="settings.doc?.brand_accent || '#8aa1a9'"
+            :cor-neutra="settings.doc?.brand_neutral || '#f4f2ed'"
+            :nome-marca="brandName"
+          />
+        </template>
       </div>
     </div>
 
@@ -130,6 +143,7 @@
 
 <script setup>
 import SparkleIcon from '@/components/Icons/SparkleIcon.vue'
+import InstagramEditor from '@/components/InstagramEditor.vue'
 import { getSettings } from '@/stores/settings'
 import { Button, Dialog, ErrorMessage, FormControl, call, createResource } from 'frappe-ui'
 import { computed, nextTick, ref, watch } from 'vue'
@@ -145,6 +159,7 @@ const tipos = [
   { value: 'Story', label: __('Story') },
 ]
 const tipo = ref('Carrossel')
+const slideAtivo = ref(0)
 
 const conversa = ref(null)
 const statusConversa = ref('Rascunho')
@@ -168,6 +183,7 @@ function novaConversa() {
   statusConversa.value = 'Rascunho'
   mensagens.value = []
   slides.value = []
+  slideAtivo.value = 0
   mensagem.value = ''
   erro.value = ''
   mostrarHistorico.value = false
@@ -181,6 +197,7 @@ async function abrirConversa(name) {
   statusConversa.value = r.status
   mensagens.value = r.mensagens
   slides.value = r.slides
+  slideAtivo.value = 0
   scrollToEnd()
 }
 
@@ -217,7 +234,10 @@ async function enviar() {
     conversa.value = r.conversa
     tipo.value = r.tipo
     mensagens.value.push({ role: 'assistant', content: JSON.stringify({ resposta: r.resposta }) })
-    if (r.slides?.length) slides.value = r.slides
+    if (r.slides?.length) {
+      slides.value = r.slides
+      slideAtivo.value = 0
+    }
     scrollToEnd()
   } catch (e) {
     erro.value = e.messages?.join(', ') || e.message || __('Falha ao gerar conteúdo')
