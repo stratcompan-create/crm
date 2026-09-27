@@ -1,14 +1,15 @@
 <template>
   <div class="flex min-h-0 flex-1 flex-col">
-    <div class="flex flex-col gap-2 border-b border-outline-gray-1 px-4 py-2.5">
+    <div class="flex flex-col gap-3 border-b border-outline-gray-1 px-4 py-3">
       <div class="flex flex-wrap items-center justify-between gap-2">
-        <div class="flex gap-1">
+        <div class="flex gap-1.5">
           <button
             v-for="t in tipos"
             :key="t.value"
             type="button"
-            class="rounded-full border px-3 py-1 text-p-sm"
-            :class="tipo === t.value ? 'border-ink-gray-9 bg-surface-gray-2 font-medium text-ink-gray-9' : 'border-outline-gray-2 text-ink-gray-7'"
+            class="rounded-full border px-3 py-1 text-p-sm transition-all duration-150"
+            :class="tipo === t.value ? 'border-transparent font-medium text-white shadow-sm' : 'border-outline-gray-2 text-ink-gray-7 hover:border-ink-gray-4'"
+            :style="tipo === t.value ? { background: corDestaqueUI } : {}"
             @click="tipo = t.value"
           >
             {{ t.label }}
@@ -19,17 +20,24 @@
           <Button variant="subtle" :label="__('+ Nova')" @click="novaConversa" />
         </div>
       </div>
-      <div class="flex items-center gap-1.5">
-        <span class="text-xs text-ink-gray-5">{{ __('Modelo:') }}</span>
+      <div class="flex items-center gap-3">
+        <span class="text-xs font-medium text-ink-gray-5">{{ __('Modelo') }}</span>
         <button
           v-for="m in modelos"
           :key="m.value"
           type="button"
-          class="rounded-full border px-2.5 py-0.5 text-xs"
-          :class="modelo === m.value ? 'border-ink-gray-9 bg-surface-gray-2 font-medium text-ink-gray-9' : 'border-outline-gray-2 text-ink-gray-6'"
+          class="flex flex-col items-center gap-1 rounded-lg p-1 transition-transform duration-150 hover:-translate-y-0.5"
           @click="modelo = m.value"
         >
-          {{ m.label }}
+          <div
+            class="w-14 overflow-hidden rounded-lg shadow-sm ring-2 ring-offset-2 transition-all duration-150"
+            :style="{ '--tw-ring-color': modelo === m.value ? corDestaqueUI : 'transparent' }"
+          >
+            <InstagramModeloPreview :modelo="m.value" :cor-marca="corFundo" :cor-destaque="corDestaqueUI" />
+          </div>
+          <span class="text-[10px]" :class="modelo === m.value ? 'font-medium text-ink-gray-9' : 'text-ink-gray-5'">
+            {{ m.label }}
+          </span>
         </button>
       </div>
     </div>
@@ -160,6 +168,7 @@
 <script setup>
 import SparkleIcon from '@/components/Icons/SparkleIcon.vue'
 import InstagramEditor from '@/components/InstagramEditor.vue'
+import InstagramModeloPreview from '@/components/InstagramModeloPreview.vue'
 import { getSettings } from '@/stores/settings'
 import { Button, Dialog, ErrorMessage, FormControl, call, createResource } from 'frappe-ui'
 import { computed, nextTick, ref, watch } from 'vue'
@@ -167,6 +176,7 @@ import { computed, nextTick, ref, watch } from 'vue'
 const { _settings: settings } = getSettings()
 const brandName = computed(() => settings.doc?.brand_name || 'Sua marca')
 const corFundo = computed(() => settings.doc?.brand_color || '#042d3c')
+const corDestaqueUI = computed(() => settings.doc?.brand_accent || '#8aa1a9')
 const corTexto = computed(() => '#ffffff')
 
 const tipos = [

@@ -1,23 +1,42 @@
 <template>
   <div class="flex min-h-0 flex-1">
     <!-- Barra de ferramentas -->
-    <div class="flex w-14 shrink-0 flex-col items-center gap-1 border-r border-outline-gray-1 py-3">
-      <button type="button" class="flex flex-col items-center gap-0.5 rounded p-2 text-ink-gray-6 hover:bg-surface-gray-2" @click="adicionarTexto">
+    <div class="flex w-16 shrink-0 flex-col items-center gap-2 border-r border-outline-gray-1 bg-surface-gray-1 py-4">
+      <button
+        type="button"
+        class="flex flex-col items-center gap-1 rounded-lg p-2 text-ink-gray-6 transition-all duration-150 hover:-translate-y-0.5 hover:text-white hover:shadow-sm"
+        :style="{ '--hover-bg': corDestaque }"
+        @mouseenter="$event.currentTarget.style.background = corDestaque"
+        @mouseleave="$event.currentTarget.style.background = ''"
+        @click="adicionarTexto"
+      >
         <LucideType class="size-4" />
         <span class="text-[10px]">{{ __('Texto') }}</span>
       </button>
-      <button type="button" class="flex flex-col items-center gap-0.5 rounded p-2 text-ink-gray-6 hover:bg-surface-gray-2" @click="abrirUpload(null)">
+      <button
+        type="button"
+        class="flex flex-col items-center gap-1 rounded-lg p-2 text-ink-gray-6 transition-all duration-150 hover:-translate-y-0.5 hover:text-white hover:shadow-sm"
+        @mouseenter="$event.currentTarget.style.background = corDestaque"
+        @mouseleave="$event.currentTarget.style.background = ''"
+        @click="abrirUpload(null)"
+      >
         <LucideImage class="size-4" />
         <span class="text-[10px]">{{ __('Imagem') }}</span>
       </button>
-      <button type="button" class="flex flex-col items-center gap-0.5 rounded p-2 text-ink-gray-6 hover:bg-surface-gray-2" @click="adicionarForma">
+      <button
+        type="button"
+        class="flex flex-col items-center gap-1 rounded-lg p-2 text-ink-gray-6 transition-all duration-150 hover:-translate-y-0.5 hover:text-white hover:shadow-sm"
+        @mouseenter="$event.currentTarget.style.background = corDestaque"
+        @mouseleave="$event.currentTarget.style.background = ''"
+        @click="adicionarForma"
+      >
         <LucideSquare class="size-4" />
         <span class="text-[10px]">{{ __('Forma') }}</span>
       </button>
       <button
         v-if="objetoSelecionado"
         type="button"
-        class="mt-2 flex flex-col items-center gap-0.5 rounded p-2 text-red-500 hover:bg-surface-gray-2"
+        class="mt-2 flex flex-col items-center gap-1 rounded-lg p-2 text-red-500 transition-all duration-150 hover:-translate-y-0.5 hover:bg-red-50"
         @click="removerSelecionado"
       >
         <LucideTrash2 class="size-4" />
@@ -27,8 +46,10 @@
     </div>
 
     <!-- Canvas -->
-    <div class="flex flex-1 flex-col items-center gap-3 overflow-auto bg-surface-gray-1 p-6">
-      <canvas ref="canvasEl" />
+    <div class="flex flex-1 flex-col items-center gap-4 overflow-auto bg-gradient-to-b from-surface-gray-1 to-surface-gray-2 p-8">
+      <div class="rounded-lg shadow-lg ring-1 ring-black/5 transition-shadow duration-300 hover:shadow-xl">
+        <canvas ref="canvasEl" class="rounded-lg" />
+      </div>
       <div class="flex items-center gap-2">
         <Button variant="outline" size="sm" :label="__('Baixar PNG')" @click="baixarPng" />
         <Button variant="solid" size="sm" :label="__('Salvar')" :loading="salvando" @click="salvar" />
