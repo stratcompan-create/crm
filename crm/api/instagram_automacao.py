@@ -101,6 +101,40 @@ def maybe_send_welcome(lead: str, sender_id: str):
 		frappe.log_error("Instagram: falha nas boas-vindas", frappe.get_traceback())
 
 
+# ------------------------------------------------------------------ palavra-chave em resposta de Story
+
+def process_story_reply(lead: str, sender_id: str, text: str, story_id: str = ""):
+	"""A pessoa respondeu (no Direct) a um Story seu - mesma lógica de palavra-chave dos
+	comentários, só que chega como resposta de Story em vez de comentário em post."""
+	cleaned = re.sub(r"[^\w\s]", " ", text or "")
+	normalized = f" {_norm(cleaned)} "
+	trigger = None
+	for g in frappe.get_all("CRM Instagram Gatilho", filters={"ativa": 1}, fields=["palavra", "mensagem", "servico"]):
+		word = _norm(g.palavra)
+		if word and f" {word} " in normalized:
+			trigger = g
+			break
+	if not trigger:
+		return False
+
+	if trigger.get("servico") and not frappe.db.get_value("CRM Lead", lead, "servico"):
+		frappe.db.set_value("CRM Lead", lead, "servico", trigger.servico, update_modified=False)
+	dm = _fill(trigger.mensagem, lead)
+	if not dm:
+		return False
+	# uma mensagem por pessoa e palavra a cada 24h, mesmo que ela responda de novo
+	if frappe.db.exists(
+		"CRM Instagram Message",
+		{"lead": lead, "direction": "Sent", "message": dm, "creation": [">", add_to_date(now_datetime(), hours=-24)]},
+	):
+		return False
+	if _post_message({"id": sender_id}, dm):
+		_log_message(lead, sender_id, "Sent", dm)
+		frappe.db.commit()
+		return True
+	return False
+
+
 # ------------------------------------------------------------------ palavra-chave em comentário
 
 def process_comment_change(value: dict):

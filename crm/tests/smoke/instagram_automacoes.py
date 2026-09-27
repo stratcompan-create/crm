@@ -55,6 +55,17 @@ def run():
                 out=ig._handle_incoming_event()
             made.append(frappe.db.get_value("CRM Lead",{"instagram_sender_id":"T903"}))
             ck("webhook trata changes/comments",len(sent)==1 and out["status"]=="ok")
+            # resposta de Story: mesma lógica de palavra-chave, mas chega como reply_to.story
+            sent.clear()
+            ig._process_message_event({"sender":{"id":"T904"},"message":{"text":"quero o escritorio","reply_to":{"story":{"id":"S1"+U,"url":"https://x"}}}})
+            l4=frappe.db.get_value("CRM Lead",{"instagram_sender_id":"T904"}); made.append(l4)
+            ck("resposta de story com palavra cria lead",bool(l4))
+            ck("resposta de story manda DM pro id da pessoa (não comment_id)",len(sent)==1 and sent[0]["recipient"]=={"id":"T904"} and "Aqui está" in sent[0]["message"]["text"])
+            sent.clear()
+            ig._process_message_event({"sender":{"id":"T905"},"message":{"text":"legal isso","reply_to":{"story":{"id":"S2"+U,"url":"https://x"}}}})
+            l5=frappe.db.get_value("CRM Lead",{"instagram_sender_id":"T905"}); made.append(l5)
+            ck("resposta de story sem palavra não manda nada",len(sent)==0)
+            ck("mas ainda vira lead/mensagem normal (não é descartada)",bool(l5) and frappe.db.count("CRM Instagram Message",{"lead":l5})==1)
     finally:
         frappe.db.rollback()
         for l in made:

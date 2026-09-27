@@ -146,9 +146,15 @@ def _process_message_event(event: dict):
 	on_inbound_message(lead_name, text)
 	frappe.db.commit()
 
-	from crm.api.instagram_automacao import maybe_send_welcome
+	story = (message.get("reply_to") or {}).get("story")
+	if story:
+		from crm.api.instagram_automacao import process_story_reply
 
-	maybe_send_welcome(lead_name, sender_id)
+		process_story_reply(lead_name, sender_id, text, story.get("id", ""))
+	else:
+		from crm.api.instagram_automacao import maybe_send_welcome
+
+		maybe_send_welcome(lead_name, sender_id)
 
 
 def _fetch_sender_profile(sender_id: str) -> dict:
