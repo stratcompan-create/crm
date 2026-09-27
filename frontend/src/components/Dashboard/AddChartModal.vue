@@ -83,6 +83,8 @@ const numberCharts = [
     label: __('Avg Time to Close a Deal'),
     value: 'average_time_to_close_a_deal',
   },
+  { label: __('Receita recebida (Financeiro)'), value: 'receita_recebida' },
+  { label: __('Meta do mês (Financeiro)'), value: 'meta_mensal' },
 ]
 
 const axisChart = ref('sales_trend')
@@ -94,6 +96,7 @@ const axisCharts = [
   { label: __('Lost Deal Reasons'), value: 'lost_deal_reasons' },
   { label: __('Deals by Territory'), value: 'deals_by_territory' },
   { label: __('Deals by Salesperson'), value: 'deals_by_salesperson' },
+  { label: __('Tendência de receita (Financeiro)'), value: 'receita_trend' },
 ]
 
 const donutChart = ref('deals_by_stage_donut')

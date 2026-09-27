@@ -27,6 +27,7 @@ MODULES = [
     "gerador_conteudo",
     "pagamento_link",
     "assistente_geral",
+    "dashboard_financeiro",
 ]
 
 

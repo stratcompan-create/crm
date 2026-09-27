@@ -1175,6 +1175,106 @@ def get_deals_by_salesperson(
 	}
 
 
+# ------------------------------------------------------------------ Financeiro (CRM Honorario)
+
+def get_receita_recebida(from_date: str | None = None, to_date: str | None = None, user: str | None = None):
+	"""Total recebido (Honorarios pagos) no periodo, comparado com o periodo anterior de mesmo tamanho."""
+	if not from_date or not to_date:
+		from_date = frappe.utils.get_first_day(from_date or frappe.utils.nowdate())
+		to_date = frappe.utils.get_last_day(to_date or frappe.utils.nowdate())
+
+	diff = frappe.utils.date_diff(to_date, from_date)
+	if diff == 0:
+		diff = 1
+	prev_from_date = frappe.utils.add_days(from_date, -diff)
+
+	Honorario = DocType("CRM Honorario")
+
+	def _sum(start, end):
+		row = (
+			frappe.qb.from_(Honorario)
+			.select(Sum(Honorario.valor).as_("total"))
+			.where((Honorario.status == "Pago") & (Honorario.data_pagamento >= start) & (Honorario.data_pagamento < end))
+			.run(as_dict=True)
+		)
+		return row[0].total or 0
+
+	current = _sum(from_date, frappe.utils.add_days(to_date, 1))
+	previous = _sum(prev_from_date, from_date)
+	delta = (current - previous) / previous * 100 if previous else 0
+
+	return {
+		"title": _("Receita recebida"),
+		"tooltip": _("Total de honorários pagos no período (data de pagamento)"),
+		"value": current,
+		"delta": delta,
+		"deltaSuffix": "%",
+	}
+
+
+def get_meta_mensal(from_date: str | None = None, to_date: str | None = None, user: str | None = None):
+	"""Percentual da meta mensal (MRR) atingido com o recebido no período."""
+	if not from_date or not to_date:
+		from_date = frappe.utils.get_first_day(from_date or frappe.utils.nowdate())
+		to_date = frappe.utils.get_last_day(to_date or frappe.utils.nowdate())
+
+	Honorario = DocType("CRM Honorario")
+	row = (
+		frappe.qb.from_(Honorario)
+		.select(Sum(Honorario.valor).as_("total"))
+		.where(
+			(Honorario.status == "Pago")
+			& (Honorario.data_pagamento >= from_date)
+			& (Honorario.data_pagamento < frappe.utils.add_days(to_date, 1))
+		)
+		.run(as_dict=True)
+	)
+	recebido = frappe.utils.flt(row[0].total)
+	meta = frappe.utils.flt(frappe.db.get_singles_dict("CRM Financial Goals").get("meta_mrr"))
+	pct = round(recebido / meta * 100) if meta else 0
+
+	return {
+		"title": _("Meta do mês"),
+		"tooltip": _("Recebido no período comparado com a meta mensal (MRR) cadastrada"),
+		"value": pct,
+		"deltaSuffix": "%",
+	}
+
+
+def get_receita_trend(from_date: str | None = None, to_date: str | None = None, user: str | None = None):
+	"""Recebido por dia no período (Honorarios pagos, agrupado pela data de pagamento)."""
+	if not from_date or not to_date:
+		from_date = frappe.utils.get_first_day(from_date or frappe.utils.nowdate())
+		to_date = frappe.utils.get_last_day(to_date or frappe.utils.nowdate())
+
+	Honorario = DocType("CRM Honorario")
+	result = (
+		frappe.qb.from_(Honorario)
+		.select(DateFormat(Honorario.data_pagamento, "%Y-%m-%d").as_("date"), Sum(Honorario.valor).as_("recebido"))
+		.where(
+			(Honorario.status == "Pago")
+			& (Honorario.data_pagamento >= from_date)
+			& (Honorario.data_pagamento < frappe.utils.add_days(to_date, 1))
+		)
+		.groupby(Honorario.data_pagamento)
+		.orderby(Honorario.data_pagamento)
+		.run(as_dict=True)
+	)
+
+	trend = [{"date": row.date, "recebido": row.recebido or 0} for row in result]
+
+	return {
+		"data": trend,
+		"title": _("Receita recebida"),
+		"subtitle": _("Honorários pagos, por dia"),
+		"xAxis": {"title": _("Data"), "key": "date", "type": "time", "timeGrain": "day"},
+		"yAxis": {"title": _("R$")},
+		"series": [
+			{"name": "recebido", "type": "bar", "showDataPoints": True, "echartOptions": {"name": _("Recebido")}},
+		],
+	}
+
+
 def get_base_currency_symbol():
 	"""
 	Get the base currency symbol from the system settings.
