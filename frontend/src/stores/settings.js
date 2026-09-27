@@ -1,7 +1,6 @@
 import { createDocumentResource } from 'frappe-ui'
-import { reactive, ref } from 'vue'
+import { computed, reactive } from 'vue'
 
-const settings = ref({})
 // Seeded from the boot payload so the office's own name/logo is there on the
 // very first paint instead of a generic placeholder while settings load.
 const brand = reactive({ ...(window.crm_brand || {}) })
@@ -29,12 +28,17 @@ applyBrandToHead()
 const _settings = createDocumentResource({
   doctype: 'FCRM Settings',
   name: 'FCRM Settings',
-  onSuccess: (data) => {
-    settings.value = data
+  onSuccess: () => {
     getSettings().setupBrand()
-    return data
   },
 })
+
+// Espelha _settings.doc sempre - antes "settings" só era preenchido uma vez, na mão,
+// dentro do onSuccess acima; se esse momento específico falhasse por qualquer motivo
+// (sessão ainda carregando, ordem de montagem dos componentes, etc.), settings.value
+// ficava vazio pelo resto da sessão inteira mesmo com o documento já carregado certo
+// (é o que já vinha acontecendo com o menu de Configurações e o Meu Site).
+const settings = computed(() => _settings.doc || {})
 
 export function getSettings() {
   function setupBrand() {
