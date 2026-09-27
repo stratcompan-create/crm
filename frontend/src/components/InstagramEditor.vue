@@ -239,33 +239,46 @@ function montarTwitter() {
   canvas.backgroundColor = props.corMarca
   corFundoAtual.value = props.corMarca
 
-  const raioAvatar = w * 0.045
+  const raioAvatar = w * 0.07
   const avatar = new Circle({ left: w * 0.08, top: h * 0.08, radius: raioAvatar, fill: '#ffffff' })
-  canvas.add(avatar)
+  const marca = new Rect({
+    left: w * 0.08 + raioAvatar, top: h * 0.08 + raioAvatar, width: raioAvatar * 0.9, height: raioAvatar * 0.9,
+    fill: 'transparent', stroke: props.corDestaque, strokeWidth: Math.max(2, w * 0.006), angle: 45, originX: 'center', originY: 'center',
+  })
+  canvas.add(avatar, marca)
 
-  const handle = new Textbox(props.nomeMarca || __('sua marca'), {
-    left: w * 0.08 + raioAvatar * 2 + 16, top: h * 0.08,
-    width: w * 0.6, fontSize: Math.round(w * 0.032), fontWeight: 'bold', fontFamily: 'Arial', fill: '#ffffff',
+  const nomeTexto = props.nomeMarca || __('Sua marca')
+  const nome = new Textbox(nomeTexto, {
+    left: w * 0.08 + raioAvatar * 2 + 18, top: h * 0.085,
+    width: w * 0.6, fontSize: Math.round(w * 0.036), fontWeight: 'bold', fontFamily: 'Arial', fill: '#ffffff',
   })
-  const tagline = new Textbox(__('marketing jurídico'), {
-    left: w * 0.08 + raioAvatar * 2 + 16, top: h * 0.08 + Math.round(w * 0.032) + 8,
-    width: w * 0.6, fontSize: Math.round(w * 0.024), fontFamily: 'Arial', fill: props.corDestaque,
+  const selo = new Circle({
+    left: w * 0.08 + raioAvatar * 2 + 18 + nomeTexto.length * w * 0.021 + 14,
+    top: h * 0.085 + w * 0.006, radius: w * 0.014, fill: '#3897f0',
   })
-  canvas.add(handle, tagline)
+  const check = new Textbox('✓', {
+    left: selo.left - w * 0.008, top: selo.top - w * 0.011,
+    fontSize: Math.round(w * 0.02), fontFamily: 'Arial', fill: '#ffffff', selectable: false,
+  })
+  const handle = new Textbox('@' + nomeTexto.toLowerCase().replace(/\s+/g, ''), {
+    left: w * 0.08 + raioAvatar * 2 + 18, top: h * 0.085 + Math.round(w * 0.036) + 8,
+    width: w * 0.6, fontSize: Math.round(w * 0.024), fontFamily: 'Arial', fill: '#9fb0b5',
+  })
+  canvas.add(nome, selo, check, handle)
 
   const titulo = new Textbox(props.slide.titulo || '', {
-    left: w * 0.08, top: h * 0.22, width: w * 0.84,
-    fontSize: Math.round(w * 0.062), fontWeight: 'bold', fontFamily: 'Arial', fill: '#ffffff',
+    left: w * 0.08, top: h * 0.27, width: w * 0.84,
+    fontSize: Math.round(w * 0.058), fontWeight: 'bold', fontFamily: 'Arial', fill: '#ffffff', lineHeight: 1.18,
   })
   const corpo = new Textbox(props.slide.corpo || '', {
-    left: w * 0.08, top: h * 0.22 + Math.round(w * 0.062) * 2.5 + 20, width: w * 0.84,
-    fontSize: Math.round(w * 0.032), fontFamily: 'Arial', fill: '#c7d3d6',
+    left: w * 0.08, top: h * 0.46, width: w * 0.79,
+    fontSize: Math.round(w * 0.032), fontFamily: 'Arial', fill: '#c7d3d6', lineHeight: 1.5,
   })
   canvas.add(titulo, corpo)
 
   const espacoImagem = new Rect({
-    left: w * 0.08, top: h * 0.6, width: w * 0.84, height: h * 0.34, rx: 18, ry: 18,
-    fill: '#ffffff', opacity: 0.15,
+    left: w * 0.08, top: h * 0.68, width: w * 0.58, height: h * 0.24, rx: 20, ry: 20,
+    fill: '#ffffff', opacity: 0.1, stroke: 'rgba(255,255,255,.3)', strokeWidth: 1, strokeDashArray: [6, 6],
   })
   canvas.add(espacoImagem)
   canvas.renderAll()
@@ -290,8 +303,8 @@ function montarCitacao() {
   canvas.add(titulo, corpo)
 
   const espacoImagem = new Rect({
-    left: w * 0.09, top: h * 0.52, width: w * 0.82, height: h * 0.4, rx: 14, ry: 14,
-    fill: '#e4e4e4',
+    left: w * 0.09, top: h * 0.54, width: w * 0.82, height: h * 0.37, rx: 20, ry: 20,
+    fill: '#f2f2f2', stroke: '#d8d8d8', strokeWidth: 1, strokeDashArray: [6, 6],
   })
   canvas.add(espacoImagem)
   canvas.renderAll()
