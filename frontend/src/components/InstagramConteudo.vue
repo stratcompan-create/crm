@@ -114,8 +114,16 @@
 
       <!-- Editor -->
       <div class="hidden min-w-0 flex-1 flex-col md:flex">
-        <div v-if="!slides.length" class="flex flex-1 items-center justify-center text-center text-p-sm text-ink-gray-5">
-          {{ __('Descreva no chat o que você quer. Quando o conteúdo ficar pronto, o editor aparece aqui.') }}
+        <div v-if="!slides.length" class="flex flex-1 flex-col items-center justify-center gap-4 overflow-y-auto p-6 text-center">
+          <InstagramModeloPreviewGrande
+            :modelo="modelo"
+            :cor-marca="corFundo"
+            :cor-destaque="corDestaqueUI"
+            :nome-marca="brandName"
+          />
+          <div class="max-w-sm text-p-sm text-ink-gray-5">
+            {{ __('Prévia do modelo "{0}" — o texto acima é só exemplo. Descreva no chat o que você quer: o conteúdo real substitui essa prévia.', [modeloLabelAtual]) }}
+          </div>
         </div>
         <template v-else>
           <div class="flex items-center justify-between border-b border-outline-gray-1 px-4 py-2">
@@ -169,6 +177,7 @@
 import SparkleIcon from '@/components/Icons/SparkleIcon.vue'
 import InstagramEditor from '@/components/InstagramEditor.vue'
 import InstagramModeloPreview from '@/components/InstagramModeloPreview.vue'
+import InstagramModeloPreviewGrande from '@/components/InstagramModeloPreviewGrande.vue'
 import { getSettings } from '@/stores/settings'
 import { Button, Dialog, ErrorMessage, FormControl, call, createResource } from 'frappe-ui'
 import { computed, nextTick, ref, watch } from 'vue'
@@ -193,6 +202,7 @@ const modelos = [
   { value: 'citacao', label: __('Citação') },
 ]
 const modelo = ref('padrao')
+const modeloLabelAtual = computed(() => modelos.find((m) => m.value === modelo.value)?.label || '')
 
 const conversa = ref(null)
 const statusConversa = ref('Rascunho')
