@@ -61,6 +61,19 @@
       </template>
       <template v-else>
         <div class="mb-3 text-p-sm font-medium text-ink-gray-7">{{ __('Fundo') }}</div>
+        <div class="mb-3 flex flex-wrap gap-2">
+          <button
+            v-for="p in paletaFundo"
+            :key="p.cor"
+            type="button"
+            class="size-8 rounded-full border-2"
+            :class="corFundoAtual.toLowerCase() === p.cor.toLowerCase() ? 'border-ink-gray-9' : 'border-outline-gray-2'"
+            :style="{ background: p.cor }"
+            :title="p.rotulo"
+            @click="corFundoAtual = p.cor; aplicarCorFundo()"
+          />
+        </div>
+        <div class="mb-1 text-p-sm text-ink-gray-6">{{ __('Outra cor') }}</div>
         <input type="color" class="h-8 w-full cursor-pointer rounded border border-outline-gray-2" v-model="corFundoAtual" @input="aplicarCorFundo" />
       </template>
 
@@ -90,14 +103,15 @@ import LucideImage from '~icons/lucide/image'
 import LucideSquare from '~icons/lucide/square'
 import LucideTrash2 from '~icons/lucide/trash-2'
 import { Button, FormControl, call } from 'frappe-ui'
-import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { Canvas, Textbox, Rect, FabricImage } from 'fabric'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { Canvas, Textbox, Rect, FabricImage, Circle } from 'fabric'
 
 const props = defineProps({
   conversa: { type: String, required: true },
   indice: { type: Number, required: true },
   slide: { type: Object, required: true },
   tipo: { type: String, default: 'Carrossel' },
+  modelo: { type: String, default: 'padrao' },
   corMarca: { type: String, default: '#042d3c' },
   corDestaque: { type: String, default: '#8aa1a9' },
   corNeutra: { type: String, default: '#f4f2ed' },
@@ -126,6 +140,12 @@ const objetoSelecionado = ref(null)
 const camadas = ref([])
 const salvando = ref(false)
 const corFundoAtual = ref(props.corMarca)
+const paletaFundo = computed(() => [
+  { cor: '#ffffff', rotulo: __('Branco') },
+  { cor: props.corMarca, rotulo: __('Cor principal') },
+  { cor: props.corDestaque, rotulo: __('Cor de destaque') },
+  { cor: props.corNeutra, rotulo: __('Cor neutra') },
+])
 const propTexto = ref({ fontFamily: 'Arial', fontSize: 32, fill: '#ffffff' })
 const propForma = ref({ fill: '#ffffff' })
 
@@ -190,6 +210,72 @@ function montarPadrao() {
   canvas.renderAll()
 }
 
+// Modelo "estilo Twitter": avatar + nome da marca no topo, título e texto,
+// espaço de imagem arredondado embaixo - pra colar a foto (upload) por cima.
+function montarTwitter() {
+  const { w, h } = TAMANHOS[props.tipo] || TAMANHOS.Carrossel
+  canvas.setDimensions({ width: w, height: h })
+  canvas.backgroundColor = props.corMarca
+  corFundoAtual.value = props.corMarca
+
+  const raioAvatar = w * 0.045
+  const avatar = new Circle({ left: w * 0.08, top: h * 0.08, radius: raioAvatar, fill: '#ffffff' })
+  canvas.add(avatar)
+
+  const handle = new Textbox(props.nomeMarca || __('sua marca'), {
+    left: w * 0.08 + raioAvatar * 2 + 16, top: h * 0.08,
+    width: w * 0.6, fontSize: Math.round(w * 0.032), fontWeight: 'bold', fontFamily: 'Arial', fill: '#ffffff',
+  })
+  const tagline = new Textbox(__('marketing jurídico'), {
+    left: w * 0.08 + raioAvatar * 2 + 16, top: h * 0.08 + Math.round(w * 0.032) + 8,
+    width: w * 0.6, fontSize: Math.round(w * 0.024), fontFamily: 'Arial', fill: props.corDestaque,
+  })
+  canvas.add(handle, tagline)
+
+  const titulo = new Textbox(props.slide.titulo || '', {
+    left: w * 0.08, top: h * 0.22, width: w * 0.84,
+    fontSize: Math.round(w * 0.062), fontWeight: 'bold', fontFamily: 'Arial', fill: '#ffffff',
+  })
+  const corpo = new Textbox(props.slide.corpo || '', {
+    left: w * 0.08, top: h * 0.22 + Math.round(w * 0.062) * 2.5 + 20, width: w * 0.84,
+    fontSize: Math.round(w * 0.032), fontFamily: 'Arial', fill: '#c7d3d6',
+  })
+  canvas.add(titulo, corpo)
+
+  const espacoImagem = new Rect({
+    left: w * 0.08, top: h * 0.6, width: w * 0.84, height: h * 0.34, rx: 18, ry: 18,
+    fill: '#ffffff', opacity: 0.15,
+  })
+  canvas.add(espacoImagem)
+  canvas.renderAll()
+}
+
+// Modelo "citação clara": fundo branco, título na cor de destaque, texto cinza,
+// espaço de imagem arredondado embaixo.
+function montarCitacao() {
+  const { w, h } = TAMANHOS[props.tipo] || TAMANHOS.Carrossel
+  canvas.setDimensions({ width: w, height: h })
+  canvas.backgroundColor = '#ffffff'
+  corFundoAtual.value = '#ffffff'
+
+  const titulo = new Textbox(props.slide.titulo || '', {
+    left: w * 0.09, top: h * 0.08, width: w * 0.82,
+    fontSize: Math.round(w * 0.062), fontWeight: 'bold', fontFamily: 'Arial', fill: props.corDestaque,
+  })
+  const corpo = new Textbox(props.slide.corpo || '', {
+    left: w * 0.09, top: h * 0.08 + Math.round(w * 0.062) * 2.3 + 24, width: w * 0.82,
+    fontSize: Math.round(w * 0.034), fontFamily: 'Arial', fill: '#666666',
+  })
+  canvas.add(titulo, corpo)
+
+  const espacoImagem = new Rect({
+    left: w * 0.09, top: h * 0.52, width: w * 0.82, height: h * 0.4, rx: 14, ry: 14,
+    fill: '#e4e4e4',
+  })
+  canvas.add(espacoImagem)
+  canvas.renderAll()
+}
+
 async function montarCanvas() {
   const { w, h } = TAMANHOS[props.tipo] || TAMANHOS.Carrossel
   if (props.slide.canvas) {
@@ -197,6 +283,10 @@ async function montarCanvas() {
     canvas.setDimensions({ width: props.slide.canvas.width || w, height: props.slide.canvas.height || h })
     corFundoAtual.value = canvas.backgroundColor || props.corMarca
     canvas.renderAll()
+  } else if (props.modelo === 'twitter') {
+    montarTwitter()
+  } else if (props.modelo === 'citacao') {
+    montarCitacao()
   } else {
     montarPadrao()
   }
