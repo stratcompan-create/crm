@@ -1,32 +1,28 @@
 <template>
   <div class="mp" :style="{ background: fundo }">
     <template v-if="modelo === 'twitter'">
-      <div class="mp-row">
-        <div class="mp-avatar" />
-        <div class="mp-col">
-          <div class="mp-line mp-line-strong" style="width: 60%; background: #ffffff" />
-          <div class="mp-line" style="width: 40%" :style="{ background: corDestaque }" />
-        </div>
-      </div>
-      <div class="mp-line mp-title" style="width: 85%; background: #ffffff" />
-      <div class="mp-line mp-title" style="width: 55%; background: #ffffff" />
-      <div class="mp-line" style="width: 90%; background: #c7d3d6" />
-      <div class="mp-line" style="width: 70%; background: #c7d3d6" />
-      <div class="mp-image" style="background: rgba(255,255,255,.18)" />
+      <div class="mp-avatar" />
+      <div class="mp-el" style="top: 10cqw; left: 27cqw; width: 45cqw; height: 6cqw; background: #ffffff" />
+      <div class="mp-el" style="top: 18cqw; left: 27cqw; width: 30cqw; height: 5cqw" :style="{ background: corDestaque }" />
+      <div class="mp-el" style="top: 32cqw; left: 9cqw; width: 82cqw; height: 8cqw; background: #ffffff" />
+      <div class="mp-el" style="top: 42cqw; left: 9cqw; width: 55cqw; height: 8cqw; background: #ffffff" />
+      <div class="mp-el" style="top: 56cqw; left: 9cqw; width: 82cqw; height: 4cqw; background: #c7d3d6" />
+      <div class="mp-el" style="top: 63cqw; left: 9cqw; width: 65cqw; height: 4cqw; background: #c7d3d6" />
+      <div class="mp-image" style="top: 74cqw; bottom: 9cqw; background: rgba(255,255,255,.2)" />
     </template>
     <template v-else-if="modelo === 'citacao'">
-      <div class="mp-line mp-title" style="width: 85%" :style="{ background: corDestaque }" />
-      <div class="mp-line mp-title" style="width: 55%" :style="{ background: corDestaque }" />
-      <div class="mp-line" style="width: 90%; background: #999999" />
-      <div class="mp-line" style="width: 70%; background: #999999" />
-      <div class="mp-image" style="background: #e4e4e4" />
+      <div class="mp-el" style="top: 9cqw; left: 9cqw; width: 82cqw; height: 8cqw" :style="{ background: corDestaque }" />
+      <div class="mp-el" style="top: 19cqw; left: 9cqw; width: 55cqw; height: 8cqw" :style="{ background: corDestaque }" />
+      <div class="mp-el" style="top: 34cqw; left: 9cqw; width: 82cqw; height: 4cqw; background: #999999" />
+      <div class="mp-el" style="top: 41cqw; left: 9cqw; width: 65cqw; height: 4cqw; background: #999999" />
+      <div class="mp-image" style="top: 52cqw; bottom: 9cqw; background: #e4e4e4" />
     </template>
     <template v-else>
-      <div class="mp-line" style="width: 45%; background: #ffffff; opacity: .85" />
-      <div class="mp-line mp-title" style="width: 85%; background: #ffffff" />
-      <div class="mp-line mp-title" style="width: 55%; background: #ffffff" />
-      <div class="mp-line" style="width: 80%" :style="{ background: corDestaque }" />
-      <div class="mp-line" style="width: 60%" :style="{ background: corDestaque }" />
+      <div class="mp-el" style="top: 12cqw; left: 9cqw; width: 40cqw; height: 4cqw; background: #ffffff; opacity: .85" />
+      <div class="mp-el" style="top: 34cqw; left: 9cqw; width: 82cqw; height: 9cqw; background: #ffffff" />
+      <div class="mp-el" style="top: 45cqw; left: 9cqw; width: 55cqw; height: 9cqw; background: #ffffff" />
+      <div class="mp-el" style="top: 62cqw; left: 9cqw; width: 75cqw; height: 4cqw" :style="{ background: corDestaque }" />
+      <div class="mp-el" style="top: 69cqw; left: 9cqw; width: 55cqw; height: 4cqw" :style="{ background: corDestaque }" />
     </template>
   </div>
 </template>
@@ -44,19 +40,29 @@ const fundo = computed(() => (props.modelo === 'citacao' ? '#ffffff' : props.cor
 <style scoped>
 .mp {
   container-type: inline-size;
+  position: relative;
   aspect-ratio: 1 / 1;
   border-radius: 10%;
-  padding: 10cqw 9cqw;
-  display: flex;
-  flex-direction: column;
-  gap: 5cqw;
   overflow: hidden;
 }
-.mp-row { display: flex; align-items: center; gap: 4cqw; margin-bottom: 2cqw; }
-.mp-avatar { width: 16cqw; height: 16cqw; border-radius: 50%; background: #ffffff; flex-shrink: 0; }
-.mp-col { display: flex; flex-direction: column; gap: 2.5cqw; flex: 1; }
-.mp-line { height: 6cqw; border-radius: 2cqw; }
-.mp-line-strong { height: 6cqw; }
-.mp-title { height: 9cqw; }
-.mp-image { margin-top: auto; height: 26cqw; border-radius: 8%; }
+.mp-avatar {
+  position: absolute;
+  top: 9cqw;
+  left: 9cqw;
+  width: 16cqw;
+  height: 16cqw;
+  border-radius: 50%;
+  background: #ffffff;
+}
+.mp-el {
+  position: absolute;
+  border-radius: 2cqw;
+}
+.mp-image {
+  position: absolute;
+  left: 9cqw;
+  right: 9cqw;
+  bottom: 9cqw;
+  border-radius: 8%;
+}
 </style>
