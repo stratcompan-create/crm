@@ -315,9 +315,25 @@ def generate_ai_suggestions(lead: str, force=0) -> dict:
 			)
 	if not out:
 		frappe.throw(_("A IA não devolveu sugestões desta vez. Tente de novo."))
-	frappe.db.set_value("CRM Instagram Message", row.name, "sugestoes", json.dumps(out, ensure_ascii=False), update_modified=False)
-	frappe.db.commit()
+	_save_suggestions(row.name, out)
 	return {"sugestoes": out}
+
+
+def _save_suggestions(message: str, out: list):
+	"""A mesma mensagem pode estar sendo lida pela atualização automática da tela (a cada
+	10s) bem na hora de salvar - tenta de novo em vez de estourar erro pra quem está usando."""
+	import time
+
+	for attempt in range(4):
+		try:
+			frappe.db.set_value("CRM Instagram Message", message, "sugestoes", json.dumps(out, ensure_ascii=False), update_modified=False)
+			frappe.db.commit()
+			return
+		except (frappe.QueryDeadlockError, frappe.TimestampMismatchError):
+			frappe.db.rollback()
+			if attempt == 3:
+				raise
+			time.sleep(0.5 + attempt * 0.5)
 
 
 # ------------------------------------------------------------------ o que a conversa alimenta sozinha

@@ -20,7 +20,7 @@ import DoctypeModals from '@/components/Modals/DoctypeModals.vue'
 import { Dialogs } from '@/utils/dialogs'
 import { sessionStore } from '@/stores/session'
 import { FrappeUIProvider, setConfig, useTheme } from 'frappe-ui'
-import { computed, defineAsyncComponent, onMounted, provide } from 'vue'
+import { computed, defineAsyncComponent, onMounted, provide, ref } from 'vue'
 import { toast } from 'frappe-ui'
 
 const session = sessionStore()
@@ -48,8 +48,14 @@ const MobileLayout = defineAsyncComponent(
 const DesktopLayout = defineAsyncComponent(
   () => import('./components/Layouts/DesktopLayout.vue'),
 )
+// window.innerWidth sozinho não é reativo - sem acompanhar o resize, essa escolha
+// ficava travada no tamanho de tela de quando a página carregou pela primeira vez.
+const windowWidth = ref(window.innerWidth)
+window.addEventListener('resize', () => {
+  windowWidth.value = window.innerWidth
+})
 const Layout = computed(() => {
-  if (window.innerWidth < 640) {
+  if (windowWidth.value < 640) {
     return MobileLayout
   } else {
     return DesktopLayout

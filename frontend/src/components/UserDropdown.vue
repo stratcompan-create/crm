@@ -67,35 +67,34 @@ const { getUser } = usersStore()
 
 const user = computed(() => getUser() || {})
 
+// Configurações e Sair são navegação essencial: nunca dependem de a Ficha de
+// Configurações (FCRM Settings) ter carregado certo. Só os itens EXTRAS
+// (não padrão) vêm de lá - hoje ninguém usa isso, mas fica compatível caso
+// algum dia alguém cadastre um item próprio.
+const STANDARD_ITEMS = {
+  settings: { name1: 'settings', label: 'Settings', icon: 'settings', is_standard: 1 },
+  login_to_fc: { name1: 'login_to_fc', label: 'Login to Frappe Cloud', is_standard: 1 },
+  about: { name1: 'about', label: 'About', icon: 'info', is_standard: 1 },
+  logout: { name1: 'logout', label: 'Log out', icon: 'log-out', is_standard: 1 },
+}
+
 const dropdownItems = computed(() => {
-  if (!settings.value?.dropdown_items) return []
+  const principais = []
+  if (!isMobileView.value) {
+    principais.push(getStandardItem(STANDARD_ITEMS.settings))
+    if (window.is_fc_site) principais.push(getStandardItem(STANDARD_ITEMS.login_to_fc))
+  }
+  principais.push(getStandardItem(STANDARD_ITEMS.about))
 
-  let items = settings.value.dropdown_items
+  const extras = (settings.value?.dropdown_items || []).filter(
+    (item) => !item.hidden && item.name1 !== 'app_selector' && !item.is_standard,
+  )
+  extras.forEach((item) => principais.push(dropdownItemObj(item)))
 
-  let _dropdownItems = [
-    {
-      group: 'Dropdown Items',
-      hideLabel: true,
-      items: [],
-    },
+  return [
+    { group: 'Dropdown Items', hideLabel: true, items: principais },
+    { group: '', hideLabel: true, items: [getStandardItem(STANDARD_ITEMS.logout)] },
   ]
-
-  items.forEach((item) => {
-    if (item.hidden || item.name1 === 'app_selector') return
-    if (item.type !== 'Separator') {
-      _dropdownItems[_dropdownItems.length - 1].items.push(
-        dropdownItemObj(item),
-      )
-    } else {
-      _dropdownItems.push({
-        group: '',
-        hideLabel: true,
-        items: [],
-      })
-    }
-  })
-
-  return _dropdownItems
 })
 
 function dropdownItemObj(item) {
