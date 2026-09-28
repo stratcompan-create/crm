@@ -1,11 +1,11 @@
 <template>
   <div class="mp" :style="{ background: fundo }">
     <template v-if="modelo === 'twitter'">
-      <div class="mp-avatar-bio" style="top: 36cqw; left: 10cqw; width: 15cqw; height: 15cqw" />
-      <div class="mp-el" style="top: 40cqw; left: 28cqw; width: 45cqw; height: 5.5cqw; background: #ffffff" />
-      <div class="mp-el" style="top: 47cqw; left: 28cqw; width: 30cqw; height: 4cqw; background: #9fb0b5" />
-      <div class="mp-el" style="top: 58cqw; left: 10cqw; width: 80cqw; height: 4cqw; background: #666666" />
-      <div class="mp-el" style="top: 64cqw; left: 10cqw; width: 60cqw; height: 4cqw; background: #666666" />
+      <div class="mp-avatar-bio" style="top: 42cqw; left: 18cqw; width: 8cqw; height: 8cqw" />
+      <div class="mp-el" style="top: 43.5cqw; left: 28cqw; width: 40cqw; height: 5cqw; background: #ffffff" />
+      <div class="mp-el" style="top: 49.5cqw; left: 28cqw; width: 26cqw; height: 3.5cqw; background: #9fb0b5" />
+      <div class="mp-el" style="top: 54cqw; left: 18cqw; width: 68cqw; height: 3.5cqw; background: #666666" />
+      <div class="mp-el" style="top: 59cqw; left: 18cqw; width: 50cqw; height: 3.5cqw; background: #666666" />
     </template>
     <template v-else-if="modelo === 'citacao'">
       <div class="mp-el" style="top: 9cqw; left: 9cqw; width: 82cqw; height: 8cqw" :style="{ background: corDestaque }" />
@@ -15,12 +15,12 @@
       <div class="mp-image" style="top: 52cqw; bottom: 9cqw; background: #e4e4e4" />
     </template>
     <template v-else>
-      <div class="mp-el" style="top: 4cqw; left: 8cqw; width: 22cqw; height: 3cqw; background: rgba(255,255,255,.75)" />
-      <div class="mp-el" style="top: 4cqw; right: 8cqw; width: 16cqw; height: 3cqw; background: rgba(255,255,255,.75)" />
-      <div class="mp-pill" style="top: 55cqw; left: 8cqw; width: 30cqw; height: 5.2cqw" />
-      <div class="mp-el" style="top: 64cqw; left: 8cqw; width: 84cqw; height: 8cqw; background: #ffffff" />
-      <div class="mp-el" style="top: 74cqw; left: 8cqw; width: 65cqw; height: 8cqw; background: #ffffff" />
-      <div class="mp-el" style="top: 84cqw; left: 8cqw; width: 60cqw; height: 3cqw; background: rgba(255,255,255,.55)" />
+      <div class="mp-el" style="top: 2cqw; left: 6cqw; width: 20cqw; height: 2.6cqw; background: rgba(255,255,255,.7)" />
+      <div class="mp-el" style="top: 2cqw; right: 6cqw; width: 14cqw; height: 2.6cqw; background: rgba(255,255,255,.7)" />
+      <div class="mp-pill" style="top: 50cqw; left: 14cqw; width: 28cqw; height: 4.8cqw" />
+      <div class="mp-el" style="top: 57cqw; left: 14cqw; width: 80cqw; height: 7.5cqw; background: #ffffff" />
+      <div class="mp-el" style="top: 66cqw; left: 14cqw; width: 62cqw; height: 7.5cqw; background: #ffffff" />
+      <div class="mp-el" style="top: 81cqw; left: 14cqw; width: 55cqw; height: 2.8cqw; background: rgba(255,255,255,.55)" />
     </template>
   </div>
 </template>

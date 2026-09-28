@@ -14,14 +14,16 @@
 
   <div class="flex flex-1 flex-col gap-6 overflow-y-auto p-8">
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <div class="flex h-24 items-start overflow-hidden rounded-lg shadow">
-        <Tooltip :text="receita.data?.tooltip || ''">
-          <NumberChart v-if="receita.data" class="!items-start" :config="receita.data" />
+      <div class="flex h-24 w-full items-start overflow-hidden rounded-lg border border-outline-gray-2 shadow">
+        <Tooltip class="w-full" :text="receita.data?.tooltip || ''">
+          <NumberChart v-if="receita.data" class="w-full !items-start" :config="receita.data" />
+          <div v-else class="flex h-24 w-full items-center justify-center text-p-sm text-ink-gray-4">...</div>
         </Tooltip>
       </div>
-      <div class="flex h-24 items-start overflow-hidden rounded-lg shadow">
-        <Tooltip :text="meta.data?.tooltip || ''">
-          <NumberChart v-if="meta.data" class="!items-start" :config="meta.data" />
+      <div class="flex h-24 w-full items-start overflow-hidden rounded-lg border border-outline-gray-2 shadow">
+        <Tooltip class="w-full" :text="meta.data?.tooltip || ''">
+          <NumberChart v-if="meta.data" class="w-full !items-start" :config="meta.data" />
+          <div v-else class="flex h-24 w-full items-center justify-center text-p-sm text-ink-gray-4">...</div>
         </Tooltip>
       </div>
       <div class="rounded-lg border border-outline-gray-2 p-5">
@@ -37,11 +39,11 @@
     <div class="rounded-lg border border-outline-gray-2 p-5">
       <div class="mb-1 text-p-base-medium text-ink-gray-8">{{ __('Faturamento do mês') }}</div>
       <div class="mb-4 text-p-sm text-ink-gray-5">{{ __('Honorários pagos, por dia, no período selecionado.') }}</div>
-      <div v-if="trend.data?.data?.length" class="h-72 w-full">
+      <div v-if="trend.data" class="h-72 w-full">
         <FixedAxisChart :config="trend.data" />
       </div>
       <div v-else class="flex h-40 items-center justify-center text-p-sm text-ink-gray-4">
-        {{ __('Ainda não há honorários pagos neste período.') }}
+        {{ __('Carregando...') }}
       </div>
     </div>
 

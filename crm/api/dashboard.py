@@ -1177,6 +1177,7 @@ def get_deals_by_salesperson(
 
 # ------------------------------------------------------------------ Financeiro (CRM Honorario)
 
+@frappe.whitelist()
 def get_receita_recebida(from_date: str | None = None, to_date: str | None = None, user: str | None = None):
 	"""Total recebido (Honorarios pagos) no periodo, comparado com o periodo anterior de mesmo tamanho."""
 	if not from_date or not to_date:
@@ -1212,6 +1213,7 @@ def get_receita_recebida(from_date: str | None = None, to_date: str | None = Non
 	}
 
 
+@frappe.whitelist()
 def get_meta_mensal(from_date: str | None = None, to_date: str | None = None, user: str | None = None):
 	"""Percentual da meta mensal (MRR) atingido com o recebido no período."""
 	if not from_date or not to_date:
@@ -1241,6 +1243,7 @@ def get_meta_mensal(from_date: str | None = None, to_date: str | None = None, us
 	}
 
 
+@frappe.whitelist()
 def get_receita_trend(from_date: str | None = None, to_date: str | None = None, user: str | None = None):
 	"""Recebido por dia no período (Honorarios pagos, agrupado pela data de pagamento)."""
 	if not from_date or not to_date:
@@ -1261,7 +1264,12 @@ def get_receita_trend(from_date: str | None = None, to_date: str | None = None, 
 		.run(as_dict=True)
 	)
 
-	trend = [{"date": row.date, "recebido": row.recebido or 0} for row in result]
+	por_dia = {row.date: (row.recebido or 0) for row in result}
+	dias = frappe.utils.date_diff(to_date, from_date) + 1
+	trend = []
+	for i in range(dias):
+		dia_str = frappe.utils.getdate(frappe.utils.add_days(from_date, i)).isoformat()
+		trend.append({"date": dia_str, "recebido": por_dia.get(dia_str, 0)})
 
 	return {
 		"data": trend,

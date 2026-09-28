@@ -204,75 +204,79 @@ function aoLimparSelecao() {
   atualizarCamadas()
 }
 
-// Modelo "capa": barra com handle + tipo no topo, selo com o handle da marca,
-// título grande, subtítulo e rodapé com categoria/aviso de arrastar - igual
-// aos carrosséis de capa que a Stratcompany usa de referência.
+// Modelo "capa": réplica do carrossel de referência - handle + tipo no
+// topo (margem estreita), selo com avatar+handle, título grande e subtítulo
+// (margem mais larga, alinhados entre si), rodapé com categoria/"Arraste".
 function montarPadrao() {
   const { w, h } = TAMANHOS[props.tipo] || TAMANHOS.Carrossel
   canvas.setDimensions({ width: w, height: h })
   canvas.backgroundColor = props.corMarca
   corFundoAtual.value = props.corMarca
 
+  const margemTopo = w * 0.06
+  const margemConteudo = w * 0.14
   const handleTexto = '@' + (props.nomeMarca || __('suamarca')).toLowerCase().replace(/\s+/g, '')
 
   const handleTopo = new Textbox(handleTexto, {
-    left: w * 0.08, top: h * 0.04, width: w * 0.4,
-    fontSize: Math.round(w * 0.026), fontFamily: 'Arial', fill: 'rgba(255,255,255,.75)',
+    left: margemTopo, top: h * 0.02, width: w * 0.45,
+    fontSize: Math.round(h * 0.021), fontFamily: 'Arial', fill: 'rgba(255,255,255,.7)',
   })
   const tagTopo = new Textbox(props.tipo || '', {
-    left: w * 0.6, top: h * 0.04, width: w * 0.32,
-    fontSize: Math.round(w * 0.026), fontFamily: 'Arial', fill: 'rgba(255,255,255,.75)', textAlign: 'right',
+    left: w - margemTopo - w * 0.32, top: h * 0.02, width: w * 0.32,
+    fontSize: Math.round(h * 0.021), fontFamily: 'Arial', fill: 'rgba(255,255,255,.7)', textAlign: 'right',
   })
   canvas.add(handleTopo, tagTopo)
 
-  const pillTop = h * 0.55
-  const pillHeight = h * 0.052
-  const avatarD = pillHeight * 0.72
-  const pillPad = w * 0.014
-  const pillWidth = pillPad * 3 + avatarD + handleTexto.length * w * 0.017
+  const pillTop = h * 0.5
+  const pillHeight = h * 0.048
+  const avatarD = pillHeight * 0.74
+  const pillPad = w * 0.012
+  const pillWidth = pillPad * 3 + avatarD + handleTexto.length * w * 0.016
 
   const pill = new Rect({
-    left: w * 0.08, top: pillTop, width: pillWidth, height: pillHeight,
+    left: margemConteudo, top: pillTop, width: pillWidth, height: pillHeight,
     rx: pillHeight / 2, ry: pillHeight / 2, fill: 'rgba(255,255,255,.12)',
   })
   const avatarPill = new Circle({
-    left: w * 0.08 + pillPad, top: pillTop + (pillHeight - avatarD) / 2, radius: avatarD / 2, fill: '#ffffff',
+    left: margemConteudo + pillPad, top: pillTop + (pillHeight - avatarD) / 2, radius: avatarD / 2, fill: '#ffffff',
   })
   const handlePill = new Textbox(handleTexto, {
-    left: w * 0.08 + pillPad * 2 + avatarD, top: pillTop + pillHeight * 0.24,
-    width: pillWidth, fontSize: Math.round(w * 0.024), fontFamily: 'Arial', fill: '#ffffff',
+    left: margemConteudo + pillPad * 2 + avatarD, top: pillTop + pillHeight * 0.24,
+    width: pillWidth, fontSize: Math.round(h * 0.021), fontFamily: 'Arial', fill: '#ffffff',
   })
   canvas.add(pill, avatarPill, handlePill)
 
+  const larguraConteudo = w - margemConteudo - margemTopo
   const titulo = new Textbox(props.slide.titulo || '', {
-    left: w * 0.08, top: pillTop + pillHeight + h * 0.03, width: w * 0.84,
-    fontSize: Math.round(w * 0.072), fontWeight: 'bold', fontFamily: 'Arial', fill: '#ffffff', lineHeight: 1.14,
+    left: margemConteudo, top: pillTop + pillHeight + h * 0.02, width: larguraConteudo,
+    fontSize: Math.round(h * 0.065), fontWeight: 'bold', fontFamily: 'Arial', fill: '#ffffff', lineHeight: 1.12,
   })
   canvas.add(titulo)
 
   const corpo = new Textbox(props.slide.corpo || '', {
-    left: w * 0.08, top: h * 0.84, width: w * 0.84,
-    fontSize: Math.round(w * 0.03), fontFamily: 'Arial', fill: 'rgba(255,255,255,.55)',
+    left: margemConteudo, top: h * 0.81, width: larguraConteudo,
+    fontSize: Math.round(h * 0.028), fontFamily: 'Arial', fill: 'rgba(255,255,255,.55)',
   })
   canvas.add(corpo)
 
   const rodapeEsq = new Textbox(props.tipo || '', {
-    left: w * 0.08, top: h * 0.945, width: w * 0.4,
-    fontSize: Math.round(w * 0.022), fontFamily: 'Arial', fill: 'rgba(255,255,255,.45)',
+    left: margemTopo, top: h * 0.95, width: w * 0.4,
+    fontSize: Math.round(h * 0.02), fontFamily: 'Arial', fill: 'rgba(255,255,255,.45)',
   })
   canvas.add(rodapeEsq)
   if (props.tipo === 'Carrossel') {
     const rodapeDir = new Textbox(__('Arraste'), {
-      left: w * 0.6, top: h * 0.945, width: w * 0.32,
-      fontSize: Math.round(w * 0.022), fontFamily: 'Arial', fill: 'rgba(255,255,255,.45)', textAlign: 'right',
+      left: w - margemTopo - w * 0.32, top: h * 0.95, width: w * 0.32,
+      fontSize: Math.round(h * 0.02), fontFamily: 'Arial', fill: 'rgba(255,255,255,.45)', textAlign: 'right',
     })
     canvas.add(rodapeDir)
   }
   canvas.renderAll()
 }
 
-// Modelo "perfil": avatar grande + nome/selo/handle ao lado, parágrafo de
-// texto embaixo - cartão de bio, igual ao print de referência do usuário.
+// Modelo "perfil": réplica do cartão de bio de referência - avatar (com
+// espaço pra foto) mais pra baixo/esquerda, nome + selo verificado + handle
+// ao lado, parágrafo de texto embaixo, ocupando quase toda a largura.
 function montarTwitter() {
   const { w, h } = TAMANHOS[props.tipo] || TAMANHOS.Carrossel
   canvas.setDimensions({ width: w, height: h })
@@ -280,9 +284,9 @@ function montarTwitter() {
   corFundoAtual.value = props.corMarca
 
   const nomeTexto = props.nomeMarca || __('Sua marca')
-  const avatarD = w * 0.15
-  const avatarLeft = w * 0.1
-  const avatarTop = h * 0.36
+  const avatarD = w * 0.08
+  const avatarLeft = w * 0.18
+  const avatarTop = h * 0.42
 
   const avatar = new Circle({ left: avatarLeft, top: avatarTop, radius: avatarD / 2, fill: '#2f2f2f' })
   const marca = new Textbox('?', {
@@ -292,29 +296,29 @@ function montarTwitter() {
   })
   canvas.add(avatar, marca)
 
-  const nomeLeft = avatarLeft + avatarD + w * 0.03
-  const nomeTop = avatarTop + avatarD * 0.14
+  const nomeLeft = avatarLeft + avatarD + w * 0.02
+  const nomeTop = avatarTop + h * 0.013
   const nome = new Textbox(nomeTexto, {
     left: nomeLeft, top: nomeTop,
-    width: w * 0.6, fontSize: Math.round(w * 0.042), fontWeight: 'bold', fontFamily: 'Arial', fill: '#ffffff',
+    width: w * 0.6, fontSize: Math.round(w * 0.036), fontWeight: 'bold', fontFamily: 'Arial', fill: '#ffffff',
   })
   const selo = new Circle({
-    left: nomeLeft + nomeTexto.length * w * 0.0245 + 10,
-    top: nomeTop + w * 0.006, radius: w * 0.016, fill: '#3897f0',
+    left: nomeLeft + nomeTexto.length * w * 0.021 + 10,
+    top: nomeTop + w * 0.005, radius: w * 0.014, fill: '#3897f0',
   })
   const check = new Textbox('✓', {
-    left: selo.left - w * 0.009, top: selo.top - w * 0.013,
-    fontSize: Math.round(w * 0.022), fontFamily: 'Arial', fill: '#ffffff', selectable: false,
+    left: selo.left - w * 0.008, top: selo.top - w * 0.011,
+    fontSize: Math.round(w * 0.02), fontFamily: 'Arial', fill: '#ffffff', selectable: false,
   })
   const handle = new Textbox('@' + nomeTexto.toLowerCase().replace(/\s+/g, ''), {
-    left: nomeLeft, top: nomeTop + Math.round(w * 0.042) + 6,
-    width: w * 0.6, fontSize: Math.round(w * 0.026), fontFamily: 'Arial', fill: '#9fb0b5',
+    left: nomeLeft, top: nomeTop + Math.round(w * 0.036) + 4,
+    width: w * 0.6, fontSize: Math.round(w * 0.022), fontFamily: 'Arial', fill: '#9fb0b5',
   })
   canvas.add(nome, selo, check, handle)
 
   const corpo = new Textbox(props.slide.corpo || '', {
-    left: avatarLeft, top: avatarTop + avatarD + h * 0.06, width: w * 0.8,
-    fontSize: Math.round(w * 0.032), fontFamily: 'Arial', fill: '#d0d0d0', lineHeight: 1.5,
+    left: avatarLeft, top: avatarTop + avatarD + h * 0.015, width: w * 0.68,
+    fontSize: Math.round(w * 0.028), fontFamily: 'Arial', fill: '#d0d0d0', lineHeight: 1.5,
   })
   canvas.add(corpo)
   canvas.renderAll()

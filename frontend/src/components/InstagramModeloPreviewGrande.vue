@@ -1,16 +1,16 @@
 <template>
   <div class="mg" :style="{ background: fundo }">
     <template v-if="modelo === 'twitter'">
-      <div class="mg-avatar-bio" style="top: 36cqw; left: 10cqw; width: 15cqw; height: 15cqw">
+      <div class="mg-avatar-bio" style="top: 42cqw; left: 18cqw; width: 8cqw; height: 8cqw">
         <span class="mg-avatar-bio-mark">?</span>
       </div>
-      <div class="mg-el mg-nome" style="top: 39.5cqw; left: 28cqw; right: 9cqw; color: #ffffff">
+      <div class="mg-el mg-nome" style="top: 43.3cqw; left: 28cqw; right: 9cqw; color: #ffffff">
         {{ nomeMarca || __('Sua marca') }}
         <span class="mg-verificado" :style="{ background: '#3897f0' }">✓</span>
       </div>
-      <div class="mg-el mg-tag" style="top: 45.5cqw; left: 28cqw; right: 9cqw; color: #9fb0b5">{{ handle }}</div>
+      <div class="mg-el mg-tag" style="top: 49cqw; left: 28cqw; right: 9cqw; color: #9fb0b5">{{ handle }}</div>
 
-      <div class="mg-el mg-texto" style="top: 57cqw; left: 10cqw; right: 11cqw; color: #d0d0d0">
+      <div class="mg-el mg-texto" style="top: 53cqw; left: 18cqw; right: 14cqw; color: #d0d0d0">
         {{ __('Texto de exemplo mostrando como fica o conteúdo gerado, já com a cor e o nome da sua marca.') }}
       </div>
     </template>
@@ -29,22 +29,22 @@
     </template>
 
     <template v-else>
-      <div class="mg-el mg-tag-topo" style="top: 4cqw; left: 8cqw; color: rgba(255,255,255,.75)">{{ handle }}</div>
-      <div class="mg-el mg-tag-topo" style="top: 4cqw; right: 8cqw; color: rgba(255,255,255,.75)">{{ __('Carrossel') }}</div>
+      <div class="mg-el mg-tag-topo" style="top: 2cqw; left: 6cqw; color: rgba(255,255,255,.7)">{{ handle }}</div>
+      <div class="mg-el mg-tag-topo" style="top: 2cqw; right: 6cqw; color: rgba(255,255,255,.7)">{{ __('Carrossel') }}</div>
 
-      <div class="mg-pill" style="top: 55cqw; left: 8cqw">
+      <div class="mg-pill" style="top: 50cqw; left: 14cqw; height: 4.8cqw">
         <span class="mg-pill-avatar" />
         <span class="mg-pill-handle">{{ handle }}</span>
       </div>
 
-      <div class="mg-el mg-titulo" style="top: 63cqw; left: 8cqw; right: 9cqw; color: #ffffff">
+      <div class="mg-el mg-titulo" style="top: 56.8cqw; left: 14cqw; right: 6cqw; color: #ffffff">
         {{ __('Título chamativo aqui') }}
       </div>
-      <div class="mg-el mg-subtitulo" style="top: 84cqw; left: 8cqw; right: 9cqw; color: rgba(255,255,255,.55)">
+      <div class="mg-el mg-subtitulo" style="top: 81cqw; left: 14cqw; right: 6cqw; color: rgba(255,255,255,.55)">
         {{ __('Subtítulo curto de apoio') }}
       </div>
-      <div class="mg-el mg-rodape" style="top: 94.5cqw; left: 8cqw; color: rgba(255,255,255,.45)">{{ __('Categoria') }}</div>
-      <div class="mg-el mg-rodape" style="top: 94.5cqw; right: 8cqw; color: rgba(255,255,255,.45)">{{ __('Arraste') }}</div>
+      <div class="mg-el mg-rodape" style="top: 95cqw; left: 6cqw; color: rgba(255,255,255,.45)">{{ __('Categoria') }}</div>
+      <div class="mg-el mg-rodape" style="top: 95cqw; right: 6cqw; color: rgba(255,255,255,.45)">{{ __('Arraste') }}</div>
     </template>
   </div>
 </template>
@@ -83,22 +83,21 @@ const handle = computed(() => '@' + (props.nomeMarca || 'suamarca').toLowerCase(
 }
 .mg-avatar-bio-mark {
   font-family: Arial, sans-serif;
-  font-size: 7cqw;
+  font-size: 4cqw;
   color: rgba(255, 255, 255, 0.35);
 }
 .mg-pill {
   position: absolute;
   display: flex;
   align-items: center;
-  gap: 1.4cqw;
-  height: 5.2cqw;
-  padding: 0 1.6cqw;
+  gap: 1.2cqw;
+  padding: 0 1.4cqw;
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.12);
 }
 .mg-pill-avatar {
-  width: 3.7cqw;
-  height: 3.7cqw;
+  width: 3.5cqw;
+  height: 3.5cqw;
   min-width: 12px;
   min-height: 12px;
   border-radius: 50%;
@@ -107,7 +106,7 @@ const handle = computed(() => '@' + (props.nomeMarca || 'suamarca').toLowerCase(
 }
 .mg-pill-handle {
   font-family: Arial, sans-serif;
-  font-size: 2.4cqw;
+  font-size: 2.1cqw;
   color: #ffffff;
   white-space: nowrap;
 }
@@ -115,13 +114,13 @@ const handle = computed(() => '@' + (props.nomeMarca || 'suamarca').toLowerCase(
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 3.4cqw;
-  height: 3.4cqw;
-  min-width: 14px;
-  min-height: 14px;
+  width: 3cqw;
+  height: 3cqw;
+  min-width: 13px;
+  min-height: 13px;
   border-radius: 50%;
   color: #ffffff;
-  font-size: 2cqw;
+  font-size: 1.8cqw;
   line-height: 1;
   margin-left: 0.4cqw;
   vertical-align: middle;
@@ -131,13 +130,13 @@ const handle = computed(() => '@' + (props.nomeMarca || 'suamarca').toLowerCase(
   font-family: Arial, sans-serif;
   line-height: 1.3;
 }
-.mg-nome { font-size: 4.4cqw; font-weight: 700; }
-.mg-tag { font-size: 2.8cqw; }
-.mg-tag-topo { font-size: 2.6cqw; }
-.mg-titulo { font-size: 7cqw; font-weight: 700; line-height: 1.16; }
-.mg-subtitulo { font-size: 3cqw; }
-.mg-rodape { font-size: 2.2cqw; }
-.mg-texto { font-size: 3.4cqw; line-height: 1.5; }
+.mg-nome { font-size: 3.6cqw; font-weight: 700; }
+.mg-tag { font-size: 2.2cqw; }
+.mg-tag-topo { font-size: 2.1cqw; }
+.mg-titulo { font-size: 6.5cqw; font-weight: 700; line-height: 1.12; }
+.mg-subtitulo { font-size: 2.8cqw; }
+.mg-rodape { font-size: 2cqw; }
+.mg-texto { font-size: 2.8cqw; line-height: 1.5; }
 .mg-image {
   position: absolute;
   border-radius: 9%;
