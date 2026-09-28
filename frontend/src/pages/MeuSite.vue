@@ -81,6 +81,16 @@ async function save() {
   if (!newUrl) return
   saving.value = true
   try {
+    // Se o FCRM Settings ainda nao carregou (ex.: app recem-aberto), o
+    // submit quebra silenciosamente (Object.assign em cima de doc nulo) -
+    // espera carregar antes de tentar, em vez de deixar isso estourar.
+    if (!_settings.doc) {
+      await _settings.reload()
+    }
+    if (!_settings.doc) {
+      toast.error(__('Ainda carregando as configurações, tenta de novo em um instante.'))
+      return
+    }
     await _settings.setValue.submit({ website_url: newUrl })
     if (settings.value) settings.value.website_url = newUrl
     showEditDialog.value = false

@@ -31,6 +31,18 @@ const _settings = createDocumentResource({
   onSuccess: () => {
     getSettings().setupBrand()
   },
+  // Se o carregamento inicial falhar (ex.: app recem-aberto disputando com a
+  // sessao ainda sendo estabelecida), _settings.doc fica null pro resto da
+  // sessao inteira, sem nenhum aviso - e qualquer tela que chame
+  // _settings.setValue.submit(...) depois disso quebra silenciosamente
+  // (o beforeSubmit do frappe-ui faz Object.assign(null, ...), que da erro
+  // sem passar pelo onError de setValue). Tenta de novo sozinho em vez de
+  // deixar isso morto pelo resto da sessao.
+  onError: (err) => {
+    // eslint-disable-next-line no-console
+    console.error('Falha ao carregar FCRM Settings, tentando de novo em 1.5s:', err)
+    setTimeout(() => _settings.reload(), 1500)
+  },
   // Sem essa chave, o frappe-ui nao monta o sub-recurso _settings.setValue -
   // era por isso que MeuSite.vue (que chama _settings.setValue.submit(...))
   // sempre falhava com "Falha ao salvar o site" antes mesmo de chegar no
