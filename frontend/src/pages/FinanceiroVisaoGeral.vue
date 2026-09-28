@@ -15,16 +15,12 @@
   <div class="flex flex-1 flex-col gap-6 overflow-y-auto p-8">
     <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
       <div class="flex h-24 w-full items-start overflow-hidden rounded-lg border border-outline-gray-2 shadow">
-        <Tooltip class="w-full" :text="receita.data?.tooltip || ''">
-          <NumberChart v-if="receita.data" class="w-full !items-start" :config="receita.data" />
-          <div v-else class="flex h-24 w-full items-center justify-center text-p-sm text-ink-gray-4">...</div>
-        </Tooltip>
+        <NumberChart v-if="receita.data" class="w-full !items-start" :config="receita.data" />
+        <div v-else class="flex h-24 w-full items-center justify-center text-p-sm text-ink-gray-4">...</div>
       </div>
       <div class="flex h-24 w-full items-start overflow-hidden rounded-lg border border-outline-gray-2 shadow">
-        <Tooltip class="w-full" :text="meta.data?.tooltip || ''">
-          <NumberChart v-if="meta.data" class="w-full !items-start" :config="meta.data" />
-          <div v-else class="flex h-24 w-full items-center justify-center text-p-sm text-ink-gray-4">...</div>
-        </Tooltip>
+        <NumberChart v-if="meta.data" class="w-full !items-start" :config="meta.data" />
+        <div v-else class="flex h-24 w-full items-center justify-center text-p-sm text-ink-gray-4">...</div>
       </div>
       <div class="rounded-lg border border-outline-gray-2 p-5">
         <div class="text-p-sm text-ink-gray-6">{{ __('A receber (pendente)') }}</div>
@@ -59,7 +55,7 @@
 <script setup>
 import LayoutHeader from '@/components/LayoutHeader.vue'
 import FixedAxisChart from '@/components/Dashboard/FixedAxisChart.vue'
-import { Button, Dropdown, NumberChart, Tooltip, createResource } from 'frappe-ui'
+import { Button, Dropdown, NumberChart, createResource } from 'frappe-ui'
 import { computed, ref } from 'vue'
 
 const periodos = [
