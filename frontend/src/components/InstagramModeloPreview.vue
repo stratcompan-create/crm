@@ -1,14 +1,11 @@
 <template>
   <div class="mp" :style="{ background: fundo }">
     <template v-if="modelo === 'twitter'">
-      <div class="mp-avatar" />
-      <div class="mp-el" style="top: 10cqw; left: 27cqw; width: 45cqw; height: 6cqw; background: #ffffff" />
-      <div class="mp-el" style="top: 18cqw; left: 27cqw; width: 30cqw; height: 5cqw" :style="{ background: corDestaque }" />
-      <div class="mp-el" style="top: 32cqw; left: 9cqw; width: 82cqw; height: 8cqw; background: #ffffff" />
-      <div class="mp-el" style="top: 42cqw; left: 9cqw; width: 55cqw; height: 8cqw; background: #ffffff" />
-      <div class="mp-el" style="top: 56cqw; left: 9cqw; width: 82cqw; height: 4cqw; background: #c7d3d6" />
-      <div class="mp-el" style="top: 63cqw; left: 9cqw; width: 65cqw; height: 4cqw; background: #c7d3d6" />
-      <div class="mp-image" style="top: 74cqw; bottom: 9cqw; background: rgba(255,255,255,.2)" />
+      <div class="mp-avatar-bio" style="top: 36cqw; left: 10cqw; width: 15cqw; height: 15cqw" />
+      <div class="mp-el" style="top: 40cqw; left: 28cqw; width: 45cqw; height: 5.5cqw; background: #ffffff" />
+      <div class="mp-el" style="top: 47cqw; left: 28cqw; width: 30cqw; height: 4cqw; background: #9fb0b5" />
+      <div class="mp-el" style="top: 58cqw; left: 10cqw; width: 80cqw; height: 4cqw; background: #666666" />
+      <div class="mp-el" style="top: 64cqw; left: 10cqw; width: 60cqw; height: 4cqw; background: #666666" />
     </template>
     <template v-else-if="modelo === 'citacao'">
       <div class="mp-el" style="top: 9cqw; left: 9cqw; width: 82cqw; height: 8cqw" :style="{ background: corDestaque }" />
@@ -18,11 +15,12 @@
       <div class="mp-image" style="top: 52cqw; bottom: 9cqw; background: #e4e4e4" />
     </template>
     <template v-else>
-      <div class="mp-el" style="top: 12cqw; left: 9cqw; width: 40cqw; height: 4cqw; background: #ffffff; opacity: .85" />
-      <div class="mp-el" style="top: 34cqw; left: 9cqw; width: 82cqw; height: 9cqw; background: #ffffff" />
-      <div class="mp-el" style="top: 45cqw; left: 9cqw; width: 55cqw; height: 9cqw; background: #ffffff" />
-      <div class="mp-el" style="top: 62cqw; left: 9cqw; width: 75cqw; height: 4cqw" :style="{ background: corDestaque }" />
-      <div class="mp-el" style="top: 69cqw; left: 9cqw; width: 55cqw; height: 4cqw" :style="{ background: corDestaque }" />
+      <div class="mp-el" style="top: 4cqw; left: 8cqw; width: 22cqw; height: 3cqw; background: rgba(255,255,255,.75)" />
+      <div class="mp-el" style="top: 4cqw; right: 8cqw; width: 16cqw; height: 3cqw; background: rgba(255,255,255,.75)" />
+      <div class="mp-pill" style="top: 55cqw; left: 8cqw; width: 30cqw; height: 5.2cqw" />
+      <div class="mp-el" style="top: 64cqw; left: 8cqw; width: 84cqw; height: 8cqw; background: #ffffff" />
+      <div class="mp-el" style="top: 74cqw; left: 8cqw; width: 65cqw; height: 8cqw; background: #ffffff" />
+      <div class="mp-el" style="top: 84cqw; left: 8cqw; width: 60cqw; height: 3cqw; background: rgba(255,255,255,.55)" />
     </template>
   </div>
 </template>
@@ -45,14 +43,15 @@ const fundo = computed(() => (props.modelo === 'citacao' ? '#ffffff' : props.cor
   border-radius: 10%;
   overflow: hidden;
 }
-.mp-avatar {
+.mp-avatar-bio {
   position: absolute;
-  top: 9cqw;
-  left: 9cqw;
-  width: 16cqw;
-  height: 16cqw;
   border-radius: 50%;
-  background: #ffffff;
+  background: rgba(255, 255, 255, 0.2);
+}
+.mp-pill {
+  position: absolute;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
 }
 .mp-el {
   position: absolute;

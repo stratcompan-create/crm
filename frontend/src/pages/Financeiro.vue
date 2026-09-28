@@ -26,7 +26,7 @@
   <ListView
     v-if="honorarios.data && rows.length"
     :columns="columns"
-    :rows="rows"
+    :rows="displayRows"
     :options="{
       onRowClick: (row) => editHonorario(row.name),
       showTooltip: false,
@@ -39,11 +39,10 @@
     <ListHeader class="mx-3 sm:mx-5" @columnWidthUpdated="() => triggerResize++">
       <ListHeaderItem v-for="column in columns" :key="column.key" :item="column" />
     </ListHeader>
-    <ListRows v-slot="{ idx, column, item, row }" class="mx-3 sm:mx-5" :rows="rows" doctype="CRM Honorario">
-      <ListRowItem :item="item" :align="column.align" class="overflow-hidden" @click="editHonorario(row.name)" />
+    <ListRows v-slot="{ idx, column, item, row }" class="mx-3 sm:mx-5" :rows="displayRows" doctype="CRM Honorario">
+      <ListRowItem v-if="column.key !== 'acoes'" :item="item" :align="column.align" class="overflow-hidden" @click="editHonorario(row.name)" />
       <Button
-        v-if="column.key === 'status'"
-        class="ml-2 shrink-0"
+        v-else
         variant="ghost"
         size="sm"
         :label="__('Gerar link')"
@@ -98,7 +97,7 @@ import {
   FormControl,
   call,
 } from 'frappe-ui'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 const brl = (v) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(v) || 0)
 
@@ -113,7 +112,46 @@ const rows = computed(() => {
   return parseRows(honorarios.value.data.data, honorarios.value.data.columns)
 })
 
-const columns = computed(() => honorarios.value?.data?.columns || [])
+const dealOrgCache = ref({})
+
+const displayRows = computed(() =>
+  rows.value.map((row) => {
+    if (!row.deal) return row
+    const org = dealOrgCache.value[row.deal]
+    return org ? { ...row, deal: org } : row
+  }),
+)
+
+watch(
+  rows,
+  (newRows) => {
+    const missing = [
+      ...new Set(
+        newRows.map((r) => r.deal).filter((d) => d && !(d in dealOrgCache.value)),
+      ),
+    ]
+    if (!missing.length) return
+    call('frappe.client.get_list', {
+      doctype: 'CRM Deal',
+      filters: [['name', 'in', missing]],
+      fields: ['name', 'organization'],
+      limit_page_length: 0,
+    }).then((list) => {
+      const next = { ...dealOrgCache.value }
+      list.forEach((d) => {
+        next[d.name] = d.organization || d.name
+      })
+      dealOrgCache.value = next
+    })
+  },
+  { immediate: true },
+)
+
+const columns = computed(() => {
+  const base = honorarios.value?.data?.columns || []
+  if (!base.length) return base
+  return [...base, { key: 'acoes', label: __('Ações'), type: 'Data', width: '8rem', align: 'center' }]
+})
 
 function parseRows(data, columns = []) {
   return data.map((honorario) => {
