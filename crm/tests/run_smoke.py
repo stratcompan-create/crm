@@ -29,6 +29,7 @@ MODULES = [
     "assistente_geral",
     "dashboard_financeiro",
     "instagram_echo_leitura",
+    "assinatura_proposta",
 ]
 
 

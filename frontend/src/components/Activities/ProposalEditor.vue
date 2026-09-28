@@ -10,6 +10,12 @@
             :label="__('Não Salvo')"
             theme="orange"
           />
+          <Badge
+            v-if="assinatura.assinada"
+            class="ml-3"
+            :label="__('Assinada por {0}', [assinatura.nome])"
+            theme="green"
+          />
         </div>
         <div class="text-p-sm text-ink-gray-5">
           {{
@@ -387,6 +393,16 @@ async function load() {
   loading.value = false
 }
 
+const assinatura = reactive({ assinada: false, nome: '', em: '' })
+async function loadAssinatura() {
+  try {
+    const res = await call('crm.api.proposta.get_signature_status', { deal: props.deal })
+    Object.assign(assinatura, res)
+  } catch (e) {
+    // silencioso - status de assinatura não é crítico pra tela carregar
+  }
+}
+
 async function save() {
   saving.value = true
   try {
@@ -463,6 +479,7 @@ const templateOptions = computed(() => {
 onMounted(() => {
   load()
   loadTemplates()
+  loadAssinatura()
 })
 defineExpose({ isDirty })
 </script>

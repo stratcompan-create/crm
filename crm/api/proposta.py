@@ -3,11 +3,12 @@ import io
 import json
 import os
 import re
+import secrets
 import subprocess
 
 import frappe
 from frappe import _
-from frappe.utils import add_days, escape_html, flt, get_datetime, getdate, nowdate
+from frappe.utils import add_days, escape_html, flt, get_datetime, get_url, getdate, now_datetime, nowdate
 
 FONT_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), "public", "fonts")
 FONTS = [
@@ -811,6 +812,13 @@ def send_document(deal: str, doc_type: str, to: str, subject: str, message: str)
 	file_doc.insert(ignore_permissions=True)
 
 	body = escape_html(message or "").replace("\n", "<br>")
+	if doc_type == "proposta":
+		link = _link_assinatura(deal)
+		body += (
+			"<br><br>"
+			+ escape_html(_("Para confirmar o aceite desta proposta, acesse:"))
+			+ f' <a href="{link}">{link}</a>'
+		)
 	make(
 		doctype="CRM Deal",
 		name=deal,
@@ -824,6 +832,114 @@ def send_document(deal: str, doc_type: str, to: str, subject: str, message: str)
 	if doc_type == "proposta":
 		_advance_to_proposal(deal)
 	return {"ok": True, "arquivo": file_doc.file_name}
+
+
+# ---------------------------------------------------------------- assinatura eletronica
+
+def _link_assinatura(deal: str) -> str:
+	token = frappe.db.get_value("CRM Deal", deal, "proposta_token")
+	if not token:
+		token = secrets.token_urlsafe(24)
+		frappe.db.set_value("CRM Deal", deal, "proposta_token", token, update_modified=False)
+	return get_url(f"/assinatura?t={token}")
+
+
+def _deal_by_token(token: str):
+	if not token or len(token) > 80:
+		return None
+	name = frappe.db.get_value("CRM Deal", {"proposta_token": token})
+	return frappe.get_doc("CRM Deal", name) if name else None
+
+
+@frappe.whitelist()
+def get_signature_status(deal: str) -> dict:
+	doc = frappe.get_doc("CRM Deal", deal)
+	doc.check_permission("read")
+	return {
+		"assinada": bool(doc.get("proposta_assinada")),
+		"nome": doc.get("assinante_nome") or "",
+		"em": doc.get("assinado_em"),
+	}
+
+
+@frappe.whitelist(allow_guest=True)
+def get_public_signature(t: str = "") -> dict:
+	doc = _deal_by_token(t)
+	if not doc:
+		frappe.throw(_("Link inválido ou expirado."))
+	settings = frappe.get_single("FCRM Settings")
+	client_name = deal_context(doc).get("client_name") or doc.get("organization") or doc.get("first_name") or ""
+	return {
+		"marca": settings.get("brand_name") or "",
+		"cor": settings.get("brand_color") or "#042d3c",
+		"destaque": settings.get("brand_accent") or "#8aa1a9",
+		"logo": settings.get("brand_logo") or "",
+		"cliente": client_name,
+		"assinada": bool(doc.get("proposta_assinada")),
+		"assinante_nome": doc.get("assinante_nome") or "",
+		"assinado_em": doc.get("assinado_em"),
+	}
+
+
+@frappe.whitelist(allow_guest=True)
+def assinar_proposta(t: str = "", nome: str = "", documento: str = "", email: str = "") -> dict:
+	doc = _deal_by_token(t)
+	if not doc:
+		frappe.throw(_("Link inválido ou expirado."))
+
+	nome = (nome or "").strip()
+	documento = re.sub(r"[^0-9]", "", documento or "")
+	email = (email or "").strip()
+	if not nome or len(nome.split()) < 2:
+		frappe.throw(_("Informe o nome completo."))
+	if len(documento) not in (11, 14):
+		frappe.throw(_("Informe um CPF ou CNPJ válido."))
+	if not email or "@" not in email:
+		frappe.throw(_("Informe um e-mail válido."))
+
+	if doc.get("proposta_assinada"):
+		# já assinado (reenvio do form, duplo clique) - devolve os dados que já existem,
+		# sem sobrescrever quem assinou primeiro
+		return {
+			"ok": True,
+			"assinante_nome": doc.get("assinante_nome"),
+			"assinado_em": doc.get("assinado_em"),
+		}
+
+	agora = now_datetime()
+	ip = frappe.local.request_ip or ""
+	frappe.db.set_value(
+		"CRM Deal",
+		doc.name,
+		{
+			"proposta_assinada": 1,
+			"assinante_nome": nome,
+			"assinante_documento": documento,
+			"assinante_email": email,
+			"assinado_em": agora,
+			"assinado_ip": ip,
+		},
+		update_modified=False,
+	)
+	try:
+		won = frappe.db.get_value("CRM Deal Status", {"type": "Won"})
+		if won:
+			doc.reload()
+			doc.status = won
+			doc.save(ignore_permissions=True)
+	except Exception:
+		frappe.log_error("Assinatura de proposta: não consegui marcar o negócio como Ganho", frappe.get_traceback())
+	frappe.db.commit()
+
+	try:
+		doc.add_comment(
+			"Comment",
+			_("Proposta assinada eletronicamente por {0} ({1}) em {2}.").format(nome, email, agora),
+		)
+	except Exception:
+		pass
+
+	return {"ok": True, "assinante_nome": nome, "assinado_em": agora}
 
 
 def _advance_to_proposal(deal: str):

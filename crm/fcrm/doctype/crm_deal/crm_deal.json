@@ -86,6 +86,13 @@
   "budget_items",
   "budget_discount",
   "proposal_data",
+  "proposta_token",
+  "proposta_assinada",
+  "assinante_nome",
+  "assinante_documento",
+  "assinante_email",
+  "assinado_em",
+  "assinado_ip",
   "posvenda_avaliacao_em",
   "posvenda_indicacao_em",
   "servico",
@@ -553,6 +560,55 @@
    "fieldtype": "Long Text",
    "label": "Conteúdo da proposta",
    "hidden": 1
+  },
+  {
+   "fieldname": "proposta_token",
+   "fieldtype": "Data",
+   "label": "Token da proposta",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "proposta_assinada",
+   "fieldtype": "Check",
+   "label": "Proposta assinada",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "assinante_nome",
+   "fieldtype": "Data",
+   "label": "Assinado por",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "assinante_documento",
+   "fieldtype": "Data",
+   "label": "CPF/CNPJ de quem assinou",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "assinante_email",
+   "fieldtype": "Data",
+   "label": "E-mail de quem assinou",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "assinado_em",
+   "fieldtype": "Datetime",
+   "label": "Assinado em",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "assinado_ip",
+   "fieldtype": "Data",
+   "label": "IP de quem assinou",
+   "hidden": 1,
+   "read_only": 1
   },
   {
    "fieldname": "posvenda_avaliacao_em",
