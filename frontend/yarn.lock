@@ -1464,6 +1464,11 @@
     "@floating-ui/utils" "^0.2.11"
     vue-demi ">=0.13.0"
 
+"@fontsource/poppins@^5.3.0":
+  version "5.3.0"
+  resolved "https://registry.yarnpkg.com/@fontsource/poppins/-/poppins-5.3.0.tgz#2b0b95ad6d221ca81f884796429b209837954b89"
+  integrity sha512-cms1nM7U6SN8epIV1WMVOV8VsA645aSm3wHfzIQnkk188U341ThbJGSl2Sv54V29gnDbT2arMPfLzvVIIVCceQ==
+
 "@framework/ui@link:../../frappe/ui":
   version "0.0.0"
   uid ""

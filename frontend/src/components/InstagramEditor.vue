@@ -219,11 +219,11 @@ function montarPadrao() {
 
   const handleTopo = new Textbox(handleTexto, {
     left: margemTopo, top: h * 0.02, width: w * 0.45,
-    fontSize: Math.round(h * 0.021), fontFamily: 'Arial', fill: 'rgba(255,255,255,.7)',
+    fontSize: Math.round(h * 0.021), fontFamily: 'Poppins', fill: 'rgba(255,255,255,.7)',
   })
   const tagTopo = new Textbox(props.tipo || '', {
     left: w - margemTopo - w * 0.32, top: h * 0.02, width: w * 0.32,
-    fontSize: Math.round(h * 0.021), fontFamily: 'Arial', fill: 'rgba(255,255,255,.7)', textAlign: 'right',
+    fontSize: Math.round(h * 0.021), fontFamily: 'Poppins', fill: 'rgba(255,255,255,.7)', textAlign: 'right',
   })
   canvas.add(handleTopo, tagTopo)
 
@@ -242,32 +242,32 @@ function montarPadrao() {
   })
   const handlePill = new Textbox(handleTexto, {
     left: margemConteudo + pillPad * 2 + avatarD, top: pillTop + pillHeight * 0.24,
-    width: pillWidth, fontSize: Math.round(h * 0.021), fontFamily: 'Arial', fill: '#ffffff',
+    width: pillWidth, fontSize: Math.round(h * 0.021), fontFamily: 'Poppins', fill: '#ffffff',
   })
   canvas.add(pill, avatarPill, handlePill)
 
   const larguraConteudo = w - margemConteudo - margemTopo
   const titulo = new Textbox(props.slide.titulo || '', {
     left: margemConteudo, top: pillTop + pillHeight + h * 0.02, width: larguraConteudo,
-    fontSize: Math.round(h * 0.065), fontWeight: 'bold', fontFamily: 'Arial', fill: '#ffffff', lineHeight: 1.12,
+    fontSize: Math.round(h * 0.065), fontWeight: 'bold', fontFamily: 'Poppins', fill: '#ffffff', lineHeight: 1.12,
   })
   canvas.add(titulo)
 
   const corpo = new Textbox(props.slide.corpo || '', {
     left: margemConteudo, top: h * 0.81, width: larguraConteudo,
-    fontSize: Math.round(h * 0.028), fontFamily: 'Arial', fill: 'rgba(255,255,255,.55)',
+    fontSize: Math.round(h * 0.028), fontFamily: 'Poppins', fill: 'rgba(255,255,255,.55)',
   })
   canvas.add(corpo)
 
   const rodapeEsq = new Textbox(props.tipo || '', {
     left: margemTopo, top: h * 0.95, width: w * 0.4,
-    fontSize: Math.round(h * 0.02), fontFamily: 'Arial', fill: 'rgba(255,255,255,.45)',
+    fontSize: Math.round(h * 0.02), fontFamily: 'Poppins', fill: 'rgba(255,255,255,.45)',
   })
   canvas.add(rodapeEsq)
   if (props.tipo === 'Carrossel') {
     const rodapeDir = new Textbox(__('Arraste'), {
       left: w - margemTopo - w * 0.32, top: h * 0.95, width: w * 0.32,
-      fontSize: Math.round(h * 0.02), fontFamily: 'Arial', fill: 'rgba(255,255,255,.45)', textAlign: 'right',
+      fontSize: Math.round(h * 0.02), fontFamily: 'Poppins', fill: 'rgba(255,255,255,.45)', textAlign: 'right',
     })
     canvas.add(rodapeDir)
   }
@@ -291,7 +291,7 @@ function montarTwitter() {
   const avatar = new Circle({ left: avatarLeft, top: avatarTop, radius: avatarD / 2, fill: '#2f2f2f' })
   const marca = new Textbox('?', {
     left: avatarLeft, top: avatarTop + avatarD * 0.18, width: avatarD,
-    fontSize: Math.round(avatarD * 0.5), fontFamily: 'Arial', fill: 'rgba(255,255,255,.35)',
+    fontSize: Math.round(avatarD * 0.5), fontFamily: 'Poppins', fill: 'rgba(255,255,255,.35)',
     textAlign: 'center', selectable: false,
   })
   canvas.add(avatar, marca)
@@ -300,7 +300,7 @@ function montarTwitter() {
   const nomeTop = avatarTop + h * 0.013
   const nome = new Textbox(nomeTexto, {
     left: nomeLeft, top: nomeTop,
-    width: w * 0.6, fontSize: Math.round(w * 0.036), fontWeight: 'bold', fontFamily: 'Arial', fill: '#ffffff',
+    width: w * 0.6, fontSize: Math.round(w * 0.036), fontWeight: 'bold', fontFamily: 'Poppins', fill: '#ffffff',
   })
   const selo = new Circle({
     left: nomeLeft + nomeTexto.length * w * 0.021 + 10,
@@ -308,17 +308,17 @@ function montarTwitter() {
   })
   const check = new Textbox('✓', {
     left: selo.left - w * 0.008, top: selo.top - w * 0.011,
-    fontSize: Math.round(w * 0.02), fontFamily: 'Arial', fill: '#ffffff', selectable: false,
+    fontSize: Math.round(w * 0.02), fontFamily: 'Poppins', fill: '#ffffff', selectable: false,
   })
   const handle = new Textbox('@' + nomeTexto.toLowerCase().replace(/\s+/g, ''), {
     left: nomeLeft, top: nomeTop + Math.round(w * 0.036) + 4,
-    width: w * 0.6, fontSize: Math.round(w * 0.022), fontFamily: 'Arial', fill: '#9fb0b5',
+    width: w * 0.6, fontSize: Math.round(w * 0.022), fontFamily: 'Poppins', fill: '#9fb0b5',
   })
   canvas.add(nome, selo, check, handle)
 
   const corpo = new Textbox(props.slide.corpo || '', {
     left: avatarLeft, top: avatarTop + avatarD + h * 0.015, width: w * 0.68,
-    fontSize: Math.round(w * 0.028), fontFamily: 'Arial', fill: '#d0d0d0', lineHeight: 1.5,
+    fontSize: Math.round(w * 0.028), fontFamily: 'Poppins', fill: '#d0d0d0', lineHeight: 1.5,
   })
   canvas.add(corpo)
   canvas.renderAll()
@@ -334,11 +334,11 @@ function montarCitacao() {
 
   const titulo = new Textbox(props.slide.titulo || '', {
     left: w * 0.09, top: h * 0.08, width: w * 0.82,
-    fontSize: Math.round(w * 0.062), fontWeight: 'bold', fontFamily: 'Arial', fill: props.corDestaque,
+    fontSize: Math.round(w * 0.062), fontWeight: 'bold', fontFamily: 'Poppins', fill: props.corDestaque,
   })
   const corpo = new Textbox(props.slide.corpo || '', {
     left: w * 0.09, top: h * 0.08 + Math.round(w * 0.062) * 2.3 + 24, width: w * 0.82,
-    fontSize: Math.round(w * 0.034), fontFamily: 'Arial', fill: '#666666',
+    fontSize: Math.round(w * 0.034), fontFamily: 'Poppins', fill: '#666666',
   })
   canvas.add(titulo, corpo)
 
@@ -351,6 +351,10 @@ function montarCitacao() {
 }
 
 async function montarCanvas() {
+  // espera a fonte Poppins carregar de verdade antes de desenhar os
+  // modelos - sem isso o canvas as vezes renderiza com a fonte padrao do
+  // navegador e nao atualiza sozinho quando a Poppins termina de carregar.
+  await document.fonts.ready
   const { w, h } = TAMANHOS[props.tipo] || TAMANHOS.Carrossel
   if (props.slide.canvas) {
     await canvas.loadFromJSON(props.slide.canvas)

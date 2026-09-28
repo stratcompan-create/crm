@@ -1,5 +1,13 @@
 import './index.css'
 
+// Fonte usada nos modelos de carrossel do Instagram (Gerador de conteudo) -
+// self-hospedada via @fontsource pra bater com a fonte geometrica das
+// referencias que o cliente mandou, sem depender do Google Fonts externo.
+import '@fontsource/poppins/400.css'
+import '@fontsource/poppins/600.css'
+import '@fontsource/poppins/700.css'
+import '@fontsource/poppins/800.css'
+
 // dayjs's locale is a single global registry shared by every import of the
 // package (frappe-ui's Calendar, DatePicker, and relative-time labels all
 // use the same dayjs instance) - setting it once here switches day names,

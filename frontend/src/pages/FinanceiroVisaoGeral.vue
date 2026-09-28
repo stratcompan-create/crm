@@ -50,6 +50,48 @@
         <Button variant="outline" :label="__('Ver relatório completo')" @click="$router.push({ name: 'Financeiro Relatorios' })" />
       </div>
     </div>
+
+    <div class="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div class="rounded-lg border border-outline-gray-2 p-5">
+        <div class="mb-1 text-p-base-medium text-ink-gray-8">{{ __('Faturamento por serviço') }}</div>
+        <div class="mb-4 text-p-sm text-ink-gray-5">{{ __('Total acumulado (pago + a receber), todos os períodos.') }}</div>
+        <div v-if="breakdown.data?.servicos?.length" class="flex flex-col gap-3">
+          <div v-for="s in breakdown.data.servicos" :key="s.servico" class="flex flex-col gap-1">
+            <div class="flex items-center justify-between text-p-sm">
+              <span class="text-ink-gray-7">{{ s.servico }}</span>
+              <span class="font-medium text-ink-gray-9">{{ formatCurrency(s.pago + s.pendente) }}</span>
+            </div>
+            <div class="h-2 w-full overflow-hidden rounded-full bg-surface-gray-2">
+              <div class="h-2 rounded-full bg-blue-500" :style="{ width: barWidth(s) }" />
+            </div>
+          </div>
+        </div>
+        <div v-else class="flex h-20 items-center justify-center text-p-sm text-ink-gray-4">
+          {{ __('Sem honorários cadastrados ainda.') }}
+        </div>
+      </div>
+
+      <div class="rounded-lg border border-outline-gray-2 p-5">
+        <div class="mb-1 flex items-center justify-between">
+          <div class="text-p-base-medium text-ink-gray-8">{{ __('Próximas mensalidades a vencer') }}</div>
+          <Button variant="ghost" size="sm" :label="__('Ver tudo')" @click="$router.push({ name: 'Financeiro Recorrencia' })" />
+        </div>
+        <div class="mb-4 text-p-sm text-ink-gray-5">{{ __('Mensalidades atrasadas ou vencendo nos próximos 30 dias.') }}</div>
+        <div v-if="mrr.data?.atrasadas?.length || mrr.data?.proximas?.length" class="flex flex-col divide-y divide-outline-gray-1">
+          <div v-for="item in mrr.data.atrasadas" :key="'a-' + item.name" class="flex items-center justify-between py-2 text-p-sm">
+            <span class="text-ink-gray-8">{{ item.cliente }}</span>
+            <span class="font-medium text-ink-red-6">{{ formatCurrency(item.valor) }} · {{ __('{0} dias atrasado', [item.dias]) }}</span>
+          </div>
+          <div v-for="item in mrr.data.proximas" :key="'p-' + item.name" class="flex items-center justify-between py-2 text-p-sm">
+            <span class="text-ink-gray-8">{{ item.cliente }}</span>
+            <span class="font-medium text-ink-gray-7">{{ formatCurrency(item.valor) }} · {{ __('vence em {0} dias', [item.dias]) }}</span>
+          </div>
+        </div>
+        <div v-else class="flex h-20 items-center justify-center text-p-sm text-ink-gray-4">
+          {{ __('Nenhuma mensalidade atrasada ou vencendo em breve.') }}
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 <script setup>
@@ -91,6 +133,16 @@ const trend = createResource({
   params: _limites(0),
   auto: true,
 })
+
+const breakdown = createResource({ url: 'crm.api.financeiro.get_revenue_breakdown', auto: true })
+const mrr = createResource({ url: 'crm.api.financeiro.get_mrr', auto: true })
+
+function barWidth(servico) {
+  const valores = breakdown.data?.servicos?.map((s) => s.pago + s.pendente) || [0]
+  const max = Math.max(...valores, 1)
+  const pct = Math.round(((servico.pago + servico.pendente) / max) * 100)
+  return Math.max(4, pct) + '%'
+}
 
 function selecionarPeriodo(offset) {
   mesesAtras.value = offset

@@ -82,7 +82,7 @@ const handle = computed(() => '@' + (props.nomeMarca || 'suamarca').toLowerCase(
   justify-content: center;
 }
 .mg-avatar-bio-mark {
-  font-family: Arial, sans-serif;
+  font-family: 'Poppins', Arial, sans-serif;
   font-size: 4cqw;
   color: rgba(255, 255, 255, 0.35);
 }
@@ -105,7 +105,7 @@ const handle = computed(() => '@' + (props.nomeMarca || 'suamarca').toLowerCase(
   flex: none;
 }
 .mg-pill-handle {
-  font-family: Arial, sans-serif;
+  font-family: 'Poppins', Arial, sans-serif;
   font-size: 2.1cqw;
   color: #ffffff;
   white-space: nowrap;
@@ -127,7 +127,7 @@ const handle = computed(() => '@' + (props.nomeMarca || 'suamarca').toLowerCase(
 }
 .mg-el {
   position: absolute;
-  font-family: Arial, sans-serif;
+  font-family: 'Poppins', Arial, sans-serif;
   line-height: 1.3;
 }
 .mg-nome { font-size: 3.6cqw; font-weight: 700; }
@@ -149,7 +149,7 @@ const handle = computed(() => '@' + (props.nomeMarca || 'suamarca').toLowerCase(
 }
 .mg-image-icon { width: 9cqw; height: 9cqw; }
 .mg-image-label {
-  font-family: Arial, sans-serif;
+  font-family: 'Poppins', Arial, sans-serif;
   font-size: 3cqw;
   font-style: italic;
 }
