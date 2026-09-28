@@ -246,6 +246,7 @@ scheduler_events = {
 	"hourly": [
 		"crm.api.event.trigger_hourly_event_notifications",
 		"crm.api.followup.run_followups",
+		"crm.api.followup.run_read_followups",
 		"crm.api.agenda.send_meeting_reminders",
 		"crm.api.automacoes.weekly_job",
 		"crm.api.saude_sistema.check_and_alert",

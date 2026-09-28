@@ -14,6 +14,7 @@
 import hashlib
 import hmac
 import json
+from datetime import datetime
 
 import frappe
 import requests
@@ -116,13 +117,24 @@ def _is_valid_signature(raw_body: bytes, signature_header: str | None, app_secre
 
 
 def _process_message_event(event: dict):
-	sender_id = event.get("sender", {}).get("id")
+	# Recibo de leitura: "sender" aqui é quem LEU (o lead), não quem mandou.
+	read = event.get("read")
+	if read:
+		_process_read_receipt(event.get("sender", {}).get("id"), read)
+		return
+
 	message = event.get("message", {})
 	text = message.get("text")
+	mid = message.get("mid")
 
-	# Ignore echoes of our own outgoing messages and non-text events (likes,
-	# attachments-only, read receipts) for this first version.
-	if not sender_id or not text or message.get("is_echo"):
+	# Eco da própria mensagem (mandada pelo CRM OU direto pelo app do Instagram).
+	# Sem isso, uma resposta dada direto no app nunca aparecia aqui.
+	if message.get("is_echo"):
+		_process_outgoing_echo(event.get("recipient", {}).get("id"), mid, text)
+		return
+
+	sender_id = event.get("sender", {}).get("id")
+	if not sender_id or not text:
 		return
 	if sender_id == (_get_settings().instagram_business_account_id or ""):
 		return
@@ -136,6 +148,7 @@ def _process_message_event(event: dict):
 			"sender_id": sender_id,
 			"direction": "Received",
 			"message": text,
+			"mid": mid,
 			"timestamp": now_datetime(),
 		}
 	).insert(ignore_permissions=True)
@@ -155,6 +168,66 @@ def _process_message_event(event: dict):
 		from crm.api.instagram_automacao import maybe_send_welcome
 
 		maybe_send_welcome(lead_name, sender_id)
+
+
+def _process_outgoing_echo(recipient_id: str | None, mid: str | None, text: str | None):
+	"""Mensagem que NÓS mandamos. Se já foi gravada pelo send_reply() (mesmo mid), ignora -
+	senão foi mandada direto pelo app do Instagram, e a gente grava agora pra a conversa no
+	CRM não ficar desatualizada."""
+	if not text or not recipient_id:
+		return
+	if mid and frappe.db.exists("CRM Instagram Message", {"mid": mid}):
+		return
+	lead_name = frappe.db.get_value("CRM Lead", {"instagram_sender_id": recipient_id})
+	if not lead_name:
+		return
+	frappe.get_doc(
+		{
+			"doctype": "CRM Instagram Message",
+			"lead": lead_name,
+			"sender_id": recipient_id,
+			"direction": "Sent",
+			"message": text,
+			"mid": mid,
+			"timestamp": now_datetime(),
+		}
+	).insert(ignore_permissions=True)
+	frappe.db.commit()
+
+
+def _process_read_receipt(sender_id: str | None, read: dict):
+	"""A Meta manda um "watermark" (timestamp em ms): tudo que a gente mandou até essa
+	hora foi lido. Às vezes também vem o "mid" da última mensagem lida - quando vier,
+	usamos ele também, mas o watermark é o campo garantido."""
+	if not sender_id:
+		return
+	lead_name = frappe.db.get_value("CRM Lead", {"instagram_sender_id": sender_id})
+	if not lead_name:
+		return
+
+	filters = {"lead": lead_name, "direction": "Sent", "lida_em": ["is", "not set"]}
+	watermark = read.get("watermark")
+	if watermark:
+		try:
+			ate = datetime.fromtimestamp(int(watermark) / 1000)
+			filters["timestamp"] = ["<=", ate]
+		except (TypeError, ValueError, OSError):
+			watermark = None
+	if not watermark and not read.get("mid"):
+		frappe.log_error("Instagram: recibo de leitura em formato inesperado", json.dumps(read))
+		return
+
+	if read.get("mid") and not watermark:
+		nomes = frappe.get_all("CRM Instagram Message", filters={"mid": read.get("mid"), "direction": "Sent"}, pluck="name")
+	else:
+		nomes = frappe.get_all("CRM Instagram Message", filters=filters, pluck="name")
+
+	if not nomes:
+		return
+	agora = now_datetime()
+	for nome in nomes:
+		frappe.db.set_value("CRM Instagram Message", nome, "lida_em", agora, update_modified=False)
+	frappe.db.commit()
 
 
 def _fetch_sender_profile(sender_id: str) -> dict:
@@ -350,6 +423,12 @@ def send_reply(lead: str, message: str):
 	if not response.ok:
 		frappe.throw(_("Failed to send Instagram message: {0}").format(response.text))
 
+	mid = None
+	try:
+		mid = response.json().get("message_id")
+	except ValueError:
+		pass
+
 	frappe.get_doc(
 		{
 			"doctype": "CRM Instagram Message",
@@ -357,6 +436,7 @@ def send_reply(lead: str, message: str):
 			"sender_id": sender_id,
 			"direction": "Sent",
 			"message": message,
+			"mid": mid,
 			"timestamp": now_datetime(),
 		}
 	).insert(ignore_permissions=True)

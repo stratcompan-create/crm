@@ -28,6 +28,7 @@ MODULES = [
     "pagamento_link",
     "assistente_geral",
     "dashboard_financeiro",
+    "instagram_echo_leitura",
 ]
 
 

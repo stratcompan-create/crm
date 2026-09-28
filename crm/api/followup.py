@@ -13,11 +13,21 @@
 
 import json
 import re
+import urllib.error
+import urllib.request
 from urllib.parse import quote
 
 import frappe
 from frappe import _
 from frappe.utils import add_days, add_to_date, cint, get_datetime, getdate, now_datetime, nowdate
+
+from crm.api import ficha
+
+# horas de espera depois que a pessoa LEU a mensagem (sem responder) antes de sugerir
+# o follow-up - fica dentro da janela de 24h que a Meta permite responder pela API
+HORAS_APOS_LEITURA = 20
+CLAUDE_MODEL = "claude-sonnet-5"
+CLAUDE_API_URL = "https://api.anthropic.com/v1/messages"
 
 DEFAULT_MESSAGE = (
 	"Oi, {nome}! Passando para retomar nossa conversa. Você chegou a ver minha mensagem? "
@@ -249,6 +259,135 @@ def _responsible(lead) -> str:
 		limit=1,
 	)
 	return managers[0] if managers else "Administrator"
+
+
+# ------------------------------------------------------------------ follow-up por leitura
+
+def _ai_followup_draft(lead: dict, msgs: list[dict]) -> str | None:
+	"""Rascunho de retomada escrito pela IA, olhando a conversa de verdade - só roda se a
+	chave do Claude estiver configurada. Sem ela (ou se a chamada falhar), quem chama usa
+	build_draft() como reserva."""
+	api_key = ficha._api_key()
+	if not api_key or not msgs:
+		return None
+	historico = "\n".join(
+		f"{'Cliente' if m['direction'] == 'Received' else 'Você'}: {m['message']}" for m in msgs
+	)
+	system = (
+		"Você escreve, em nome do dono de um negócio, uma mensagem curta pra retomar contato "
+		"com um lead do Instagram que LEU a última mensagem mas não respondeu. Direto, sem soar "
+		"como robô, sem ser insistente - uma ou duas frases, terminando com uma pergunta simples. "
+		"Responda só com o texto da mensagem, nada mais."
+	)
+	body = json.dumps({
+		"model": CLAUDE_MODEL,
+		"max_tokens": 200,
+		"system": system,
+		"messages": [{
+			"role": "user",
+			"content": f"Nome da pessoa: {lead.get('first_name') or ''}\n\nConversa até agora:\n{historico}",
+		}],
+	}).encode()
+	req = urllib.request.Request(
+		CLAUDE_API_URL,
+		data=body,
+		headers={"content-type": "application/json", "x-api-key": api_key, "anthropic-version": "2023-06-01"},
+	)
+	try:
+		with urllib.request.urlopen(req, timeout=30) as resp:
+			data = json.loads(resp.read())
+		texto = "".join(b.get("text", "") for b in data.get("content", [])).strip()
+		return texto or None
+	except (urllib.error.URLError, urllib.error.HTTPError, ValueError, TimeoutError):
+		frappe.log_error("Follow-up por leitura: falha ao chamar a IA", frappe.get_traceback())
+		return None
+
+
+def run_read_followups():
+	"""Job de hora em hora: quem LEU a última mensagem nossa no Instagram e não respondeu
+	ganha um follow-up com rascunho pronto - sinal mais forte que só contar dias, porque a
+	gente sabe que a pessoa viu. Não manda sozinho, mesma regra de 24h da Meta."""
+	cfg = _config()
+	if not cfg["ativado"]:
+		return
+	limite = add_to_date(now_datetime(), hours=-HORAS_APOS_LEITURA)
+
+	ultimas = frappe.db.sql(
+		"""
+		select m.lead, m.lida_em
+		from `tabCRM Instagram Message` m
+		where m.direction = 'Sent' and m.lida_em is not null
+		and m.timestamp = (
+			select max(m2.timestamp) from `tabCRM Instagram Message` m2
+			where m2.lead = m.lead and m2.direction = 'Sent'
+		)
+		""",
+		as_dict=True,
+	)
+	created = 0
+	for row in ultimas:
+		if get_datetime(row.lida_em) > limite:
+			continue
+		if replied_since(row.lead, row.lida_em):
+			continue
+		if frappe.db.exists(
+			"CRM Task",
+			{"reference_doctype": "CRM Lead", "reference_docname": row.lead, "title": ["like", "Follow-up:%"], "status": OPEN_TASK},
+		):
+			continue
+		lead = frappe.db.get_value(
+			"CRM Lead",
+			row.lead,
+			["name", "first_name", "last_name", "source", "instagram_username", "mobile_no", "lead_owner", "converted"],
+			as_dict=True,
+		)
+		if not lead or cint(lead.converted):
+			continue
+		_create_read_followup_task(lead)
+		created += 1
+	if created:
+		frappe.db.commit()
+	return created
+
+
+def _create_read_followup_task(lead):
+	nome = " ".join(filter(None, [lead.first_name, lead.last_name]))
+	msgs = frappe.get_all(
+		"CRM Instagram Message",
+		filters={"lead": lead.name},
+		fields=["direction", "message", "timestamp"],
+		order_by="timestamp desc",
+		limit=12,
+	)
+	msgs = list(reversed(msgs))
+	draft = _ai_followup_draft(lead, msgs) or build_draft(lead)
+	link = deep_link(lead, draft)
+	desc = (
+		f"<p>{frappe.utils.escape_html(nome)} leu sua última mensagem no Instagram e não respondeu.</p>"
+		f"<p><b>Mensagem sugerida:</b><br>{frappe.utils.escape_html(draft)}</p>"
+	)
+	if link:
+		desc += f'<p><a href="{link}">Abrir a conversa</a></p>'
+	task = frappe.get_doc(
+		{
+			"doctype": "CRM Task",
+			"title": f"Follow-up: {nome}",
+			"status": "Todo",
+			"priority": "Medium",
+			"assigned_to": _responsible(lead),
+			"reference_doctype": "CRM Lead",
+			"reference_docname": lead.name,
+			"due_date": now_datetime(),
+			"description": desc,
+		}
+	).insert(ignore_permissions=True)
+	try:
+		frappe.get_doc("CRM Lead", lead.name).add_comment(
+			"Comment", "Follow-up criado automaticamente: leu a mensagem e não respondeu."
+		)
+	except Exception:
+		pass
+	return task
 
 
 def run_followups():

@@ -17,6 +17,8 @@
   "section_break_1",
   "message",
   "comment_id",
+  "mid",
+  "lida_em",
   "sugestoes"
  ],
  "fields": [
@@ -71,6 +73,21 @@
    "fieldtype": "Data",
    "label": "Comentário de origem",
    "search_index": 1
+  },
+  {
+   "fieldname": "mid",
+   "fieldtype": "Data",
+   "label": "Message ID (Instagram)",
+   "hidden": 1,
+   "read_only": 1,
+   "description": "ID da mensagem no Instagram - usado pra nao duplicar o eco da propria mensagem e pra casar com o recibo de leitura."
+  },
+  {
+   "fieldname": "lida_em",
+   "fieldtype": "Datetime",
+   "label": "Lida em",
+   "read_only": 1,
+   "description": "Quando o destinatario leu essa mensagem (so preenchido pra mensagens enviadas por nos)."
   },
   {
    "fieldname": "sugestoes",
