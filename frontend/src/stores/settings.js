@@ -31,6 +31,16 @@ const _settings = createDocumentResource({
   onSuccess: () => {
     getSettings().setupBrand()
   },
+  // Sem essa chave, o frappe-ui nao monta o sub-recurso _settings.setValue -
+  // era por isso que MeuSite.vue (que chama _settings.setValue.submit(...))
+  // sempre falhava com "Falha ao salvar o site" antes mesmo de chegar no
+  // servidor (nenhum erro ficava registrado no CRM por causa disso).
+  setValue: {
+    onError: (err) => {
+      // eslint-disable-next-line no-console
+      console.error('Falha ao salvar FCRM Settings:', err)
+    },
+  },
 })
 
 // Espelha _settings.doc sempre - antes "settings" só era preenchido uma vez, na mão,

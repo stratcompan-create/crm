@@ -75,6 +75,11 @@ const routes = [
     component: () => import('@/pages/MeuSite.vue'),
   },
   {
+    path: '/financeiro/visao-geral',
+    name: 'Financeiro Visao Geral',
+    component: () => import('@/pages/FinanceiroVisaoGeral.vue'),
+  },
+  {
     alias: '/financeiro',
     path: '/financeiro/view/:viewType?',
     name: 'Financeiro',

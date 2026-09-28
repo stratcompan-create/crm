@@ -238,6 +238,7 @@ import ReceiptIcon from '~icons/lucide/receipt'
 import RepeatIcon from '~icons/lucide/repeat'
 import HeartPulseIcon from '~icons/lucide/heart-pulse'
 import EstimatorIcon from '~icons/lucide/ruler'
+import LucideLayoutDashboard from '~icons/lucide/layout-dashboard'
 import InstagramIcon from '@/components/Icons/InstagramIcon.vue'
 import WhatsAppIcon from '@/components/Icons/WhatsAppIcon.vue'
 import CRMLogo from '@/components/Icons/CRMLogo.vue'
@@ -353,6 +354,7 @@ const isCrmSection = computed(() => CRM_ROUTE_NAMES.includes(route.name))
 // The Financeiro tab gets its own small, fixed sidebar (Honorários, Metas,
 // and whatever else lands under it) instead of the CRM saved-views list.
 const FINANCEIRO_ROUTE_NAMES = [
+  'Financeiro Visao Geral',
   'Financeiro',
   'Financeiro Despesas',
   'Financeiro Recorrencia',
@@ -366,6 +368,12 @@ const isFinanceiroSection = computed(() =>
   FINANCEIRO_ROUTE_NAMES.includes(route.name),
 )
 const financeiroLinks = [
+  {
+    label: 'Visão Geral',
+    icon: LucideLayoutDashboard,
+    key: 'Financeiro Visao Geral',
+    to: { name: 'Financeiro Visao Geral' },
+  },
   {
     label: 'Honorários',
     icon: MoneyIcon,
