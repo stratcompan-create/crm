@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { call } from 'frappe-ui'
 import { usersStore } from '@/stores/users'
 import { sessionStore } from '@/stores/session'
 import { viewsStore } from '@/stores/views'
@@ -8,26 +7,12 @@ let personaChecked = false
 export const PERSONA_DONE_KEY = 'crm_persona_captured'
 
 async function shouldCapturePersona() {
-  // Client-side flag guards against re-prompting if the server persist failed.
-  if (localStorage.getItem(PERSONA_DONE_KEY)) return false
-  const captured = await call('frappe.client.get_single_value', {
-    doctype: 'FCRM Settings',
-    field: 'persona_captured',
-  })
-  if (captured) return false
-  // The wizard only feeds telemetry; skip it entirely if the user opted out.
-  // This Frappe version's pulse client has no boot_config method (confirmed
-  // via console: AttributeError, HTTP 417, uncaught promise rejection on
-  // every navigation) - guarded here instead of relying only on the
-  // callers' try/catch, since the failure was surfacing as an unhandled
-  // rejection instead of being cleanly swallowed.
-  try {
-    const { enabled } =
-      (await call('frappe.utils.telemetry.pulse.client.boot_config')) || {}
-    return !!enabled
-  } catch {
-    return false
-  }
+  // Wizard permanently disabled: it depended on
+  // frappe.utils.telemetry.pulse.client.boot_config, which does not exist
+  // on this Frappe version - every call failed (417) and logged noise in
+  // the browser console on every navigation. Never showing the wizard
+  // avoids the broken call entirely instead of just catching its error.
+  return false
 }
 
 const routes = [
