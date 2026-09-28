@@ -129,6 +129,16 @@ export default defineConfig(async ({ mode }) => {
         registerType: 'autoUpdate',
         workbox: {
           maximumFileSizeToCacheInBytes: 8 * 1024 * 1024,
+          // Sem isso, uma versao nova do service worker fica "esperando" ate
+          // TODAS as abas do CRM fecharem pra ativar - na pratica, o usuario
+          // via a mesma versao antiga (com bugs ja corrigidos) mesmo depois
+          // de fechar e reabrir uma aba, porque outras abas/o proprio
+          // processo do navegador ainda seguravam a versao anterior no ar.
+          // skipWaiting + clientsClaim faz a versao nova assumir na hora,
+          // no proximo carregamento - like o registerType: 'autoUpdate' ja
+          // deveria fazer, mas nao faz sozinho.
+          skipWaiting: true,
+          clientsClaim: true,
         },
         devOptions: {
           enabled: true,
