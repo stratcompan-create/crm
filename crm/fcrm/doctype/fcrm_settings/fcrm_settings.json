@@ -43,6 +43,7 @@
   "all_day_event_notifications",
   "integracoes_ia_tab",
   "infinitepay_handle",
+  "webhook_secret_pagamento",
   "dropdown_items_tab",
   "dropdown_items",
   "persona_captured"
@@ -289,6 +290,14 @@
    "fieldname": "infinitepay_handle",
    "fieldtype": "Data",
    "label": "InfiniteTag (InfinitePay)"
+  },
+  {
+   "fieldname": "webhook_secret_pagamento",
+   "fieldtype": "Data",
+   "label": "Webhook secret (pagamento)",
+   "hidden": 1,
+   "read_only": 1,
+   "description": "Gerado automaticamente - usado pra validar o webhook do InfinitePay."
   }
  ],
  "index_web_pages_for_search": 1,

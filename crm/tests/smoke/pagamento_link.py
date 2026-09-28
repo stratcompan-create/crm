@@ -74,6 +74,7 @@ def run():
 			ck("manda o handle sem o $", payload_enviado["handle"] == "stratcompany-teste")
 			ck("manda o valor em centavos", payload_enviado["items"][0]["price"] == 85000)
 			ck("order_nsu é o nome do honorário (para correlacionar depois)", payload_enviado["order_nsu"] == honorario.name)
+			ck("webhook_url leva o secret pra validar quem chama depois", "secret=" in payload_enviado["webhook_url"])
 
 		link_salvo = frappe.db.get_value("CRM Honorario", honorario.name, "link_pagamento")
 		ck("link fica salvo no honorário", link_salvo == "https://checkout.infinitepay.io/abc123")
@@ -88,6 +89,25 @@ def run():
 		frappe.db.set_value("CRM Honorario", honorario.name, "status", "Pendente")
 		r3 = pg._aplicar_pagamento({"order_nsu": honorario.name, "amount": 85000, "paid_amount": 100})
 		ck("webhook ignora pagamento com valor menor que o esperado", r3["ok"] is False and frappe.db.get_value("CRM Honorario", honorario.name, "status") == "Pendente")
+
+		# endpoint publico (webhook_infinitepay) exige o secret certo - sem isso
+		# qualquer um na internet poderia marcar um honorario como pago so
+		# adivinhando o nome do documento
+		payload_bytes = json.dumps({"order_nsu": honorario.name, "amount": 85000, "paid_amount": 85000}).encode()
+		with mock.patch.object(frappe, "request", mock.Mock(args={"secret": "errado"}, get_data=lambda: payload_bytes), create=True):
+			r4 = pg.webhook_infinitepay()
+		ck(
+			"endpoint do webhook recusa secret errado",
+			r4["ok"] is False and frappe.db.get_value("CRM Honorario", honorario.name, "status") == "Pendente",
+		)
+
+		secreto_certo = pg._webhook_secret()
+		with mock.patch.object(frappe, "request", mock.Mock(args={"secret": secreto_certo}, get_data=lambda: payload_bytes), create=True):
+			r5 = pg.webhook_infinitepay()
+		ck(
+			"endpoint do webhook aceita com o secret certo",
+			r5["ok"] and frappe.db.get_value("CRM Honorario", honorario.name, "status") == "Pago",
+		)
 	finally:
 		for dt, name in reversed(made):
 			frappe.delete_doc(dt, name, force=True, ignore_permissions=True)

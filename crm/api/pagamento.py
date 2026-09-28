@@ -23,6 +23,18 @@ def _client_label(deal: str) -> str:
 	return row.get("organization") or " ".join(filter(None, [row.get("first_name"), row.get("last_name")])) or deal
 
 
+def _webhook_secret() -> str:
+	"""Segredo usado pra validar que o POST no webhook realmente veio do fluxo
+	que a gente iniciou - a API do InfinitePay não assina o webhook, então sem
+	isso qualquer pessoa que adivinhasse o nome de um Honorário conseguiria
+	marcar ele como Pago só chamando a URL do webhook na mão."""
+	secret = frappe.db.get_single_value("FCRM Settings", "webhook_secret_pagamento")
+	if not secret:
+		secret = frappe.generate_hash(length=32)
+		frappe.db.set_single_value("FCRM Settings", "webhook_secret_pagamento", secret)
+	return secret
+
+
 @frappe.whitelist()
 def gerar_link_pagamento(honorario: str) -> dict:
 	frappe.only_for(MANAGER_ROLES)
@@ -39,7 +51,7 @@ def gerar_link_pagamento(honorario: str) -> dict:
 	payload = {
 		"handle": handle,
 		"order_nsu": doc.name,
-		"webhook_url": get_url("/api/method/crm.api.pagamento.webhook_infinitepay"),
+		"webhook_url": get_url(f"/api/method/crm.api.pagamento.webhook_infinitepay?secret={_webhook_secret()}"),
 		"items": [{
 			"quantity": 1,
 			"price": round(flt(doc.valor) * 100),
@@ -74,6 +86,9 @@ def gerar_link_pagamento(honorario: str) -> dict:
 @frappe.whitelist(allow_guest=True)
 def webhook_infinitepay():
 	"""Chamado pelo InfinitePay quando um link é pago."""
+	if frappe.request.args.get("secret") != _webhook_secret():
+		frappe.local.response.http_status_code = 403
+		return {"ok": False}
 	try:
 		payload = json.loads((frappe.request.get_data() or b"{}").decode("utf-8", "replace"))
 	except ValueError:
