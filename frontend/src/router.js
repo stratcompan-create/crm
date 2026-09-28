@@ -16,9 +16,18 @@ async function shouldCapturePersona() {
   })
   if (captured) return false
   // The wizard only feeds telemetry; skip it entirely if the user opted out.
-  const { enabled } =
-    (await call('frappe.utils.telemetry.pulse.client.boot_config')) || {}
-  return !!enabled
+  // This Frappe version's pulse client has no boot_config method (confirmed
+  // via console: AttributeError, HTTP 417, uncaught promise rejection on
+  // every navigation) - guarded here instead of relying only on the
+  // callers' try/catch, since the failure was surfacing as an unhandled
+  // rejection instead of being cleanly swallowed.
+  try {
+    const { enabled } =
+      (await call('frappe.utils.telemetry.pulse.client.boot_config')) || {}
+    return !!enabled
+  } catch {
+    return false
+  }
 }
 
 const routes = [
