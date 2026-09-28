@@ -76,7 +76,7 @@
   },
   {
    "fieldname": "mid",
-   "fieldtype": "Data",
+   "fieldtype": "Small Text",
    "label": "Message ID (Instagram)",
    "hidden": 1,
    "read_only": 1,
