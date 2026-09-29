@@ -1,66 +1,5 @@
 <template>
   <div class="flex min-h-0 flex-1 flex-col">
-    <div class="flex flex-col gap-3 border-b border-outline-gray-1 px-4 py-3">
-      <div class="flex flex-wrap items-center justify-between gap-2">
-        <div class="flex gap-1.5">
-          <button
-            v-for="t in tipos"
-            :key="t.value"
-            type="button"
-            class="rounded-full border px-3 py-1 text-p-sm transition-all duration-150"
-            :class="tipo === t.value ? 'border-transparent font-medium text-white shadow-sm' : 'border-outline-gray-2 text-ink-gray-7 hover:border-ink-gray-4'"
-            :style="tipo === t.value ? { background: corDestaqueUI } : {}"
-            @click="selecionarTipo(t.value)"
-          >
-            {{ t.label }}
-          </button>
-        </div>
-        <div class="flex gap-2">
-          <Button variant="ghost" :label="__('Histórico')" @click="toggleHistorico" />
-          <Button variant="subtle" :label="__('+ Nova')" @click="novaConversa" />
-        </div>
-      </div>
-      <div class="flex items-center gap-3">
-        <span class="text-xs font-medium text-ink-gray-5">{{ __('Modelo') }}</span>
-        <button
-          v-for="m in modelos"
-          :key="m.value"
-          type="button"
-          class="flex flex-col items-center gap-1 rounded-lg p-1 transition-transform duration-150 hover:-translate-y-0.5"
-          @click="modelo = m.value"
-        >
-          <div
-            class="w-14 overflow-hidden rounded-lg shadow-sm ring-2 ring-offset-2 transition-all duration-150"
-            :style="{ '--tw-ring-color': modelo === m.value ? corDestaqueUI : 'transparent' }"
-          >
-            <InstagramModeloPreview :modelo="m.value" :cor-marca="corFundo" :cor-destaque="corDestaqueUI" />
-          </div>
-          <span class="text-[10px]" :class="modelo === m.value ? 'font-medium text-ink-gray-9' : 'text-ink-gray-5'">
-            {{ m.label }}
-          </span>
-        </button>
-      </div>
-    </div>
-
-    <div v-if="mostrarHistorico" class="border-b border-outline-gray-1 px-4 py-2">
-      <div v-if="historico.loading" class="py-2 text-p-sm text-ink-gray-5">{{ __('Carregando...') }}</div>
-      <div v-else-if="!historico.data?.length" class="py-2 text-p-sm text-ink-gray-5">
-        {{ __('Nenhuma conversa ainda.') }}
-      </div>
-      <div v-else class="flex flex-col gap-1 max-h-40 overflow-y-auto">
-        <button
-          v-for="c in historico.data"
-          :key="c.name"
-          type="button"
-          class="flex items-center justify-between rounded px-2 py-1.5 text-left text-p-sm hover:bg-surface-gray-2"
-          @click="abrirConversa(c.name)"
-        >
-          <span class="truncate">{{ c.titulo || c.name }}</span>
-          <span class="shrink-0 text-xs text-ink-gray-5">{{ c.tipo }} · {{ c.status }}</span>
-        </button>
-      </div>
-    </div>
-
     <div class="flex min-h-0 flex-1">
       <!-- Chat -->
       <div class="flex w-full min-w-0 flex-1 flex-col border-r border-outline-gray-1 md:max-w-md">
@@ -114,6 +53,61 @@
 
       <!-- Editor -->
       <div class="hidden min-w-0 flex-1 flex-col md:flex">
+        <div class="flex flex-col gap-3 px-4 py-3">
+          <div class="flex gap-1.5">
+            <button
+              v-for="t in tipos"
+              :key="t.value"
+              type="button"
+              class="rounded-full border px-3 py-1 text-p-sm transition-all duration-150"
+              :class="tipo === t.value ? 'border-transparent font-medium text-white shadow-sm' : 'border-outline-gray-2 text-ink-gray-7 hover:border-ink-gray-4'"
+              :style="tipo === t.value ? { background: corDestaqueUI } : {}"
+              @click="selecionarTipo(t.value)"
+            >
+              {{ t.label }}
+            </button>
+          </div>
+          <div class="flex items-center gap-3">
+            <span class="text-xs font-medium text-ink-gray-5">{{ __('Modelo') }}</span>
+            <button
+              v-for="m in modelos"
+              :key="m.value"
+              type="button"
+              class="flex flex-col items-center gap-1 rounded-lg p-1 transition-transform duration-150 hover:-translate-y-0.5"
+              @click="modelo = m.value"
+            >
+              <div
+                class="w-14 overflow-hidden rounded-lg shadow-sm ring-2 ring-offset-2 transition-all duration-150"
+                :style="{ '--tw-ring-color': modelo === m.value ? corDestaqueUI : 'transparent' }"
+              >
+                <InstagramModeloPreview :modelo="m.value" :cor-marca="corFundo" :cor-destaque="corDestaqueUI" />
+              </div>
+              <span class="text-[10px]" :class="modelo === m.value ? 'font-medium text-ink-gray-9' : 'text-ink-gray-5'">
+                {{ m.label }}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <div v-if="mostrarHistorico" class="border-b border-outline-gray-1 px-4 py-2">
+          <div v-if="historico.loading" class="py-2 text-p-sm text-ink-gray-5">{{ __('Carregando...') }}</div>
+          <div v-else-if="!historico.data?.length" class="py-2 text-p-sm text-ink-gray-5">
+            {{ __('Nenhuma conversa ainda.') }}
+          </div>
+          <div v-else class="flex flex-col gap-1 max-h-40 overflow-y-auto">
+            <button
+              v-for="c in historico.data"
+              :key="c.name"
+              type="button"
+              class="flex items-center justify-between rounded px-2 py-1.5 text-left text-p-sm hover:bg-surface-gray-2"
+              @click="abrirConversa(c.name)"
+            >
+              <span class="truncate">{{ c.titulo || c.name }}</span>
+              <span class="shrink-0 text-xs text-ink-gray-5">{{ c.tipo }} · {{ c.status }}</span>
+            </button>
+          </div>
+        </div>
+
         <div v-if="!slides.length" class="flex flex-1 items-center justify-center text-p-sm text-ink-gray-5">
           {{ __('Carregando...') }}
         </div>
@@ -473,4 +467,6 @@ async function baixarTodos() {
     baixandoTodos.value = false
   }
 }
+
+defineExpose({ toggleHistorico, novaConversa })
 </script>

@@ -12,17 +12,23 @@
     </template>
   </LayoutHeader>
 
-  <div class="flex gap-1 border-b border-outline-gray-1 px-4 pt-1">
-    <button
-      v-for="t in visibleTabs"
-      :key="t.key"
-      type="button"
-      class="-mb-px border-b-2 px-3 py-2 text-p-base"
-      :class="tab === t.key ? 'border-ink-gray-9 font-medium text-ink-gray-9' : 'border-transparent text-ink-gray-5'"
-      @click="tab = t.key"
-    >
-      {{ t.label }}
-    </button>
+  <div class="flex items-center justify-between gap-2 border-b border-outline-gray-1 px-4 pt-1">
+    <div class="flex gap-1">
+      <button
+        v-for="t in visibleTabs"
+        :key="t.key"
+        type="button"
+        class="-mb-px border-b-2 px-3 py-2 text-p-base"
+        :class="tab === t.key ? 'border-ink-gray-9 font-medium text-ink-gray-9' : 'border-transparent text-ink-gray-5'"
+        @click="tab = t.key"
+      >
+        {{ t.label }}
+      </button>
+    </div>
+    <div v-if="tab === 'conteudo'" class="mb-1.5 flex gap-2">
+      <Button variant="ghost" size="sm" :label="__('Histórico')" @click="conteudoRef?.toggleHistorico()" />
+      <Button variant="subtle" size="sm" :label="__('+ Nova')" @click="conteudoRef?.novaConversa()" />
+    </div>
   </div>
 
   <InstagramProspeccao v-if="tab === 'prospeccao'" @abrir-conversa="openFromProspeccao" />
@@ -31,7 +37,7 @@
 
   <InstagramMetrics v-else-if="tab === 'metricas' && isManager()" />
 
-  <InstagramConteudo v-else-if="tab === 'conteudo'" />
+  <InstagramConteudo v-else-if="tab === 'conteudo'" ref="conteudoRef" />
 
   <div v-else class="flex min-h-0 flex-1">
     <!-- Conversas -->
@@ -176,6 +182,7 @@ const tabs = [
   { key: 'metricas', label: __('Perfil'), manager: true },
 ]
 const visibleTabs = computed(() => tabs.filter((t) => !t.manager || isManager()))
+const conteudoRef = ref(null)
 
 function openFromProspeccao(lead) {
   tab.value = 'mensagens'
