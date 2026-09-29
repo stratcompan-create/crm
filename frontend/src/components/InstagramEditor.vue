@@ -1,7 +1,17 @@
 <template>
   <div class="flex min-h-0 flex-1">
+    <!-- Canvas -->
+    <div class="flex flex-1 flex-col items-center gap-4 overflow-auto bg-gradient-to-b from-surface-gray-1 to-surface-gray-2 p-8">
+      <div class="rounded-lg shadow-lg ring-1 ring-black/5 transition-shadow duration-300 hover:shadow-xl">
+        <canvas ref="canvasEl" class="rounded-lg" />
+      </div>
+      <div class="flex items-center gap-2">
+        <Button variant="outline" size="sm" :label="__('Baixar PNG')" @click="baixarPng" />
+        <Button variant="solid" size="sm" :label="__('Salvar')" :loading="salvando" @click="salvar" />
+      </div>
+    </div>
     <!-- Painel de edição -->
-    <div class="flex w-72 shrink-0 flex-col overflow-y-auto border-r border-outline-gray-1 p-3">
+    <div class="flex w-72 shrink-0 flex-col overflow-y-auto border-l border-outline-gray-1 p-3">
       <div class="mb-3 text-p-sm font-medium text-ink-gray-7">{{ __('Adicionar') }}</div>
       <div class="mb-4 flex gap-2">
         <button
@@ -252,16 +262,6 @@
       </div>
     </div>
 
-    <!-- Canvas -->
-    <div class="flex flex-1 flex-col items-center gap-4 overflow-auto bg-gradient-to-b from-surface-gray-1 to-surface-gray-2 p-8">
-      <div class="rounded-lg shadow-lg ring-1 ring-black/5 transition-shadow duration-300 hover:shadow-xl">
-        <canvas ref="canvasEl" class="rounded-lg" />
-      </div>
-      <div class="flex items-center gap-2">
-        <Button variant="outline" size="sm" :label="__('Baixar PNG')" @click="baixarPng" />
-        <Button variant="solid" size="sm" :label="__('Salvar')" :loading="salvando" @click="salvar" />
-      </div>
-    </div>
   </div>
 </template>
 
