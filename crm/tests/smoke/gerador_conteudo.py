@@ -76,6 +76,63 @@ def run():
 			status_depois = frappe.db.get_value("CRM Conteudo Conversa", conversa_criada, "status")
 			ck("marcar_agendado muda o status para Agendado", status_depois == "Agendado")
 
+			# salvar_slide agora tambem grava titulo/corpo/layout, alem do canvas
+			gc.salvar_slide(
+				conversa_criada, 0,
+				canvas=json.dumps({"objects": [], "background": "#000"}),
+				titulo="Titulo editado a mao",
+				corpo="Corpo editado a mao",
+				layout=json.dumps({"posicao": "meio-cen", "margemH": 10}),
+			)
+			slide_0 = json.loads(frappe.db.get_value("CRM Conteudo Conversa", conversa_criada, "slides"))[0]
+			ck(
+				"salvar_slide grava titulo/corpo/layout junto com o canvas",
+				slide_0["titulo"] == "Titulo editado a mao" and slide_0["corpo"] == "Corpo editado a mao"
+				and slide_0["layout"]["posicao"] == "meio-cen" and slide_0.get("canvas", {}).get("background") == "#000",
+			)
+
+			# _parse_slide_unico: com e sem cerca de codigo
+			ck("_parse_slide_unico entende JSON simples", gc._parse_slide_unico('{"titulo": "T", "corpo": "C"}') == {"titulo": "T", "corpo": "C"})
+			ck("_parse_slide_unico entende JSON com cerca", gc._parse_slide_unico('```json\n{"titulo": "T2", "corpo": "C2"}\n```')["titulo"] == "T2")
+			ck("_parse_slide_unico devolve vazio se nao for JSON valido", gc._parse_slide_unico("bagunca") == {})
+
+			# gerar_texto_slide: gera do zero (sem instrucao) e refina (com instrucao)
+			with mock.patch.object(gc, "_call_claude", return_value='{"titulo": "Gerado pela IA", "corpo": "Corpo novo"}'):
+				r_gerar = gc.gerar_texto_slide(conversa_criada, 0)
+				ck("gerar_texto_slide sem instrucao gera conteudo novo", r_gerar["titulo"] == "Gerado pela IA")
+
+			slide_0_depois = json.loads(frappe.db.get_value("CRM Conteudo Conversa", conversa_criada, "slides"))[0]
+			ck("gerar_texto_slide apaga o canvas salvo (texto mudou, remonta do zero)", "canvas" not in slide_0_depois)
+
+			with mock.patch.object(gc, "_call_claude", return_value='{"titulo": "Refinado", "corpo": "Mais curto"}') as mocked:
+				r_refinar = gc.gerar_texto_slide(conversa_criada, 0, instrucao="deixa mais curto")
+				ck("gerar_texto_slide com instrucao refina o slide", r_refinar["corpo"] == "Mais curto")
+				pedido_mandado = mocked.call_args[0][2][0]["content"]
+				ck("instrucao de refino vai no pedido pra IA", "deixa mais curto" in pedido_mandado)
+
+			erro_indice = None
+			try:
+				gc.gerar_texto_slide(conversa_criada, 99)
+			except frappe.ValidationError as e:
+				erro_indice = str(e)
+			ck("gerar_texto_slide recusa indice que nao existe", bool(erro_indice))
+
+			# gerar_legenda e salvar_legenda
+			with mock.patch.object(gc, "_call_claude", return_value="Legenda gerada pela IA. Comenta aí embaixo!"):
+				r_legenda = gc.gerar_legenda(conversa_criada)
+				ck("gerar_legenda devolve e salva a legenda", r_legenda["legenda"].startswith("Legenda gerada"))
+			legenda_no_banco = frappe.db.get_value("CRM Conteudo Conversa", conversa_criada, "legenda")
+			ck("gerar_legenda persiste no banco", legenda_no_banco == r_legenda["legenda"])
+
+			gc.salvar_legenda(conversa_criada, "Legenda escrita na mão")
+			ck(
+				"salvar_legenda grava sem chamar IA",
+				frappe.db.get_value("CRM Conteudo Conversa", conversa_criada, "legenda") == "Legenda escrita na mão",
+			)
+
+			trazida = gc.obter_conversa(conversa_criada)
+			ck("obter_conversa devolve a legenda", trazida["legenda"] == "Legenda escrita na mão")
+
 			frappe.delete_doc("CRM Conteudo Conversa", conversa_criada, force=True, ignore_permissions=True)
 	finally:
 		ficha.save_ai_key(chave_original or "")

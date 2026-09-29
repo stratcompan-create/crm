@@ -1,104 +1,240 @@
 <template>
   <div class="flex min-h-0 flex-1">
-    <!-- Barra de ferramentas -->
-    <div class="flex w-16 shrink-0 flex-col items-center gap-2 border-r border-outline-gray-1 bg-surface-gray-1 py-4">
-      <button
-        type="button"
-        class="flex flex-col items-center gap-1 rounded-lg p-2 text-ink-gray-6 transition-all duration-150 hover:-translate-y-0.5 hover:text-white hover:shadow-sm"
-        :style="{ '--hover-bg': corDestaque }"
-        @mouseenter="$event.currentTarget.style.background = corDestaque"
-        @mouseleave="$event.currentTarget.style.background = ''"
-        @click="adicionarTexto"
-      >
-        <LucideType class="size-4" />
-        <span class="text-[10px]">{{ __('Texto') }}</span>
-      </button>
-      <button
-        type="button"
-        class="flex flex-col items-center gap-1 rounded-lg p-2 text-ink-gray-6 transition-all duration-150 hover:-translate-y-0.5 hover:text-white hover:shadow-sm"
-        @mouseenter="$event.currentTarget.style.background = corDestaque"
-        @mouseleave="$event.currentTarget.style.background = ''"
-        @click="abrirUpload(null)"
-      >
-        <LucideImage class="size-4" />
-        <span class="text-[10px]">{{ __('Imagem') }}</span>
-      </button>
-      <button
-        type="button"
-        class="flex flex-col items-center gap-1 rounded-lg p-2 text-ink-gray-6 transition-all duration-150 hover:-translate-y-0.5 hover:text-white hover:shadow-sm"
-        @mouseenter="$event.currentTarget.style.background = corDestaque"
-        @mouseleave="$event.currentTarget.style.background = ''"
-        @click="adicionarForma"
-      >
-        <LucideSquare class="size-4" />
-        <span class="text-[10px]">{{ __('Forma') }}</span>
-      </button>
-      <button
-        v-if="objetoSelecionado"
-        type="button"
-        class="mt-2 flex flex-col items-center gap-1 rounded-lg p-2 text-red-500 transition-all duration-150 hover:-translate-y-0.5 hover:bg-red-50"
-        @click="removerSelecionado"
-      >
-        <LucideTrash2 class="size-4" />
-        <span class="text-[10px]">{{ __('Excluir') }}</span>
-      </button>
+    <!-- Painel de edição -->
+    <div class="flex w-72 shrink-0 flex-col overflow-y-auto border-r border-outline-gray-1 p-3">
+      <div class="mb-3 text-p-sm font-medium text-ink-gray-7">{{ __('Adicionar') }}</div>
+      <div class="mb-4 flex gap-2">
+        <button
+          type="button"
+          class="flex flex-1 flex-col items-center gap-1 rounded-lg border border-outline-gray-2 p-2 text-ink-gray-6 transition-all duration-150 hover:-translate-y-0.5 hover:text-white hover:shadow-sm"
+          @mouseenter="$event.currentTarget.style.background = corDestaque"
+          @mouseleave="$event.currentTarget.style.background = ''"
+          @click="adicionarTexto"
+        >
+          <LucideType class="size-4" />
+          <span class="text-[10px]">{{ __('Texto') }}</span>
+        </button>
+        <button
+          type="button"
+          class="flex flex-1 flex-col items-center gap-1 rounded-lg border border-outline-gray-2 p-2 text-ink-gray-6 transition-all duration-150 hover:-translate-y-0.5 hover:text-white hover:shadow-sm"
+          @mouseenter="$event.currentTarget.style.background = corDestaque"
+          @mouseleave="$event.currentTarget.style.background = ''"
+          @click="abrirUpload(null)"
+        >
+          <LucideImage class="size-4" />
+          <span class="text-[10px]">{{ __('Imagem') }}</span>
+        </button>
+        <button
+          type="button"
+          class="flex flex-1 flex-col items-center gap-1 rounded-lg border border-outline-gray-2 p-2 text-ink-gray-6 transition-all duration-150 hover:-translate-y-0.5 hover:text-white hover:shadow-sm"
+          @mouseenter="$event.currentTarget.style.background = corDestaque"
+          @mouseleave="$event.currentTarget.style.background = ''"
+          @click="adicionarForma"
+        >
+          <LucideSquare class="size-4" />
+          <span class="text-[10px]">{{ __('Forma') }}</span>
+        </button>
+      </div>
       <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFileSelecionado" />
-    </div>
 
-    <!-- Canvas -->
-    <div class="flex flex-1 flex-col items-center gap-4 overflow-auto bg-gradient-to-b from-surface-gray-1 to-surface-gray-2 p-8">
-      <div class="rounded-lg shadow-lg ring-1 ring-black/5 transition-shadow duration-300 hover:shadow-xl">
-        <canvas ref="canvasEl" class="rounded-lg" />
-      </div>
-      <div class="flex items-center gap-2">
-        <Button variant="outline" size="sm" :label="__('Baixar PNG')" @click="baixarPng" />
-        <Button variant="solid" size="sm" :label="__('Salvar')" :loading="salvando" @click="salvar" />
-      </div>
-    </div>
-
-    <!-- Painel do objeto selecionado / camadas -->
-    <div class="flex w-56 shrink-0 flex-col border-l border-outline-gray-1 p-3">
-      <template v-if="objetoSelecionado?.type === 'textbox'">
-        <div class="mb-3 text-p-sm font-medium text-ink-gray-7">{{ __('Texto') }}</div>
-        <div class="flex flex-col gap-2">
-          <FormControl type="select" :label="__('Fonte')" v-model="propTexto.fontFamily" :options="fontes" @update:modelValue="aplicarFonte" />
-          <FormControl type="number" :label="__('Tamanho')" v-model="propTexto.fontSize" @update:modelValue="aplicarTamanho" />
-          <div>
-            <div class="mb-1 text-p-sm text-ink-gray-6">{{ __('Cor') }}</div>
-            <input type="color" class="h-8 w-full cursor-pointer rounded border border-outline-gray-2" v-model="propTexto.fill" @input="aplicarCorTexto" />
+      <!-- Texto & IA -->
+      <div class="border-t border-outline-gray-1 pt-3">
+        <button type="button" class="mb-2 flex w-full items-center justify-between text-p-sm font-medium text-ink-gray-7" @click="secoes.texto = !secoes.texto">
+          {{ __('Texto & IA') }}
+          <LucideChevronDown class="size-3.5 transition-transform" :class="secoes.texto ? '' : '-rotate-90'" />
+        </button>
+        <div v-if="secoes.texto" class="flex flex-col gap-2">
+          <FormControl type="textarea" :label="__('Título')" :rows="2" v-model="tituloEdit" @update:modelValue="aoEditarTexto" />
+          <FormControl type="textarea" :label="__('Subtítulo')" :rows="3" v-model="corpoEdit" @update:modelValue="aoEditarTexto" />
+          <Button
+            class="mt-1"
+            variant="outline"
+            size="sm"
+            :label="__('Gerar conteúdo deste slide com IA')"
+            :loading="gerandoConteudo"
+            @click="gerarConteudoSlide"
+          />
+          <div class="mt-2">
+            <FormControl type="textarea" :rows="2" :placeholder="__('Ex.: deixe mais curto, tom mais direto...')" v-model="instrucaoRefinar" />
+            <Button class="mt-1 w-full" variant="ghost" size="sm" :label="__('Refinar slide com IA')" :loading="refinando" @click="refinarSlide" />
           </div>
         </div>
-      </template>
-      <template v-else-if="objetoSelecionado?.type === 'rect'">
-        <div class="mb-3 text-p-sm font-medium text-ink-gray-7">{{ __('Forma') }}</div>
-        <div>
-          <div class="mb-1 text-p-sm text-ink-gray-6">{{ __('Cor') }}</div>
-          <input type="color" class="h-8 w-full cursor-pointer rounded border border-outline-gray-2" v-model="propForma.fill" @input="aplicarCorForma" />
+      </div>
+
+      <!-- Layout do texto -->
+      <div class="mt-4 border-t border-outline-gray-1 pt-3">
+        <button type="button" class="mb-2 flex w-full items-center justify-between text-p-sm font-medium text-ink-gray-7" @click="secoes.layout = !secoes.layout">
+          {{ __('Layout do texto') }}
+          <LucideChevronDown class="size-3.5 transition-transform" :class="secoes.layout ? '' : '-rotate-90'" />
+        </button>
+        <div v-if="secoes.layout" class="flex flex-col gap-3">
+          <div>
+            <div class="mb-1 text-p-sm text-ink-gray-6">{{ __('Posição') }}</div>
+            <div class="grid grid-cols-3 gap-1">
+              <button
+                v-for="p in POSICOES"
+                :key="p.valor"
+                type="button"
+                class="rounded border px-1 py-1.5 text-[10px]"
+                :class="layoutAtual.posicao === p.valor ? 'border-ink-gray-9 bg-surface-gray-3 font-medium text-ink-gray-9' : 'border-outline-gray-2 text-ink-gray-6 hover:bg-surface-gray-2'"
+                @click="atualizarLayout({ posicao: p.valor })"
+              >
+                {{ p.rotulo }}
+              </button>
+            </div>
+          </div>
+          <label class="flex items-center justify-between text-p-sm text-ink-gray-6">
+            {{ __('Glass ao redor do conteúdo') }}
+            <input type="checkbox" :checked="layoutAtual.glass" @change="atualizarLayout({ glass: $event.target.checked })" />
+          </label>
+          <FormControl
+            type="number"
+            :label="__('Margem horizontal — {0}%', [layoutAtual.margemH])"
+            :model-value="layoutAtual.margemH"
+            @update:modelValue="(v) => atualizarLayout({ margemH: Number(v) || 0 })"
+          />
+          <FormControl
+            type="number"
+            :label="__('Margem vertical — {0}%', [layoutAtual.margemV])"
+            :model-value="layoutAtual.margemV"
+            @update:modelValue="(v) => atualizarLayout({ margemV: Number(v) || 0 })"
+          />
+          <Button variant="outline" size="sm" :label="__('Aplicar configurações no próximo slide')" @click="aplicarNoProximo" />
         </div>
-      </template>
-      <template v-else-if="objetoSelecionado?.type === 'image'">
-        <div class="mb-3 text-p-sm font-medium text-ink-gray-7">{{ __('Imagem') }}</div>
-        <Button variant="outline" size="sm" :label="__('Trocar imagem')" @click="abrirUpload(objetoSelecionado)" />
-      </template>
-      <template v-else>
-        <div class="mb-3 text-p-sm font-medium text-ink-gray-7">{{ __('Fundo') }}</div>
-        <div class="mb-3 flex flex-wrap gap-2">
-          <button
-            v-for="p in paletaFundo"
-            :key="p.cor"
-            type="button"
-            class="size-8 rounded-full border-2"
-            :class="corFundoAtual.toLowerCase() === p.cor.toLowerCase() ? 'border-ink-gray-9' : 'border-outline-gray-2'"
-            :style="{ background: p.cor }"
-            :title="p.rotulo"
-            @click="corFundoAtual = p.cor; aplicarCorFundo()"
+      </div>
+
+      <!-- Sombra / Overlay -->
+      <div class="mt-4 border-t border-outline-gray-1 pt-3">
+        <button type="button" class="mb-2 flex w-full items-center justify-between text-p-sm font-medium text-ink-gray-7" @click="secoes.sombra = !secoes.sombra">
+          {{ __('Sombra / Overlay') }}
+          <LucideChevronDown class="size-3.5 transition-transform" :class="secoes.sombra ? '' : '-rotate-90'" />
+        </button>
+        <div v-if="secoes.sombra" class="flex flex-col gap-2">
+          <FormControl
+            type="select"
+            :label="__('Estilo')"
+            :model-value="layoutAtual.sombraEstilo"
+            :options="SOMBRA_ESTILOS.map((s) => ({ label: s.rotulo, value: s.valor }))"
+            @update:modelValue="(v) => atualizarLayout({ sombraEstilo: v })"
+          />
+          <FormControl
+            type="number"
+            :label="__('Opacidade — {0}%', [layoutAtual.sombraOpacidade])"
+            :model-value="layoutAtual.sombraOpacidade"
+            @update:modelValue="(v) => atualizarLayout({ sombraOpacidade: Number(v) || 0 })"
           />
         </div>
-        <div class="mb-1 text-p-sm text-ink-gray-6">{{ __('Outra cor') }}</div>
-        <input type="color" class="h-8 w-full cursor-pointer rounded border border-outline-gray-2" v-model="corFundoAtual" @input="aplicarCorFundo" />
-      </template>
+      </div>
 
-      <div class="mt-6 border-t border-outline-gray-1 pt-3">
+      <!-- Fundo do slide -->
+      <div class="mt-4 border-t border-outline-gray-1 pt-3">
+        <button type="button" class="mb-2 flex w-full items-center justify-between text-p-sm font-medium text-ink-gray-7" @click="secoes.fundo = !secoes.fundo">
+          {{ __('Fundo do slide') }}
+          <LucideChevronDown class="size-3.5 transition-transform" :class="secoes.fundo ? '' : '-rotate-90'" />
+        </button>
+        <div v-if="secoes.fundo" class="flex flex-col gap-2">
+          <div class="mb-1 flex flex-wrap gap-2">
+            <button
+              v-for="p in paletaFundo"
+              :key="p.cor"
+              type="button"
+              class="size-8 rounded-full border-2"
+              :class="corFundoAtual.toLowerCase() === p.cor.toLowerCase() ? 'border-ink-gray-9' : 'border-outline-gray-2'"
+              :style="{ background: p.cor }"
+              :title="p.rotulo"
+              @click="corFundoAtual = p.cor; aplicarCorFundo()"
+            />
+          </div>
+          <input type="color" class="h-8 w-full cursor-pointer rounded border border-outline-gray-2" v-model="corFundoAtual" @input="aplicarCorFundo" />
+          <FormControl
+            type="select"
+            :label="__('Padrão sobre o fundo')"
+            :model-value="layoutAtual.fundoPadrao"
+            :options="FUNDO_PADROES.map((f) => ({ label: f.rotulo, value: f.valor }))"
+            @update:modelValue="(v) => atualizarLayout({ fundoPadrao: v })"
+          />
+        </div>
+      </div>
+
+      <!-- Tipografia -->
+      <div class="mt-4 border-t border-outline-gray-1 pt-3">
+        <button type="button" class="mb-2 flex w-full items-center justify-between text-p-sm font-medium text-ink-gray-7" @click="secoes.tipografia = !secoes.tipografia">
+          {{ __('Tipografia') }}
+          <LucideChevronDown class="size-3.5 transition-transform" :class="secoes.tipografia ? '' : '-rotate-90'" />
+        </button>
+        <div v-if="secoes.tipografia" class="flex flex-col gap-2">
+          <FormControl
+            type="number"
+            :label="__('Escala geral — {0}%', [layoutAtual.escala])"
+            :model-value="layoutAtual.escala"
+            @update:modelValue="(v) => atualizarLayout({ escala: Number(v) || 100 })"
+          />
+          <FormControl
+            type="number"
+            :label="__('Espaçamento entre linhas — {0}%', [layoutAtual.espacamento])"
+            :model-value="layoutAtual.espacamento"
+            @update:modelValue="(v) => atualizarLayout({ espacamento: Number(v) || 115 })"
+          />
+          <FormControl
+            type="select"
+            :label="__('Fonte do título')"
+            :model-value="layoutAtual.fonteTitulo"
+            :options="opcoesFontes"
+            @update:modelValue="(v) => atualizarLayout({ fonteTitulo: v })"
+          />
+          <FormControl
+            type="select"
+            :label="__('Fonte do subtítulo')"
+            :model-value="layoutAtual.fonteCorpo"
+            :options="opcoesFontes"
+            @update:modelValue="(v) => atualizarLayout({ fonteCorpo: v })"
+          />
+        </div>
+      </div>
+
+      <!-- Propriedades do objeto selecionado (elementos adicionados manualmente) -->
+      <div v-if="objetoSelecionado" class="mt-4 border-t border-outline-gray-1 pt-3">
+        <template v-if="objetoSelecionado.type === 'textbox' && objetoSelecionado.papel !== 'titulo' && objetoSelecionado.papel !== 'corpo'">
+          <div class="mb-3 flex items-center justify-between">
+            <div class="text-p-sm font-medium text-ink-gray-7">{{ __('Texto selecionado') }}</div>
+            <button type="button" class="flex items-center gap-1 rounded px-1 py-0.5 text-red-500 hover:bg-red-50" @click="removerSelecionado">
+              <LucideTrash2 class="size-3.5" />
+            </button>
+          </div>
+          <div class="flex flex-col gap-2">
+            <FormControl type="select" :label="__('Fonte')" v-model="propTexto.fontFamily" :options="opcoesFontes" @update:modelValue="aplicarFonte" />
+            <FormControl type="number" :label="__('Tamanho')" v-model="propTexto.fontSize" @update:modelValue="aplicarTamanho" />
+            <div>
+              <div class="mb-1 text-p-sm text-ink-gray-6">{{ __('Cor') }}</div>
+              <input type="color" class="h-8 w-full cursor-pointer rounded border border-outline-gray-2" v-model="propTexto.fill" @input="aplicarCorTexto" />
+            </div>
+          </div>
+        </template>
+        <template v-else-if="objetoSelecionado.type === 'rect' && objetoSelecionado.papel !== 'glass'">
+          <div class="mb-3 flex items-center justify-between">
+            <div class="text-p-sm font-medium text-ink-gray-7">{{ __('Forma selecionada') }}</div>
+            <button type="button" class="flex items-center gap-1 rounded px-1 py-0.5 text-red-500 hover:bg-red-50" @click="removerSelecionado">
+              <LucideTrash2 class="size-3.5" />
+            </button>
+          </div>
+          <div>
+            <div class="mb-1 text-p-sm text-ink-gray-6">{{ __('Cor') }}</div>
+            <input type="color" class="h-8 w-full cursor-pointer rounded border border-outline-gray-2" v-model="propForma.fill" @input="aplicarCorForma" />
+          </div>
+        </template>
+        <template v-else-if="objetoSelecionado.type === 'image'">
+          <div class="mb-3 flex items-center justify-between">
+            <div class="text-p-sm font-medium text-ink-gray-7">{{ __('Imagem') }}</div>
+            <button type="button" class="flex items-center gap-1 rounded px-1 py-0.5 text-red-500 hover:bg-red-50" @click="removerSelecionado">
+              <LucideTrash2 class="size-3.5" />
+            </button>
+          </div>
+          <Button variant="outline" size="sm" class="w-full" :label="__('Trocar imagem')" @click="abrirUpload(objetoSelecionado)" />
+        </template>
+      </div>
+
+      <!-- Camadas -->
+      <div class="mt-4 border-t border-outline-gray-1 pt-3">
         <div class="mb-2 text-p-sm font-medium text-ink-gray-7">{{ __('Camadas') }}</div>
         <div class="flex flex-col gap-1">
           <button
@@ -115,6 +251,17 @@
         </div>
       </div>
     </div>
+
+    <!-- Canvas -->
+    <div class="flex flex-1 flex-col items-center gap-4 overflow-auto bg-gradient-to-b from-surface-gray-1 to-surface-gray-2 p-8">
+      <div class="rounded-lg shadow-lg ring-1 ring-black/5 transition-shadow duration-300 hover:shadow-xl">
+        <canvas ref="canvasEl" class="rounded-lg" />
+      </div>
+      <div class="flex items-center gap-2">
+        <Button variant="outline" size="sm" :label="__('Baixar PNG')" @click="baixarPng" />
+        <Button variant="solid" size="sm" :label="__('Salvar')" :loading="salvando" @click="salvar" />
+      </div>
+    </div>
   </div>
 </template>
 
@@ -123,9 +270,15 @@ import LucideType from '~icons/lucide/type'
 import LucideImage from '~icons/lucide/image'
 import LucideSquare from '~icons/lucide/square'
 import LucideTrash2 from '~icons/lucide/trash-2'
-import { Button, FormControl, call } from 'frappe-ui'
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { Canvas, Textbox, Rect, FabricImage, Circle } from 'fabric'
+import LucideChevronDown from '~icons/lucide/chevron-down'
+import { Button, FormControl, call, toast } from 'frappe-ui'
+import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
+import { Canvas, Textbox, Rect, FabricImage } from 'fabric'
+import {
+  TAMANHOS, POSICOES, FUNDO_PADROES, SOMBRA_ESTILOS, FONTES,
+  layoutPadraoDe, corDeFundo, construirSlide, construirBlocoTexto,
+  aplicarPadraoFundo, aplicarSombra, estiloTextoPara,
+} from '@/utils/instagramTemplates'
 
 const props = defineProps({
   conversa: { type: String, required: true },
@@ -138,42 +291,45 @@ const props = defineProps({
   corNeutra: { type: String, default: '#f4f2ed' },
   nomeMarca: { type: String, default: '' },
 })
+const emit = defineEmits(['salvo', 'aplicar-layout-proximo'])
 
-const TAMANHOS = {
-  Post: { w: 1080, h: 1080 },
-  Carrossel: { w: 1080, h: 1080 },
-  Story: { w: 1080, h: 1920 },
-}
-const ESCALA_TELA = 0.37
-
-const fontes = [
-  { label: 'Arial', value: 'Arial' },
-  { label: 'Georgia', value: 'Georgia' },
-  { label: 'Helvetica', value: 'Helvetica' },
-  { label: 'Times New Roman', value: 'Times New Roman' },
-  { label: 'Verdana', value: 'Verdana' },
-  { label: 'Courier New', value: 'Courier New' },
-]
+const PROPRIEDADES_EXTRA = ['papel']
 
 const canvasEl = ref(null)
 const fileInput = ref(null)
 const objetoSelecionado = ref(null)
 const camadas = ref([])
 const salvando = ref(false)
+const gerandoConteudo = ref(false)
+const refinando = ref(false)
+const instrucaoRefinar = ref('')
+const tituloEdit = ref(props.slide.titulo || '')
+const corpoEdit = ref(props.slide.corpo || '')
 const corFundoAtual = ref(props.corMarca)
+const secoes = reactive({ texto: true, layout: false, sombra: false, fundo: false, tipografia: false })
+
+const layoutAtual = reactive({ ...layoutPadraoDe(props.modelo), ...(props.slide.layout || {}) })
+
 const paletaFundo = computed(() => [
   { cor: '#ffffff', rotulo: __('Branco') },
   { cor: props.corMarca, rotulo: __('Cor principal') },
   { cor: props.corDestaque, rotulo: __('Cor de destaque') },
   { cor: props.corNeutra, rotulo: __('Cor neutra') },
 ])
-const propTexto = ref({ fontFamily: 'Arial', fontSize: 32, fill: '#ffffff' })
+const propTexto = ref({ fontFamily: 'Poppins', fontSize: 32, fill: '#ffffff' })
 const propForma = ref({ fill: '#ffffff' })
+const opcoesFontes = FONTES.map((f) => ({ label: f, value: f }))
 
 let canvas = null
 let alvoUpload = null
 
+function tamanhoAtivo() {
+  return TAMANHOS[props.tipo] || TAMANHOS.Carrossel
+}
+
 function rotuloObjeto(o) {
+  if (o.papel === 'titulo') return __('Título')
+  if (o.papel === 'corpo') return __('Subtítulo')
   if (o.type === 'textbox') return (o.text || __('Texto')).slice(0, 24)
   if (o.type === 'image') return __('Imagem')
   if (o.type === 'rect') return __('Forma')
@@ -182,17 +338,16 @@ function rotuloObjeto(o) {
 
 function atualizarCamadas() {
   if (!canvas) return
-  camadas.value = canvas.getObjects().map((o) => ({
-    rotulo: rotuloObjeto(o),
-    ativo: o === canvas.getActiveObject(),
-  }))
+  camadas.value = canvas.getObjects()
+    .filter((o) => !['padrao-fundo', 'sombra'].includes(o.papel))
+    .map((o) => ({ obj: o, rotulo: rotuloObjeto(o), ativo: o === canvas.getActiveObject() }))
 }
 
 function aoSelecionar() {
   const obj = canvas.getActiveObject()
   objetoSelecionado.value = obj || null
   if (obj?.type === 'textbox') {
-    propTexto.value = { fontFamily: obj.fontFamily || 'Arial', fontSize: obj.fontSize || 32, fill: obj.fill || '#ffffff' }
+    propTexto.value = { fontFamily: obj.fontFamily || 'Poppins', fontSize: obj.fontSize || 32, fill: obj.fill || '#ffffff' }
   } else if (obj?.type === 'rect') {
     propForma.value = { fill: obj.fill || '#ffffff' }
   }
@@ -204,183 +359,32 @@ function aoLimparSelecao() {
   atualizarCamadas()
 }
 
-// Modelo "capa": réplica do carrossel de referência - handle + tipo no
-// topo (margem estreita), selo com avatar+handle, título grande e subtítulo
-// (margem mais larga, alinhados entre si), rodapé com categoria/"Arraste".
-function montarPadrao() {
-  const { w, h } = TAMANHOS[props.tipo] || TAMANHOS.Carrossel
-  canvas.setDimensions({ width: w, height: h })
-  canvas.backgroundColor = props.corMarca
-  corFundoAtual.value = props.corMarca
-
-  const margemTopo = w * 0.06
-  const margemConteudo = w * 0.14
-  const handleTexto = '@' + (props.nomeMarca || __('suamarca')).toLowerCase().replace(/\s+/g, '')
-
-  const handleTopo = new Textbox(handleTexto, {
-    left: margemTopo, top: h * 0.02, width: w * 0.45,
-    fontSize: Math.round(h * 0.021), fontFamily: 'Poppins', fill: 'rgba(255,255,255,.7)',
-  })
-  const tagTopo = new Textbox(props.tipo || '', {
-    left: w - margemTopo - w * 0.32, top: h * 0.02, width: w * 0.32,
-    fontSize: Math.round(h * 0.021), fontFamily: 'Poppins', fill: 'rgba(255,255,255,.7)', textAlign: 'right',
-  })
-  canvas.add(handleTopo, tagTopo)
-
-  const pillTop = h * 0.5
-  const pillHeight = h * 0.048
-  const avatarD = pillHeight * 0.74
-  const pillPad = w * 0.012
-  const pillWidth = pillPad * 3 + avatarD + handleTexto.length * w * 0.016
-
-  const pill = new Rect({
-    left: margemConteudo, top: pillTop, width: pillWidth, height: pillHeight,
-    rx: pillHeight / 2, ry: pillHeight / 2, fill: 'rgba(255,255,255,.12)',
-  })
-  const avatarPill = new Circle({
-    left: margemConteudo + pillPad, top: pillTop + (pillHeight - avatarD) / 2, radius: avatarD / 2, fill: '#ffffff',
-  })
-  const handlePill = new Textbox(handleTexto, {
-    left: margemConteudo + pillPad * 2 + avatarD, top: pillTop + pillHeight * 0.24,
-    width: pillWidth, fontSize: Math.round(h * 0.021), fontFamily: 'Poppins', fill: '#ffffff',
-  })
-  canvas.add(pill, avatarPill, handlePill)
-
-  const larguraConteudo = w - margemConteudo - margemTopo
-  const titulo = new Textbox(props.slide.titulo || '', {
-    left: margemConteudo, top: pillTop + pillHeight + h * 0.02, width: larguraConteudo,
-    fontSize: Math.round(h * 0.065), fontWeight: 'bold', fontFamily: 'Poppins', fill: '#ffffff', lineHeight: 1.12,
-  })
-  canvas.add(titulo)
-
-  const corpo = new Textbox(props.slide.corpo || '', {
-    left: margemConteudo, top: h * 0.81, width: larguraConteudo,
-    fontSize: Math.round(h * 0.028), fontFamily: 'Poppins', fill: 'rgba(255,255,255,.55)',
-  })
-  canvas.add(corpo)
-
-  const rodapeEsq = new Textbox(props.tipo || '', {
-    left: margemTopo, top: h * 0.95, width: w * 0.4,
-    fontSize: Math.round(h * 0.02), fontFamily: 'Poppins', fill: 'rgba(255,255,255,.45)',
-  })
-  canvas.add(rodapeEsq)
-  if (props.tipo === 'Carrossel') {
-    const rodapeDir = new Textbox(__('Arraste'), {
-      left: w - margemTopo - w * 0.32, top: h * 0.95, width: w * 0.32,
-      fontSize: Math.round(h * 0.02), fontFamily: 'Poppins', fill: 'rgba(255,255,255,.45)', textAlign: 'right',
-    })
-    canvas.add(rodapeDir)
-  }
-  canvas.renderAll()
-}
-
-// Modelo "perfil": réplica do cartão de bio de referência - avatar (com
-// espaço pra foto) mais pra baixo/esquerda, nome + selo verificado + handle
-// ao lado, parágrafo de texto embaixo, ocupando quase toda a largura.
-function montarTwitter() {
-  const { w, h } = TAMANHOS[props.tipo] || TAMANHOS.Carrossel
-  canvas.setDimensions({ width: w, height: h })
-  canvas.backgroundColor = props.corMarca
-  corFundoAtual.value = props.corMarca
-
-  const nomeTexto = props.nomeMarca || __('Sua marca')
-  const avatarD = w * 0.08
-  const avatarLeft = w * 0.18
-  const avatarTop = h * 0.42
-
-  const avatar = new Circle({ left: avatarLeft, top: avatarTop, radius: avatarD / 2, fill: '#2f2f2f' })
-  const marca = new Textbox('?', {
-    left: avatarLeft, top: avatarTop + avatarD * 0.18, width: avatarD,
-    fontSize: Math.round(avatarD * 0.5), fontFamily: 'Poppins', fill: 'rgba(255,255,255,.35)',
-    textAlign: 'center', selectable: false,
-  })
-  canvas.add(avatar, marca)
-
-  const nomeLeft = avatarLeft + avatarD + w * 0.02
-  const nomeTop = avatarTop + h * 0.013
-  const nome = new Textbox(nomeTexto, {
-    left: nomeLeft, top: nomeTop,
-    width: w * 0.6, fontSize: Math.round(w * 0.036), fontWeight: 'bold', fontFamily: 'Poppins', fill: '#ffffff',
-  })
-  const selo = new Circle({
-    left: nomeLeft + nomeTexto.length * w * 0.021 + 10,
-    top: nomeTop + w * 0.005, radius: w * 0.014, fill: '#3897f0',
-  })
-  const check = new Textbox('✓', {
-    left: selo.left - w * 0.008, top: selo.top - w * 0.011,
-    fontSize: Math.round(w * 0.02), fontFamily: 'Poppins', fill: '#ffffff', selectable: false,
-  })
-  const handle = new Textbox('@' + nomeTexto.toLowerCase().replace(/\s+/g, ''), {
-    left: nomeLeft, top: nomeTop + Math.round(w * 0.036) + 4,
-    width: w * 0.6, fontSize: Math.round(w * 0.022), fontFamily: 'Poppins', fill: '#9fb0b5',
-  })
-  canvas.add(nome, selo, check, handle)
-
-  const corpo = new Textbox(props.slide.corpo || '', {
-    left: avatarLeft, top: avatarTop + avatarD + h * 0.015, width: w * 0.68,
-    fontSize: Math.round(w * 0.028), fontFamily: 'Poppins', fill: '#d0d0d0', lineHeight: 1.5,
-  })
-  canvas.add(corpo)
-  canvas.renderAll()
-}
-
-// Modelo "citação clara": fundo branco, título na cor de destaque, texto cinza,
-// espaço de imagem arredondado embaixo.
-function montarCitacao() {
-  const { w, h } = TAMANHOS[props.tipo] || TAMANHOS.Carrossel
-  canvas.setDimensions({ width: w, height: h })
-  canvas.backgroundColor = '#ffffff'
-  corFundoAtual.value = '#ffffff'
-
-  const titulo = new Textbox(props.slide.titulo || '', {
-    left: w * 0.09, top: h * 0.08, width: w * 0.82,
-    fontSize: Math.round(w * 0.062), fontWeight: 'bold', fontFamily: 'Poppins', fill: props.corDestaque,
-  })
-  const corpo = new Textbox(props.slide.corpo || '', {
-    left: w * 0.09, top: h * 0.08 + Math.round(w * 0.062) * 2.3 + 24, width: w * 0.82,
-    fontSize: Math.round(w * 0.034), fontFamily: 'Poppins', fill: '#666666',
-  })
-  canvas.add(titulo, corpo)
-
-  const espacoImagem = new Rect({
-    left: w * 0.09, top: h * 0.54, width: w * 0.82, height: h * 0.37, rx: 20, ry: 20,
-    fill: '#f2f2f2', stroke: '#d8d8d8', strokeWidth: 1, strokeDashArray: [6, 6],
-  })
-  canvas.add(espacoImagem)
-  canvas.renderAll()
-}
-
 async function montarCanvas() {
-  // espera a fonte Poppins carregar de verdade antes de desenhar os
-  // modelos - sem isso o canvas as vezes renderiza com a fonte padrao do
-  // navegador e nao atualiza sozinho quando a Poppins termina de carregar.
+  // espera as fontes carregarem de verdade antes de desenhar - sem isso o
+  // canvas as vezes renderiza com a fonte padrao do navegador
   await document.fonts.ready
-  const { w, h } = TAMANHOS[props.tipo] || TAMANHOS.Carrossel
+  const { w, h } = tamanhoAtivo()
   if (props.slide.canvas) {
     await canvas.loadFromJSON(props.slide.canvas)
     canvas.setDimensions({ width: props.slide.canvas.width || w, height: props.slide.canvas.height || h })
     corFundoAtual.value = canvas.backgroundColor || props.corMarca
     canvas.renderAll()
-  } else if (props.modelo === 'twitter') {
-    montarTwitter()
-  } else if (props.modelo === 'citacao') {
-    montarCitacao()
   } else {
-    montarPadrao()
+    construirSlide(canvas, {
+      tipo: props.tipo, modelo: props.modelo, slide: props.slide,
+      corMarca: props.corMarca, corDestaque: props.corDestaque, corNeutra: props.corNeutra, nomeMarca: props.nomeMarca,
+    })
+    corFundoAtual.value = corDeFundo(props.modelo, props.corMarca)
   }
   atualizarCamadas()
 }
 
 onMounted(() => {
-  canvas = new Canvas(canvasEl.value, {
-    width: TAMANHOS[props.tipo]?.w || 1080,
-    height: TAMANHOS[props.tipo]?.h || 1080,
-  })
-  canvas.setZoom(ESCALA_TELA)
-  canvas.setDimensions(
-    { width: (TAMANHOS[props.tipo]?.w || 1080) * ESCALA_TELA, height: (TAMANHOS[props.tipo]?.h || 1080) * ESCALA_TELA },
-    { cssOnly: true },
-  )
+  canvas = new Canvas(canvasEl.value, { width: tamanhoAtivo().w, height: tamanhoAtivo().h })
+  const escalaTela = 0.37
+  canvas.setZoom(escalaTela)
+  canvas.setDimensions({ width: tamanhoAtivo().w * escalaTela, height: tamanhoAtivo().h * escalaTela }, { cssOnly: true })
+  canvas._escalaTela = escalaTela
   canvas.on('selection:created', aoSelecionar)
   canvas.on('selection:updated', aoSelecionar)
   canvas.on('selection:cleared', aoLimparSelecao)
@@ -395,13 +399,113 @@ onBeforeUnmount(() => {
 watch(() => [props.conversa, props.indice], () => {
   if (!canvas) return
   objetoSelecionado.value = null
+  tituloEdit.value = props.slide.titulo || ''
+  corpoEdit.value = props.slide.corpo || ''
+  instrucaoRefinar.value = ''
+  Object.assign(layoutAtual, layoutPadraoDe(props.modelo), props.slide.layout || {})
   canvas.clear()
   montarCanvas()
 })
 
+// ------------------------------------------------------------------ texto & IA
+
+function aoEditarTexto() {
+  props.slide.titulo = tituloEdit.value
+  props.slide.corpo = corpoEdit.value
+  delete props.slide.canvas
+  reaplicarTexto()
+}
+
+async function gerarConteudoSlide() {
+  gerandoConteudo.value = true
+  try {
+    const r = await call('crm.api.conteudo.gerar_texto_slide', { conversa: props.conversa, indice: props.indice })
+    props.slide.titulo = r.titulo
+    props.slide.corpo = r.corpo
+    delete props.slide.canvas
+    tituloEdit.value = r.titulo
+    corpoEdit.value = r.corpo
+    reaplicarTexto()
+  } catch (e) {
+    toast.error(e.messages?.join(', ') || e.message || __('Não consegui gerar agora.'))
+  } finally {
+    gerandoConteudo.value = false
+  }
+}
+
+async function refinarSlide() {
+  if (!instrucaoRefinar.value.trim()) return
+  refinando.value = true
+  try {
+    const r = await call('crm.api.conteudo.gerar_texto_slide', {
+      conversa: props.conversa, indice: props.indice, instrucao: instrucaoRefinar.value,
+    })
+    props.slide.titulo = r.titulo
+    props.slide.corpo = r.corpo
+    delete props.slide.canvas
+    tituloEdit.value = r.titulo
+    corpoEdit.value = r.corpo
+    instrucaoRefinar.value = ''
+    reaplicarTexto()
+  } catch (e) {
+    toast.error(e.messages?.join(', ') || e.message || __('Não consegui refinar agora.'))
+  } finally {
+    refinando.value = false
+  }
+}
+
+// ------------------------------------------------------------------ layout (reaplica sem apagar elementos manuais)
+
+function removerPorPapel(...papeis) {
+  canvas.getObjects().filter((o) => papeis.includes(o.papel)).forEach((o) => canvas.remove(o))
+}
+
+function reaplicarTexto() {
+  if (!canvas) return
+  removerPorPapel('titulo', 'corpo', 'glass')
+  const { w, h } = tamanhoAtivo()
+  construirBlocoTexto(canvas, {
+    slide: props.slide, layout: layoutAtual, w, h,
+    ...estiloTextoPara(props.modelo, props.corDestaque, w, h),
+  })
+  canvas.renderAll()
+  atualizarCamadas()
+}
+
+function reaplicarFundoPadrao() {
+  if (!canvas) return
+  removerPorPapel('padrao-fundo')
+  const { w, h } = tamanhoAtivo()
+  aplicarPadraoFundo(canvas, { padrao: layoutAtual.fundoPadrao, w, h, clara: props.modelo === 'citacao' })
+  canvas.renderAll()
+}
+
+function reaplicarSombra() {
+  if (!canvas) return
+  removerPorPapel('sombra')
+  const { w, h } = tamanhoAtivo()
+  aplicarSombra(canvas, { estilo: layoutAtual.sombraEstilo, opacidade: layoutAtual.sombraOpacidade, w, h })
+  canvas.renderAll()
+}
+
+function atualizarLayout(mudancas) {
+  Object.assign(layoutAtual, mudancas)
+  props.slide.layout = { ...layoutAtual }
+  if ('fundoPadrao' in mudancas) reaplicarFundoPadrao()
+  if ('sombraEstilo' in mudancas || 'sombraOpacidade' in mudancas) reaplicarSombra()
+  reaplicarTexto()
+}
+
+function aplicarNoProximo() {
+  emit('aplicar-layout-proximo', { indice: props.indice, layout: { ...layoutAtual } })
+  toast.success(__('Layout aplicado no próximo slide'))
+}
+
+// ------------------------------------------------------------------ ferramentas gerais
+
 function adicionarTexto() {
-  const { w } = TAMANHOS[props.tipo] || TAMANHOS.Carrossel
-  const t = new Textbox(__('Novo texto'), { left: w * 0.1, top: w * 0.1, width: w * 0.6, fontSize: Math.round(w * 0.04), fill: '#ffffff', fontFamily: 'Arial' })
+  const { w } = tamanhoAtivo()
+  const t = new Textbox(__('Novo texto'), { left: w * 0.1, top: w * 0.1, width: w * 0.6, fontSize: Math.round(w * 0.04), fill: '#ffffff', fontFamily: 'Poppins' })
   canvas.add(t)
   canvas.setActiveObject(t)
   canvas.renderAll()
@@ -409,7 +513,7 @@ function adicionarTexto() {
 }
 
 function adicionarForma() {
-  const { w } = TAMANHOS[props.tipo] || TAMANHOS.Carrossel
+  const { w } = tamanhoAtivo()
   const r = new Rect({ left: w * 0.1, top: w * 0.1, width: w * 0.3, height: w * 0.2, fill: props.corDestaque })
   canvas.add(r)
   canvas.setActiveObject(r)
@@ -446,7 +550,7 @@ async function onFileSelecionado(ev) {
   const url = data?.message?.file_url
   if (!url) return
   const img = await FabricImage.fromURL(url, { crossOrigin: 'anonymous' })
-  const { w } = TAMANHOS[props.tipo] || TAMANHOS.Carrossel
+  const { w } = tamanhoAtivo()
   if (alvoUpload && alvoUpload.type === 'image') {
     img.set({ left: alvoUpload.left, top: alvoUpload.top, scaleX: alvoUpload.scaleX, scaleY: alvoUpload.scaleY })
     canvas.remove(alvoUpload)
@@ -488,7 +592,7 @@ function aplicarCorFundo() {
 }
 
 function selecionarCamada(i) {
-  const obj = canvas.getObjects()[i]
+  const obj = camadas.value[i]?.obj
   if (!obj) return
   canvas.setActiveObject(obj)
   canvas.renderAll()
@@ -496,14 +600,12 @@ function selecionarCamada(i) {
 }
 
 function baixarPng() {
-  const url = canvas.toDataURL({ format: 'png', multiplier: 1 / ESCALA_TELA })
+  const url = canvas.toDataURL({ format: 'png', multiplier: 1 / canvas._escalaTela })
   const a = document.createElement('a')
   a.href = url
   a.download = `slide-${props.indice + 1}.png`
   a.click()
 }
-
-const emit = defineEmits(['salvo'])
 
 async function salvar() {
   salvando.value = true
@@ -511,7 +613,10 @@ async function salvar() {
     await call('crm.api.conteudo.salvar_slide', {
       conversa: props.conversa,
       indice: props.indice,
-      canvas: JSON.stringify(canvas.toJSON()),
+      canvas: JSON.stringify(canvas.toObject(PROPRIEDADES_EXTRA)),
+      titulo: props.slide.titulo || '',
+      corpo: props.slide.corpo || '',
+      layout: JSON.stringify(layoutAtual),
     })
     emit('salvo')
   } finally {

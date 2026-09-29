@@ -151,6 +151,7 @@ def obter_conversa(conversa: str) -> dict:
 		"status": doc.status,
 		"mensagens": json.loads(doc.mensagens or "[]"),
 		"slides": json.loads(doc.slides or "[]"),
+		"legenda": doc.legenda or "",
 	}
 
 
@@ -164,16 +165,144 @@ def marcar_agendado(conversa: str, data_agendada: str) -> dict:
 
 
 @frappe.whitelist()
-def salvar_slide(conversa: str, indice, canvas: str) -> dict:
-	"""Guarda o estado do editor visual (Fabric.js) daquele slide especifico -
-	o resto do slide (titulo/corpo gerados pela IA) continua junto, so ganha
-	a chave "canvas" com o que a pessoa desenhou/ajustou."""
+def salvar_slide(conversa: str, indice, canvas: str = None, titulo: str = None, corpo: str = None, layout: str = None) -> dict:
+	"""Guarda o estado do editor visual (Fabric.js) daquele slide especifico. titulo/corpo/layout
+	sao opcionais - so vem quando a pessoa edita o texto ou o layout direto pelo painel (sem
+	isso, o slide.canvas salvo ficaria com o texto novo mas o dado por tras ficaria desatualizado,
+	e o proximo "gerar com IA" ou remontagem do slide usaria o texto antigo)."""
 	doc = frappe.get_doc("CRM Conteudo Conversa", conversa)
 	slides = json.loads(doc.slides or "[]")
 	indice = int(indice)
 	if indice < 0 or indice >= len(slides):
 		frappe.throw("Esse slide não existe mais nessa conversa.")
-	slides[indice]["canvas"] = json.loads(canvas)
+	if canvas is not None:
+		slides[indice]["canvas"] = json.loads(canvas)
+	if titulo is not None:
+		slides[indice]["titulo"] = titulo
+	if corpo is not None:
+		slides[indice]["corpo"] = corpo
+	if layout is not None:
+		slides[indice]["layout"] = json.loads(layout) if isinstance(layout, str) else layout
 	doc.slides = json.dumps(slides)
 	doc.save()
 	return {"ok": True}
+
+
+@frappe.whitelist()
+def gerar_texto_slide(conversa: str, indice, instrucao: str = "") -> dict:
+	"""Reescreve titulo+corpo de UM slide, olhando o resto do carrossel pra manter
+	consistencia. Sem instrucao: gera conteudo novo pro slide (mesmo tema dos outros).
+	Com instrucao: refina o que ja esta la ("deixe mais curto", "tom mais direto", etc)."""
+	doc = frappe.get_doc("CRM Conteudo Conversa", conversa)
+	doc.check_permission("write")
+
+	from crm.api.ficha import _api_key as _claude_api_key
+
+	api_key = _claude_api_key()
+	if not api_key:
+		frappe.throw("Configure a chave da API do Claude em Configurações → Automações antes de usar o gerador de conteúdo.")
+
+	slides = json.loads(doc.slides or "[]")
+	indice = int(indice)
+	if indice < 0 or indice >= len(slides):
+		frappe.throw("Esse slide não existe mais nessa conversa.")
+
+	contexto = "\n".join(
+		f"Slide {i + 1}{' (este é o que você vai reescrever)' if i == indice else ''}: "
+		f"título=\"{s.get('titulo', '')}\" corpo=\"{s.get('corpo', '')}\""
+		for i, s in enumerate(slides)
+	)
+	instrucao = (instrucao or "").strip()
+	pedido = (
+		f"Reescreva o slide {indice + 1} seguindo esta instrução: {instrucao}"
+		if instrucao
+		else f"Gere um título e um corpo novos para o slide {indice + 1}, no mesmo tema e tom dos outros slides."
+	)
+	system = (
+		"Você ajuda a criar o conteúdo de UM slide de um carrossel de Instagram, mantendo "
+		"consistência com os outros slides do mesmo carrossel.\n\n"
+		f"Carrossel até agora:\n{contexto}\n\n"
+		"Responda SEMPRE em JSON válido, sem nenhum texto fora do JSON, exatamente neste formato: "
+		'{"titulo": "...", "corpo": "..."}'
+	)
+	try:
+		texto = _call_claude(api_key, system, [{"role": "user", "content": pedido}])
+	except urllib.error.HTTPError as e:
+		frappe.log_error("Gerador de conteúdo: a API do Claude recusou o pedido", f"{e.code} {e.read()}")
+		frappe.throw("A API do Claude recusou o pedido. Confira a chave configurada.")
+	except Exception:
+		frappe.log_error("Gerador de conteúdo: falha ao chamar a API do Claude", frappe.get_traceback())
+		frappe.throw("Não consegui falar com a IA agora. Tente de novo em instantes.")
+
+	novo = _parse_slide_unico(texto)
+	if not novo:
+		frappe.throw("A IA não devolveu um formato que eu entendesse. Tente de novo.")
+
+	slides[indice]["titulo"] = novo.get("titulo", slides[indice].get("titulo", ""))
+	slides[indice]["corpo"] = novo.get("corpo", slides[indice].get("corpo", ""))
+	slides[indice].pop("canvas", None)  # o canvas salvo tinha o texto antigo - remonta do zero
+	doc.slides = json.dumps(slides)
+	doc.save()
+	return {"titulo": slides[indice]["titulo"], "corpo": slides[indice]["corpo"]}
+
+
+def _parse_slide_unico(texto: str) -> dict:
+	texto = (texto or "").strip()
+	if texto.startswith("```"):
+		texto = texto.strip("`")
+		primeira_linha, _, resto = texto.partition("\n")
+		texto = resto if primeira_linha.strip().lower() in ("json", "") else texto
+	try:
+		dados = json.loads(texto)
+		if isinstance(dados, dict) and ("titulo" in dados or "corpo" in dados):
+			return dados
+	except Exception:
+		pass
+	return {}
+
+
+@frappe.whitelist()
+def salvar_legenda(conversa: str, legenda: str = "") -> dict:
+	"""Salva a legenda escrita/editada a mao - sem chamar a IA."""
+	doc = frappe.get_doc("CRM Conteudo Conversa", conversa)
+	doc.check_permission("write")
+	doc.legenda = legenda or ""
+	doc.save()
+	return {"ok": True}
+
+
+@frappe.whitelist()
+def gerar_legenda(conversa: str) -> dict:
+	"""Gera a legenda do post/carrossel a partir do conteudo de todos os slides."""
+	doc = frappe.get_doc("CRM Conteudo Conversa", conversa)
+	doc.check_permission("write")
+
+	from crm.api.ficha import _api_key as _claude_api_key
+
+	api_key = _claude_api_key()
+	if not api_key:
+		frappe.throw("Configure a chave da API do Claude em Configurações → Automações antes de usar o gerador de conteúdo.")
+
+	slides = json.loads(doc.slides or "[]")
+	if not slides:
+		frappe.throw("Gere os slides antes de pedir a legenda.")
+
+	conteudo = "\n".join(f"Slide {i + 1}: {s.get('titulo', '')} — {s.get('corpo', '')}" for i, s in enumerate(slides))
+	system = (
+		"Você escreve a legenda de um post de Instagram a partir do conteúdo dos slides do carrossel. "
+		"Direto, sem hashtag em excesso (no máximo 3, só se fizer sentido), sem emoji forçado, "
+		"terminando com uma chamada pra ação simples (comentar, salvar ou compartilhar). "
+		"Responda só com o texto da legenda, nada mais."
+	)
+	try:
+		legenda = _call_claude(api_key, system, [{"role": "user", "content": conteudo}]).strip()
+	except urllib.error.HTTPError as e:
+		frappe.log_error("Gerador de conteúdo: a API do Claude recusou o pedido", f"{e.code} {e.read()}")
+		frappe.throw("A API do Claude recusou o pedido. Confira a chave configurada.")
+	except Exception:
+		frappe.log_error("Gerador de conteúdo: falha ao chamar a API do Claude", frappe.get_traceback())
+		frappe.throw("Não consegui falar com a IA agora. Tente de novo em instantes.")
+
+	doc.legenda = legenda
+	doc.save()
+	return {"legenda": legenda}

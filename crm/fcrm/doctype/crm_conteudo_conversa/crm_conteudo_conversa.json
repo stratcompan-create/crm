@@ -15,7 +15,8 @@
   "data_agendada",
   "section_break_1",
   "mensagens",
-  "slides"
+  "slides",
+  "legenda"
  ],
  "fields": [
   {
@@ -66,6 +67,11 @@
    "fieldname": "slides",
    "fieldtype": "Long Text",
    "label": "Slides (JSON)"
+  },
+  {
+   "fieldname": "legenda",
+   "fieldtype": "Long Text",
+   "label": "Legenda"
   }
  ],
  "grid_page_length": 50,

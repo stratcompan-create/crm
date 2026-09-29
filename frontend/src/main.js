@@ -8,6 +8,28 @@ import '@fontsource/poppins/600.css'
 import '@fontsource/poppins/700.css'
 import '@fontsource/poppins/800.css'
 
+// Fontes disponiveis pro texto dos modelos do Instagram (escolha por bloco,
+// no painel de Tipografia) - mesma logica do self-hosted acima.
+import '@fontsource/inter/400.css'
+import '@fontsource/inter/700.css'
+import '@fontsource/space-grotesk/400.css'
+import '@fontsource/space-grotesk/700.css'
+import '@fontsource/syne/400.css'
+import '@fontsource/syne/700.css'
+import '@fontsource/outfit/400.css'
+import '@fontsource/outfit/700.css'
+import '@fontsource/dm-sans/400.css'
+import '@fontsource/dm-sans/700.css'
+import '@fontsource/raleway/400.css'
+import '@fontsource/raleway/700.css'
+import '@fontsource/bebas-neue/400.css'
+import '@fontsource/playfair-display/400.css'
+import '@fontsource/playfair-display/700.css'
+import '@fontsource/caveat/400.css'
+import '@fontsource/caveat/700.css'
+import '@fontsource/montserrat/400.css'
+import '@fontsource/montserrat/700.css'
+
 // dayjs's locale is a single global registry shared by every import of the
 // package (frappe-ui's Calendar, DatePicker, and relative-time labels all
 // use the same dayjs instance) - setting it once here switches day names,

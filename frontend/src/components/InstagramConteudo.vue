@@ -139,12 +139,16 @@
                 {{ i + 1 }}
               </button>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              :label="statusConversa === 'Agendado' ? __('Reagendar') : __('Agendar')"
-              @click="mostrarAgendar = true"
-            />
+            <div class="flex items-center gap-2">
+              <Button variant="ghost" size="sm" :label="__('Baixar Todos')" :loading="baixandoTodos" @click="baixarTodos" />
+              <Button variant="outline" size="sm" :label="__('Legenda')" @click="mostrarLegenda = true" />
+              <Button
+                variant="outline"
+                size="sm"
+                :label="statusConversa === 'Agendado' ? __('Reagendar') : __('Agendar')"
+                @click="mostrarAgendar = true"
+              />
+            </div>
           </div>
           <InstagramEditor
             :key="conversa + '-' + slideAtivo"
@@ -157,6 +161,7 @@
             :cor-destaque="settings.doc?.brand_accent || '#8aa1a9'"
             :cor-neutra="settings.doc?.brand_neutral || '#f4f2ed'"
             :nome-marca="brandName"
+            @aplicar-layout-proximo="aplicarLayoutProximo"
           />
         </template>
       </div>
@@ -170,6 +175,18 @@
         <Button variant="solid" :label="__('Salvar')" :loading="agendando" @click="agendar" />
       </template>
     </Dialog>
+
+    <Dialog v-model="mostrarLegenda" :options="{ title: __('Legenda do post'), size: 'lg' }">
+      <template #body-content>
+        <div class="flex flex-col gap-3">
+          <FormControl type="textarea" :rows="8" v-model="legenda" :placeholder="__('Ainda sem legenda — gere com IA ou escreva a sua.')" />
+          <Button variant="outline" :label="__('Gerar legenda com IA')" :loading="gerandoLegenda" @click="gerarLegenda" />
+        </div>
+      </template>
+      <template #actions>
+        <Button variant="solid" :label="__('Salvar legenda')" :loading="salvandoLegenda" @click="salvarLegenda" />
+      </template>
+    </Dialog>
   </div>
 </template>
 
@@ -179,8 +196,9 @@ import InstagramEditor from '@/components/InstagramEditor.vue'
 import InstagramModeloPreview from '@/components/InstagramModeloPreview.vue'
 import InstagramModeloPreviewGrande from '@/components/InstagramModeloPreviewGrande.vue'
 import { getSettings } from '@/stores/settings'
-import { Button, Dialog, ErrorMessage, FormControl, call, createResource } from 'frappe-ui'
+import { Button, Dialog, ErrorMessage, FormControl, call, createResource, toast } from 'frappe-ui'
 import { computed, nextTick, ref, watch } from 'vue'
+import { baixarTodosSlides } from '@/utils/instagramExport'
 
 const { _settings: settings } = getSettings()
 const brandName = computed(() => settings.doc?.brand_name || 'Sua marca')
@@ -208,6 +226,7 @@ const conversa = ref(null)
 const statusConversa = ref('Rascunho')
 const mensagens = ref([])
 const slides = ref([])
+const legenda = ref('')
 const mensagem = ref('')
 const enviando = ref(false)
 const erro = ref('')
@@ -226,6 +245,7 @@ function novaConversa() {
   statusConversa.value = 'Rascunho'
   mensagens.value = []
   slides.value = []
+  legenda.value = ''
   slideAtivo.value = 0
   mensagem.value = ''
   erro.value = ''
@@ -240,6 +260,7 @@ async function abrirConversa(name) {
   statusConversa.value = r.status
   mensagens.value = r.mensagens
   slides.value = r.slides
+  legenda.value = r.legenda || ''
   slideAtivo.value = 0
   scrollToEnd()
 }
@@ -306,6 +327,72 @@ async function agendar() {
     mostrarAgendar.value = false
   } finally {
     agendando.value = false
+  }
+}
+
+const mostrarLegenda = ref(false)
+const gerandoLegenda = ref(false)
+const salvandoLegenda = ref(false)
+
+async function gerarLegenda() {
+  if (!conversa.value) return
+  gerandoLegenda.value = true
+  try {
+    const r = await call('crm.api.conteudo.gerar_legenda', { conversa: conversa.value })
+    legenda.value = r.legenda
+  } catch (e) {
+    toast.error(e.messages?.join(', ') || e.message || __('Não consegui gerar a legenda agora.'))
+  } finally {
+    gerandoLegenda.value = false
+  }
+}
+
+async function salvarLegenda() {
+  if (!conversa.value) return
+  salvandoLegenda.value = true
+  try {
+    await call('crm.api.conteudo.salvar_legenda', { conversa: conversa.value, legenda: legenda.value })
+    mostrarLegenda.value = false
+    toast.success(__('Legenda salva'))
+  } catch (e) {
+    toast.error(e.messages?.join(', ') || e.message || __('Não consegui salvar a legenda.'))
+  } finally {
+    salvandoLegenda.value = false
+  }
+}
+
+async function aplicarLayoutProximo({ indice, layout }) {
+  const proximo = indice + 1
+  if (proximo >= slides.value.length || !conversa.value) return
+  slides.value[proximo].layout = { ...layout }
+  delete slides.value[proximo].canvas
+  await call('crm.api.conteudo.salvar_slide', {
+    conversa: conversa.value,
+    indice: proximo,
+    layout: JSON.stringify(layout),
+  })
+}
+
+const baixandoTodos = ref(false)
+
+async function baixarTodos() {
+  if (!slides.value.length) return
+  baixandoTodos.value = true
+  try {
+    await baixarTodosSlides(
+      slides.value,
+      {
+        tipo: tipo.value,
+        modelo: modelo.value,
+        corMarca: corFundo.value,
+        corDestaque: corDestaqueUI.value,
+        corNeutra: settings.doc?.brand_neutral || '#f4f2ed',
+        nomeMarca: brandName.value,
+      },
+      settings.doc?.brand_name || 'carrossel',
+    )
+  } finally {
+    baixandoTodos.value = false
   }
 }
 </script>
