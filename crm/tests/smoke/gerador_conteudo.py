@@ -175,6 +175,37 @@ def run():
 				[s["titulo"] for s in r_todos["slides"]] == ["A", "B", "C"],
 			)
 
+			# criar_rascunho: abre o editor com um slide de exemplo, sem precisar de mensagem
+			r_rasc = gc.criar_rascunho("Carrossel")
+			ck("criar_rascunho devolve 1 slide de exemplo", len(r_rasc["slides"]) == 1)
+			ck(
+				"criar_rascunho usa o placeholder padrao",
+				r_rasc["slides"][0]["titulo"] == gc.PLACEHOLDER_TITULO
+				and r_rasc["slides"][0]["corpo"] == gc.PLACEHOLDER_CORPO,
+			)
+			ck("criar_rascunho usa o tipo pedido", r_rasc["tipo"] == "Carrossel")
+
+			# trocar de rascunho sem nunca ter mandado mensagem apaga o anterior (nao acumula lixo)
+			r_rasc2 = gc.criar_rascunho("Post", anterior=r_rasc["conversa"])
+			ck(
+				"criar_rascunho apaga o rascunho anterior intocado",
+				not frappe.db.exists("CRM Conteudo Conversa", r_rasc["conversa"]),
+			)
+
+			# rascunho com mensagem de verdade (ja usado) nao e apagado ao trocar
+			frappe.db.set_value(
+				"CRM Conteudo Conversa", r_rasc2["conversa"], "mensagens",
+				json.dumps([{"role": "user", "content": "oi"}]),
+			)
+			r_rasc3 = gc.criar_rascunho("Story", anterior=r_rasc2["conversa"])
+			ck(
+				"criar_rascunho preserva rascunho anterior que ja tem mensagem",
+				frappe.db.exists("CRM Conteudo Conversa", r_rasc2["conversa"]),
+			)
+
+			frappe.delete_doc("CRM Conteudo Conversa", r_rasc2["conversa"], force=True, ignore_permissions=True)
+			frappe.delete_doc("CRM Conteudo Conversa", r_rasc3["conversa"], force=True, ignore_permissions=True)
+
 			frappe.delete_doc("CRM Conteudo Conversa", conversa_criada, force=True, ignore_permissions=True)
 	finally:
 		ficha.save_ai_key(chave_original or "")

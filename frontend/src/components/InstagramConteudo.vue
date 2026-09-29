@@ -10,7 +10,7 @@
             class="rounded-full border px-3 py-1 text-p-sm transition-all duration-150"
             :class="tipo === t.value ? 'border-transparent font-medium text-white shadow-sm' : 'border-outline-gray-2 text-ink-gray-7 hover:border-ink-gray-4'"
             :style="tipo === t.value ? { background: corDestaqueUI } : {}"
-            @click="tipo = t.value"
+            @click="selecionarTipo(t.value)"
           >
             {{ t.label }}
           </button>
@@ -114,16 +114,8 @@
 
       <!-- Editor -->
       <div class="hidden min-w-0 flex-1 flex-col md:flex">
-        <div v-if="!slides.length" class="flex flex-1 flex-col items-center justify-center gap-4 overflow-y-auto p-6 text-center">
-          <InstagramModeloPreviewGrande
-            :modelo="modelo"
-            :cor-marca="corFundo"
-            :cor-destaque="corDestaqueUI"
-            :nome-marca="brandName"
-          />
-          <div class="max-w-sm text-p-sm text-ink-gray-5">
-            {{ __('Prévia do modelo "{0}" — o texto acima é só exemplo. Descreva no chat o que você quer: o conteúdo real substitui essa prévia.', [modeloLabelAtual]) }}
-          </div>
+        <div v-if="!slides.length" class="flex flex-1 items-center justify-center text-p-sm text-ink-gray-5">
+          {{ __('Carregando...') }}
         </div>
         <template v-else>
           <div class="flex items-center justify-between border-b border-outline-gray-1 px-4 py-2">
@@ -159,7 +151,7 @@
             </div>
           </div>
           <InstagramEditor
-            :key="conversa + '-' + slideAtivo"
+            :key="conversa + '-' + slideAtivo + '-' + modelo + '-' + tipo"
             :conversa="conversa"
             :indice="slideAtivo"
             :slide="slides[slideAtivo]"
@@ -205,10 +197,9 @@ import LucideCopy from '~icons/lucide/copy'
 import SparkleIcon from '@/components/Icons/SparkleIcon.vue'
 import InstagramEditor from '@/components/InstagramEditor.vue'
 import InstagramModeloPreview from '@/components/InstagramModeloPreview.vue'
-import InstagramModeloPreviewGrande from '@/components/InstagramModeloPreviewGrande.vue'
 import { getSettings } from '@/stores/settings'
 import { Button, Dialog, ErrorMessage, FormControl, call, createResource, toast } from 'frappe-ui'
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref } from 'vue'
 import { baixarTodosSlides } from '@/utils/instagramExport'
 
 const { _settings: settings } = getSettings()
@@ -231,7 +222,6 @@ const modelos = [
   { value: 'citacao', label: __('Citação') },
 ]
 const modelo = ref('padrao')
-const modeloLabelAtual = computed(() => modelos.find((m) => m.value === modelo.value)?.label || '')
 
 const conversa = ref(null)
 const statusConversa = ref('Rascunho')
@@ -251,17 +241,63 @@ function toggleHistorico() {
   if (mostrarHistorico.value) historico.fetch()
 }
 
-function novaConversa() {
-  conversa.value = null
+const CHAVE_RASCUNHO = 'mazyos_conteudo_conversa_atual'
+
+function lembrarConversaAtual(nome) {
+  try {
+    if (nome) sessionStorage.setItem(CHAVE_RASCUNHO, nome)
+    else sessionStorage.removeItem(CHAVE_RASCUNHO)
+  } catch {
+    // navegação privada ou storage bloqueado - segue sem lembrar
+  }
+}
+
+async function iniciarRascunho(novoTipo) {
+  const anterior = mensagens.value.length ? null : conversa.value
+  const r = await call('crm.api.conteudo.criar_rascunho', { tipo: novoTipo || tipo.value, anterior })
+  conversa.value = r.conversa
+  tipo.value = r.tipo
   statusConversa.value = 'Rascunho'
   mensagens.value = []
-  slides.value = []
+  slides.value = r.slides
   legenda.value = ''
   slideAtivo.value = 0
+  lembrarConversaAtual(r.conversa)
+}
+
+function selecionarTipo(novoTipo) {
+  if (novoTipo === tipo.value) return
+  if (mensagens.value.length) {
+    tipo.value = novoTipo
+    return
+  }
+  iniciarRascunho(novoTipo)
+}
+
+function novaConversa() {
   mensagem.value = ''
   erro.value = ''
   mostrarHistorico.value = false
+  iniciarRascunho(tipo.value)
 }
+
+onMounted(async () => {
+  let lembrada = null
+  try {
+    lembrada = sessionStorage.getItem(CHAVE_RASCUNHO)
+  } catch {
+    lembrada = null
+  }
+  if (lembrada) {
+    try {
+      await abrirConversa(lembrada)
+      return
+    } catch {
+      // conversa antiga não existe mais - segue pro rascunho novo
+    }
+  }
+  iniciarRascunho(tipo.value)
+})
 
 async function abrirConversa(name) {
   mostrarHistorico.value = false
@@ -273,6 +309,7 @@ async function abrirConversa(name) {
   slides.value = r.slides
   legenda.value = r.legenda || ''
   slideAtivo.value = 0
+  lembrarConversaAtual(r.name)
   scrollToEnd()
 }
 

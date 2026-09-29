@@ -14,6 +14,9 @@ MODEL = "claude-sonnet-5"
 MAX_TOKENS = 2000
 API_URL = "https://api.anthropic.com/v1/messages"
 
+PLACEHOLDER_TITULO = "Título chamativo aqui"
+PLACEHOLDER_CORPO = "Subtítulo curto de apoio"
+
 SISTEMA_TEMPLATE = """Você ajuda a criar conteúdo para o Instagram (posts, carrosséis e stories) de uma empresa.
 
 Marca:
@@ -77,6 +80,29 @@ def _parse_resposta(texto: str) -> dict:
 	except Exception:
 		pass
 	return {"resposta": texto, "slides": []}
+
+
+@frappe.whitelist()
+def criar_rascunho(tipo: str = "Carrossel", anterior: str = None) -> dict:
+	"""Cria uma conversa só com um slide de exemplo, pra o editor (painel de edição +
+	canvas) abrir direto na tela, sem a pessoa precisar mandar mensagem pro chat primeiro.
+	Se "anterior" for passado e ainda não tiver nenhuma mensagem, apaga (era só rascunho,
+	ninguém usou) pra não acumular lixo toda vez que a pessoa troca de aba Post/Carrossel/Story."""
+	if anterior:
+		try:
+			doc_antigo = frappe.get_doc("CRM Conteudo Conversa", anterior)
+			if doc_antigo.owner == frappe.session.user and not json.loads(doc_antigo.mensagens or "[]"):
+				frappe.delete_doc("CRM Conteudo Conversa", anterior, force=True, ignore_permissions=True)
+		except frappe.DoesNotExistError:
+			pass
+
+	doc = frappe.new_doc("CRM Conteudo Conversa")
+	doc.tipo = tipo if tipo in ("Post", "Carrossel", "Story") else "Carrossel"
+	doc.titulo = "Rascunho"
+	doc.mensagens = "[]"
+	doc.slides = json.dumps([{"titulo": PLACEHOLDER_TITULO, "corpo": PLACEHOLDER_CORPO}])
+	doc.insert()
+	return {"conversa": doc.name, "tipo": doc.tipo, "slides": json.loads(doc.slides)}
 
 
 @frappe.whitelist()
