@@ -262,6 +262,39 @@ def _parse_slide_unico(texto: str) -> dict:
 
 
 @frappe.whitelist()
+def duplicar_slide(conversa: str, indice) -> dict:
+	"""Clona o slide (titulo, corpo, layout e canvas) e insere logo depois do original."""
+	doc = frappe.get_doc("CRM Conteudo Conversa", conversa)
+	doc.check_permission("write")
+	slides = json.loads(doc.slides or "[]")
+	indice = int(indice)
+	if indice < 0 or indice >= len(slides):
+		frappe.throw("Esse slide não existe mais nessa conversa.")
+	copia = json.loads(json.dumps(slides[indice]))
+	slides.insert(indice + 1, copia)
+	doc.slides = json.dumps(slides)
+	doc.save()
+	return {"slides": slides, "novo_indice": indice + 1}
+
+
+@frappe.whitelist()
+def aplicar_layout_todos(conversa: str, layout: str) -> dict:
+	"""Aplica o mesmo layout (posicao, margem, fonte, sombra, fundo, etc.) em todos os
+	slides da conversa. Apaga o canvas salvo de cada um pra eles remontarem do zero com
+	o layout novo, igual acontece quando o layout muda so de um slide."""
+	doc = frappe.get_doc("CRM Conteudo Conversa", conversa)
+	doc.check_permission("write")
+	layout_dict = json.loads(layout) if isinstance(layout, str) else layout
+	slides = json.loads(doc.slides or "[]")
+	for slide in slides:
+		slide["layout"] = dict(layout_dict)
+		slide.pop("canvas", None)
+	doc.slides = json.dumps(slides)
+	doc.save()
+	return {"slides": slides}
+
+
+@frappe.whitelist()
 def salvar_legenda(conversa: str, legenda: str = "") -> dict:
 	"""Salva a legenda escrita/editada a mao - sem chamar a IA."""
 	doc = frappe.get_doc("CRM Conteudo Conversa", conversa)

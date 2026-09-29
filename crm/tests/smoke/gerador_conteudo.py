@@ -133,6 +133,48 @@ def run():
 			trazida = gc.obter_conversa(conversa_criada)
 			ck("obter_conversa devolve a legenda", trazida["legenda"] == "Legenda escrita na mão")
 
+			# duplicar_slide: clona o slide e insere logo depois
+			antes = json.loads(frappe.db.get_value("CRM Conteudo Conversa", conversa_criada, "slides"))
+			r_dup = gc.duplicar_slide(conversa_criada, 0)
+			ck("duplicar_slide devolve o novo indice certo", r_dup["novo_indice"] == 1)
+			ck(
+				"duplicar_slide insere uma copia logo depois do original",
+				len(r_dup["slides"]) == len(antes) + 1
+				and r_dup["slides"][1]["titulo"] == antes[0]["titulo"]
+				and r_dup["slides"][1]["corpo"] == antes[0]["corpo"],
+			)
+			ck("duplicar_slide não mexe no slide original", r_dup["slides"][0] == antes[0])
+
+			erro_dup = None
+			try:
+				gc.duplicar_slide(conversa_criada, 99)
+			except frappe.ValidationError as e:
+				erro_dup = str(e)
+			ck("duplicar_slide recusa indice que nao existe", bool(erro_dup))
+
+			# aplicar_layout_todos: mesmo layout em todos, apagando o canvas de cada um
+			frappe.db.set_value(
+				"CRM Conteudo Conversa", conversa_criada, "slides",
+				json.dumps([
+					{"titulo": "A", "corpo": "1", "canvas": {"foo": "bar"}},
+					{"titulo": "B", "corpo": "2", "canvas": {"foo": "bar"}},
+					{"titulo": "C", "corpo": "3"},
+				]),
+			)
+			r_todos = gc.aplicar_layout_todos(conversa_criada, json.dumps({"posicao": "sup-dir", "escala": 120}))
+			ck(
+				"aplicar_layout_todos aplica o mesmo layout em todo mundo",
+				all(s["layout"] == {"posicao": "sup-dir", "escala": 120} for s in r_todos["slides"]),
+			)
+			ck(
+				"aplicar_layout_todos apaga o canvas salvo de cada slide",
+				all("canvas" not in s for s in r_todos["slides"]),
+			)
+			ck(
+				"aplicar_layout_todos não mexe no texto de cada slide",
+				[s["titulo"] for s in r_todos["slides"]] == ["A", "B", "C"],
+			)
+
 			frappe.delete_doc("CRM Conteudo Conversa", conversa_criada, force=True, ignore_permissions=True)
 	finally:
 		ficha.save_ai_key(chave_original or "")

@@ -138,6 +138,14 @@
               >
                 {{ i + 1 }}
               </button>
+              <button
+                type="button"
+                class="flex size-7 items-center justify-center rounded-full border border-outline-gray-2 text-ink-gray-6 hover:bg-surface-gray-2"
+                :title="__('Duplicar slide')"
+                @click="duplicarSlide"
+              >
+                <LucideCopy class="size-3.5" />
+              </button>
             </div>
             <div class="flex items-center gap-2">
               <Button variant="ghost" size="sm" :label="__('Baixar Todos')" :loading="baixandoTodos" @click="baixarTodos" />
@@ -161,7 +169,9 @@
             :cor-destaque="settings.doc?.brand_accent || '#8aa1a9'"
             :cor-neutra="settings.doc?.brand_neutral || '#f4f2ed'"
             :nome-marca="brandName"
+            :logo-url="settings.doc?.brand_logo || ''"
             @aplicar-layout-proximo="aplicarLayoutProximo"
+            @aplicar-layout-todos="aplicarLayoutTodos"
           />
         </template>
       </div>
@@ -191,6 +201,7 @@
 </template>
 
 <script setup>
+import LucideCopy from '~icons/lucide/copy'
 import SparkleIcon from '@/components/Icons/SparkleIcon.vue'
 import InstagramEditor from '@/components/InstagramEditor.vue'
 import InstagramModeloPreview from '@/components/InstagramModeloPreview.vue'
@@ -371,6 +382,36 @@ async function aplicarLayoutProximo({ indice, layout }) {
     indice: proximo,
     layout: JSON.stringify(layout),
   })
+}
+
+async function aplicarLayoutTodos({ layout }) {
+  if (!conversa.value) return
+  try {
+    const r = await call('crm.api.conteudo.aplicar_layout_todos', {
+      conversa: conversa.value,
+      layout: JSON.stringify(layout),
+    })
+    slides.value = r.slides
+  } catch (e) {
+    toast.error(e.messages?.join(', ') || e.message || __('Não consegui aplicar em todos os slides.'))
+  }
+}
+
+const duplicando = ref(false)
+
+async function duplicarSlide() {
+  if (!conversa.value || duplicando.value) return
+  duplicando.value = true
+  try {
+    const r = await call('crm.api.conteudo.duplicar_slide', { conversa: conversa.value, indice: slideAtivo.value })
+    slides.value = r.slides
+    slideAtivo.value = r.novo_indice
+    toast.success(__('Slide duplicado'))
+  } catch (e) {
+    toast.error(e.messages?.join(', ') || e.message || __('Não consegui duplicar o slide.'))
+  } finally {
+    duplicando.value = false
+  }
 }
 
 const baixandoTodos = ref(false)

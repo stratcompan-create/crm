@@ -6,7 +6,7 @@
 // um "layout" configurável (posição, margem, fonte, escala, sombra, fundo) -
 // os elementos de marca de cada modelo (selo com avatar na capa, avatar+nome
 // no perfil) continuam fixos, só o texto principal e o fundo são flexíveis.
-import { Textbox, Rect, Circle, Gradient } from 'fabric'
+import { Textbox, Rect, Circle, Gradient, Shadow, FabricImage } from 'fabric'
 
 export const TAMANHOS = {
   Post: { w: 1080, h: 1080 },
@@ -24,6 +24,13 @@ export const POSICOES = [
   { valor: 'inf-esq', rotulo: 'Inf. esq.', vAlign: 'bottom', hAlign: 'left' },
   { valor: 'inf-cen', rotulo: 'Inf. cen.', vAlign: 'bottom', hAlign: 'center' },
   { valor: 'inf-dir', rotulo: 'Inf. dir.', vAlign: 'bottom', hAlign: 'right' },
+]
+
+export const POSICOES_LOGO = [
+  { valor: 'sup-esq', rotulo: 'Sup. esq.' },
+  { valor: 'sup-dir', rotulo: 'Sup. dir.' },
+  { valor: 'inf-esq', rotulo: 'Inf. esq.' },
+  { valor: 'inf-dir', rotulo: 'Inf. dir.' },
 ]
 
 export const FUNDO_PADROES = [
@@ -56,6 +63,12 @@ export function layoutPadraoDe(modelo) {
     sombraEstilo: 'nenhuma',
     sombraOpacidade: 60,
     fundoPadrao: 'nenhum',
+    fundoGradiente: false,
+    fundoCor2: '',
+    textoContorno: false,
+    textoSombra: false,
+    logoAtivo: false,
+    logoPosicao: 'inf-dir',
     fonteTitulo: 'Poppins',
     fonteCorpo: 'Poppins',
     escala: 100,
@@ -71,6 +84,18 @@ export function corDeFundo(modelo, corMarca) {
 }
 
 // ------------------------------------------------------------------ fundo
+
+export function corFundoFinal(canvas, { layout, corBase, corDestaque, w, h }) {
+  if (!layout.fundoGradiente) return corBase
+  return new Gradient({
+    type: 'linear',
+    coords: { x1: 0, y1: 0, x2: 0, y2: h },
+    colorStops: [
+      { offset: 0, color: corBase },
+      { offset: 1, color: layout.fundoCor2 || corDestaque },
+    ],
+  })
+}
 
 export function aplicarPadraoFundo(canvas, { padrao, w, h, clara }) {
   if (!padrao || padrao === 'nenhum') return
@@ -144,6 +169,29 @@ export function aplicarSombra(canvas, { estilo, opacidade, w, h }) {
   canvas.add(retangulo)
 }
 
+export async function aplicarLogo(canvas, { logoUrl, posicao, w, h }) {
+  if (!logoUrl) return
+  let img
+  try {
+    img = await FabricImage.fromURL(logoUrl, { crossOrigin: 'anonymous' })
+  } catch {
+    return
+  }
+  const alvo = w * 0.14
+  img.scaleToWidth(alvo)
+  const margem = w * 0.05
+  const alturaFinal = img.getScaledHeight()
+  const posicoes = {
+    'sup-esq': { left: margem, top: margem },
+    'sup-dir': { left: w - margem - alvo, top: margem },
+    'inf-esq': { left: margem, top: h - margem - alturaFinal },
+    'inf-dir': { left: w - margem - alvo, top: h - margem - alturaFinal },
+  }
+  const pos = posicoes[posicao] || posicoes['inf-dir']
+  img.set({ ...pos, papel: 'logo', selectable: false, evented: false })
+  canvas.add(img)
+}
+
 // ------------------------------------------------------------------ bloco de texto
 
 function areaConteudo(w, h, layout) {
@@ -165,6 +213,19 @@ export function estiloTextoPara(modelo, corDestaque, w, h) {
   return { corTitulo: '#ffffff', corCorpo: 'rgba(255,255,255,.55)', tamanhoTituloBase: h * 0.065, tamanhoCorpoBase: h * 0.028 }
 }
 
+function estiloExtraTexto(layout, w) {
+  const extra = {}
+  if (layout.textoContorno) {
+    extra.stroke = 'rgba(0,0,0,.55)'
+    extra.strokeWidth = Math.max(1, w * 0.0015)
+    extra.paintFirst = 'stroke'
+  }
+  if (layout.textoSombra) {
+    extra.shadow = new Shadow({ color: 'rgba(0,0,0,.45)', blur: w * 0.012, offsetX: w * 0.004, offsetY: w * 0.004 })
+  }
+  return extra
+}
+
 // Monta o título + corpo dentro da área definida pelo layout - devolve os
 // objetos criados (pra poder marcar o "papel" de cada um e reaplicar estilo
 // via o painel sem precisar remontar o slide inteiro).
@@ -174,6 +235,7 @@ export function construirBlocoTexto(canvas, { slide, layout, w, h, corTitulo, co
   const escala = (Number(layout.escala) || 100) / 100
   const espacamento = (Number(layout.espacamento) || 115) / 100
   const alinhamento = pos.hAlign === 'center' ? 'center' : pos.hAlign === 'right' ? 'right' : 'left'
+  const extra = estiloExtraTexto(layout, w)
 
   const tamTitulo = Math.round(tamanhoTituloBase * escala)
   const tamCorpo = Math.round(tamanhoCorpoBase * escala)
@@ -182,14 +244,14 @@ export function construirBlocoTexto(canvas, { slide, layout, w, h, corTitulo, co
     ? new Textbox(slide.titulo, {
         left: area.left, top: 0, width: area.largura,
         fontSize: tamTitulo, fontWeight: 'bold', fontFamily: layout.fonteTitulo || 'Poppins',
-        fill: corTitulo, lineHeight: espacamento, textAlign: alinhamento,
+        fill: corTitulo, lineHeight: espacamento, textAlign: alinhamento, ...extra,
       })
     : null
   const corpo = slide.corpo
     ? new Textbox(slide.corpo, {
         left: area.left, top: 0, width: area.largura,
         fontSize: tamCorpo, fontFamily: layout.fonteCorpo || 'Poppins',
-        fill: corCorpo, lineHeight: espacamento, textAlign: alinhamento,
+        fill: corCorpo, lineHeight: espacamento, textAlign: alinhamento, ...extra,
       })
     : null
 
@@ -331,7 +393,8 @@ export function construirSlide(canvas, { tipo, modelo, slide, corMarca, corDesta
   const claraDeFundo = modelo === 'citacao'
 
   canvas.setDimensions({ width: w, height: h })
-  canvas.backgroundColor = corDeFundo(modelo, corMarca)
+  const corBase = corDeFundo(modelo, corMarca)
+  canvas.backgroundColor = corFundoFinal(canvas, { layout, corBase, corDestaque, w, h })
 
   aplicarPadraoFundo(canvas, { padrao: layout.fundoPadrao, w, h, clara: claraDeFundo })
   aplicarSombra(canvas, { estilo: layout.sombraEstilo, opacidade: layout.sombraOpacidade, w, h })

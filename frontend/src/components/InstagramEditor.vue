@@ -13,7 +13,7 @@
     <!-- Painel de edição -->
     <div class="flex w-72 shrink-0 flex-col overflow-y-auto border-l border-outline-gray-1 p-3">
       <div class="mb-3 text-p-sm font-medium text-ink-gray-7">{{ __('Adicionar') }}</div>
-      <div class="mb-4 flex gap-2">
+      <div class="mb-3 flex gap-2">
         <button
           type="button"
           class="flex flex-1 flex-col items-center gap-1 rounded-lg border border-outline-gray-2 p-2 text-ink-gray-6 transition-all duration-150 hover:-translate-y-0.5 hover:text-white hover:shadow-sm"
@@ -43,6 +43,21 @@
         >
           <LucideSquare class="size-4" />
           <span class="text-[10px]">{{ __('Forma') }}</span>
+        </button>
+      </div>
+      <div class="mb-1 text-p-sm text-ink-gray-6">{{ __('Elementos') }}</div>
+      <div class="mb-4 grid grid-cols-4 gap-2">
+        <button type="button" class="flex items-center justify-center rounded-lg border border-outline-gray-2 p-2 text-ink-gray-6 hover:bg-surface-gray-2" :title="__('Seta')" @click="adicionarSeta">
+          <LucideArrowRight class="size-4" />
+        </button>
+        <button type="button" class="flex items-center justify-center rounded-lg border border-outline-gray-2 p-2 text-ink-gray-6 hover:bg-surface-gray-2" :title="__('Aspas')" @click="adicionarAspas">
+          <LucideQuote class="size-4" />
+        </button>
+        <button type="button" class="flex items-center justify-center rounded-lg border border-outline-gray-2 p-2 text-ink-gray-6 hover:bg-surface-gray-2" :title="__('Numeração')" @click="adicionarNumeracao">
+          <LucideListOrdered class="size-4" />
+        </button>
+        <button type="button" class="flex items-center justify-center rounded-lg border border-outline-gray-2 p-2 text-ink-gray-6 hover:bg-surface-gray-2" :title="__('Estrela')" @click="adicionarEstrela">
+          <LucideStar class="size-4" />
         </button>
       </div>
       <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFileSelecionado" />
@@ -109,7 +124,11 @@
             :model-value="layoutAtual.margemV"
             @update:modelValue="(v) => atualizarLayout({ margemV: Number(v) || 0 })"
           />
-          <Button variant="outline" size="sm" :label="__('Aplicar configurações no próximo slide')" @click="aplicarNoProximo" />
+          <div class="mt-1 text-p-sm text-ink-gray-6">{{ __('Aplicar estas configurações em:') }}</div>
+          <div class="flex gap-2">
+            <Button class="flex-1" variant="outline" size="sm" :label="__('Próximo slide')" @click="aplicarNoProximo" />
+            <Button class="flex-1" variant="outline" size="sm" :label="__('Todos')" @click="aplicarEmTodos" />
+          </div>
         </div>
       </div>
 
@@ -163,6 +182,19 @@
             :options="FUNDO_PADROES.map((f) => ({ label: f.rotulo, value: f.valor }))"
             @update:modelValue="(v) => atualizarLayout({ fundoPadrao: v })"
           />
+          <label class="flex items-center justify-between text-p-sm text-ink-gray-6">
+            {{ __('Gradiente') }}
+            <input type="checkbox" :checked="layoutAtual.fundoGradiente" @change="atualizarLayout({ fundoGradiente: $event.target.checked })" />
+          </label>
+          <div v-if="layoutAtual.fundoGradiente">
+            <div class="mb-1 text-p-sm text-ink-gray-6">{{ __('Segunda cor do gradiente') }}</div>
+            <input
+              type="color"
+              class="h-8 w-full cursor-pointer rounded border border-outline-gray-2"
+              :value="layoutAtual.fundoCor2 || corDestaque"
+              @input="atualizarLayout({ fundoCor2: $event.target.value })"
+            />
+          </div>
         </div>
       </div>
 
@@ -199,6 +231,45 @@
             :options="opcoesFontes"
             @update:modelValue="(v) => atualizarLayout({ fonteCorpo: v })"
           />
+          <label class="flex items-center justify-between text-p-sm text-ink-gray-6">
+            {{ __('Contorno no texto') }}
+            <input type="checkbox" :checked="layoutAtual.textoContorno" @change="atualizarLayout({ textoContorno: $event.target.checked })" />
+          </label>
+          <label class="flex items-center justify-between text-p-sm text-ink-gray-6">
+            {{ __('Sombra no texto') }}
+            <input type="checkbox" :checked="layoutAtual.textoSombra" @change="atualizarLayout({ textoSombra: $event.target.checked })" />
+          </label>
+        </div>
+      </div>
+
+      <!-- Logo -->
+      <div class="mt-4 border-t border-outline-gray-1 pt-3">
+        <button type="button" class="mb-2 flex w-full items-center justify-between text-p-sm font-medium text-ink-gray-7" @click="secoes.logo = !secoes.logo">
+          {{ __('Logo') }}
+          <LucideChevronDown class="size-3.5 transition-transform" :class="secoes.logo ? '' : '-rotate-90'" />
+        </button>
+        <div v-if="secoes.logo" class="flex flex-col gap-2">
+          <div v-if="!logoUrl" class="text-p-sm text-ink-gray-4">
+            {{ __('Configure o logo da marca em Configurações → Marca pra poder usar aqui.') }}
+          </div>
+          <template v-else>
+            <label class="flex items-center justify-between text-p-sm text-ink-gray-6">
+              {{ __('Logo automático no slide') }}
+              <input type="checkbox" :checked="layoutAtual.logoAtivo" @change="atualizarLayout({ logoAtivo: $event.target.checked })" />
+            </label>
+            <div v-if="layoutAtual.logoAtivo" class="grid grid-cols-2 gap-1">
+              <button
+                v-for="p in POSICOES_LOGO"
+                :key="p.valor"
+                type="button"
+                class="rounded border px-1 py-1.5 text-[10px]"
+                :class="layoutAtual.logoPosicao === p.valor ? 'border-ink-gray-9 bg-surface-gray-3 font-medium text-ink-gray-9' : 'border-outline-gray-2 text-ink-gray-6 hover:bg-surface-gray-2'"
+                @click="atualizarLayout({ logoPosicao: p.valor })"
+              >
+                {{ p.rotulo }}
+              </button>
+            </div>
+          </template>
         </div>
       </div>
 
@@ -220,7 +291,7 @@
             </div>
           </div>
         </template>
-        <template v-else-if="objetoSelecionado.type === 'rect' && objetoSelecionado.papel !== 'glass'">
+        <template v-else-if="(objetoSelecionado.type === 'rect' || objetoSelecionado.type === 'circle' || objetoSelecionado.type === 'polygon') && objetoSelecionado.papel !== 'glass'">
           <div class="mb-3 flex items-center justify-between">
             <div class="text-p-sm font-medium text-ink-gray-7">{{ __('Forma selecionada') }}</div>
             <button type="button" class="flex items-center gap-1 rounded px-1 py-0.5 text-red-500 hover:bg-red-50" @click="removerSelecionado">
@@ -232,7 +303,7 @@
             <input type="color" class="h-8 w-full cursor-pointer rounded border border-outline-gray-2" v-model="propForma.fill" @input="aplicarCorForma" />
           </div>
         </template>
-        <template v-else-if="objetoSelecionado.type === 'image'">
+        <template v-else-if="objetoSelecionado.type === 'image' && objetoSelecionado.papel !== 'logo'">
           <div class="mb-3 flex items-center justify-between">
             <div class="text-p-sm font-medium text-ink-gray-7">{{ __('Imagem') }}</div>
             <button type="button" class="flex items-center gap-1 rounded px-1 py-0.5 text-red-500 hover:bg-red-50" @click="removerSelecionado">
@@ -271,13 +342,17 @@ import LucideImage from '~icons/lucide/image'
 import LucideSquare from '~icons/lucide/square'
 import LucideTrash2 from '~icons/lucide/trash-2'
 import LucideChevronDown from '~icons/lucide/chevron-down'
+import LucideArrowRight from '~icons/lucide/arrow-right'
+import LucideQuote from '~icons/lucide/quote'
+import LucideListOrdered from '~icons/lucide/list-ordered'
+import LucideStar from '~icons/lucide/star'
 import { Button, FormControl, call, toast } from 'frappe-ui'
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
-import { Canvas, Textbox, Rect, FabricImage } from 'fabric'
+import { Canvas, Textbox, Rect, Circle, Polygon, FabricImage } from 'fabric'
 import {
-  TAMANHOS, POSICOES, FUNDO_PADROES, SOMBRA_ESTILOS, FONTES,
-  layoutPadraoDe, corDeFundo, construirSlide, construirBlocoTexto,
-  aplicarPadraoFundo, aplicarSombra, estiloTextoPara,
+  TAMANHOS, POSICOES, POSICOES_LOGO, FUNDO_PADROES, SOMBRA_ESTILOS, FONTES,
+  layoutPadraoDe, corDeFundo, corFundoFinal, construirSlide, construirBlocoTexto,
+  aplicarPadraoFundo, aplicarSombra, aplicarLogo, estiloTextoPara,
 } from '@/utils/instagramTemplates'
 
 const props = defineProps({
@@ -290,8 +365,9 @@ const props = defineProps({
   corDestaque: { type: String, default: '#8aa1a9' },
   corNeutra: { type: String, default: '#f4f2ed' },
   nomeMarca: { type: String, default: '' },
+  logoUrl: { type: String, default: '' },
 })
-const emit = defineEmits(['salvo', 'aplicar-layout-proximo'])
+const emit = defineEmits(['salvo', 'aplicar-layout-proximo', 'aplicar-layout-todos'])
 
 const PROPRIEDADES_EXTRA = ['papel']
 
@@ -306,7 +382,7 @@ const instrucaoRefinar = ref('')
 const tituloEdit = ref(props.slide.titulo || '')
 const corpoEdit = ref(props.slide.corpo || '')
 const corFundoAtual = ref(props.corMarca)
-const secoes = reactive({ texto: true, layout: false, sombra: false, fundo: false, tipografia: false })
+const secoes = reactive({ texto: true, layout: false, sombra: false, fundo: false, tipografia: false, logo: false })
 
 const layoutAtual = reactive({ ...layoutPadraoDe(props.modelo), ...(props.slide.layout || {}) })
 
@@ -330,9 +406,12 @@ function tamanhoAtivo() {
 function rotuloObjeto(o) {
   if (o.papel === 'titulo') return __('Título')
   if (o.papel === 'corpo') return __('Subtítulo')
+  if (o.papel === 'logo') return __('Logo')
   if (o.type === 'textbox') return (o.text || __('Texto')).slice(0, 24)
   if (o.type === 'image') return __('Imagem')
   if (o.type === 'rect') return __('Forma')
+  if (o.type === 'circle') return __('Círculo')
+  if (o.type === 'polygon') return __('Elemento')
   return o.type
 }
 
@@ -348,7 +427,7 @@ function aoSelecionar() {
   objetoSelecionado.value = obj || null
   if (obj?.type === 'textbox') {
     propTexto.value = { fontFamily: obj.fontFamily || 'Poppins', fontSize: obj.fontSize || 32, fill: obj.fill || '#ffffff' }
-  } else if (obj?.type === 'rect') {
+  } else if (obj?.type === 'rect' || obj?.type === 'circle' || obj?.type === 'polygon') {
     propForma.value = { fill: obj.fill || '#ffffff' }
   }
   atualizarCamadas()
@@ -367,7 +446,7 @@ async function montarCanvas() {
   if (props.slide.canvas) {
     await canvas.loadFromJSON(props.slide.canvas)
     canvas.setDimensions({ width: props.slide.canvas.width || w, height: props.slide.canvas.height || h })
-    corFundoAtual.value = canvas.backgroundColor || props.corMarca
+    corFundoAtual.value = typeof canvas.backgroundColor === 'string' ? canvas.backgroundColor : props.corMarca
     canvas.renderAll()
   } else {
     construirSlide(canvas, {
@@ -375,6 +454,10 @@ async function montarCanvas() {
       corMarca: props.corMarca, corDestaque: props.corDestaque, corNeutra: props.corNeutra, nomeMarca: props.nomeMarca,
     })
     corFundoAtual.value = corDeFundo(props.modelo, props.corMarca)
+    if (layoutAtual.logoAtivo && props.logoUrl) {
+      await aplicarLogo(canvas, { logoUrl: props.logoUrl, posicao: layoutAtual.logoPosicao, w, h })
+      canvas.renderAll()
+    }
   }
   atualizarCamadas()
 }
@@ -488,17 +571,42 @@ function reaplicarSombra() {
   canvas.renderAll()
 }
 
+function reaplicarFundoBase() {
+  if (!canvas) return
+  const { w, h } = tamanhoAtivo()
+  canvas.backgroundColor = corFundoFinal(canvas, { layout: layoutAtual, corBase: corFundoAtual.value, corDestaque: props.corDestaque, w, h })
+  canvas.renderAll()
+}
+
+async function reaplicarLogo() {
+  if (!canvas) return
+  removerPorPapel('logo')
+  if (layoutAtual.logoAtivo && props.logoUrl) {
+    const { w, h } = tamanhoAtivo()
+    await aplicarLogo(canvas, { logoUrl: props.logoUrl, posicao: layoutAtual.logoPosicao, w, h })
+  }
+  canvas.renderAll()
+  atualizarCamadas()
+}
+
 function atualizarLayout(mudancas) {
   Object.assign(layoutAtual, mudancas)
   props.slide.layout = { ...layoutAtual }
   if ('fundoPadrao' in mudancas) reaplicarFundoPadrao()
   if ('sombraEstilo' in mudancas || 'sombraOpacidade' in mudancas) reaplicarSombra()
+  if ('fundoGradiente' in mudancas || 'fundoCor2' in mudancas) reaplicarFundoBase()
+  if ('logoAtivo' in mudancas || 'logoPosicao' in mudancas) reaplicarLogo()
   reaplicarTexto()
 }
 
 function aplicarNoProximo() {
   emit('aplicar-layout-proximo', { indice: props.indice, layout: { ...layoutAtual } })
   toast.success(__('Layout aplicado no próximo slide'))
+}
+
+function aplicarEmTodos() {
+  emit('aplicar-layout-todos', { layout: { ...layoutAtual } })
+  toast.success(__('Layout aplicado em todos os slides'))
 }
 
 // ------------------------------------------------------------------ ferramentas gerais
@@ -517,6 +625,63 @@ function adicionarForma() {
   const r = new Rect({ left: w * 0.1, top: w * 0.1, width: w * 0.3, height: w * 0.2, fill: props.corDestaque })
   canvas.add(r)
   canvas.setActiveObject(r)
+  canvas.renderAll()
+  atualizarCamadas()
+}
+
+function adicionarSeta() {
+  const { w } = tamanhoAtivo()
+  const tam = w * 0.2
+  const pontos = [
+    { x: 0, y: tam * 0.32 }, { x: tam * 0.6, y: tam * 0.32 }, { x: tam * 0.6, y: 0 },
+    { x: tam, y: tam * 0.5 }, { x: tam * 0.6, y: tam }, { x: tam * 0.6, y: tam * 0.68 }, { x: 0, y: tam * 0.68 },
+  ]
+  const seta = new Polygon(pontos, { left: w * 0.1, top: w * 0.1, fill: props.corDestaque })
+  canvas.add(seta)
+  canvas.setActiveObject(seta)
+  canvas.renderAll()
+  atualizarCamadas()
+}
+
+function adicionarAspas() {
+  const { w } = tamanhoAtivo()
+  const aspas = new Textbox('"', {
+    left: w * 0.1, top: w * 0.06, width: w * 0.3,
+    fontSize: Math.round(w * 0.22), fontFamily: 'Playfair Display', fontWeight: 'bold', fill: props.corDestaque,
+  })
+  canvas.add(aspas)
+  canvas.setActiveObject(aspas)
+  canvas.renderAll()
+  atualizarCamadas()
+}
+
+function adicionarNumeracao() {
+  const { w } = tamanhoAtivo()
+  const d = w * 0.12
+  const circulo = new Circle({ left: w * 0.1, top: w * 0.1, radius: d / 2, fill: props.corDestaque })
+  const numero = new Textbox('1', {
+    left: w * 0.1, top: w * 0.1 + d * 0.22, width: d,
+    fontSize: Math.round(d * 0.5), fontFamily: 'Poppins', fontWeight: 'bold', fill: '#ffffff', textAlign: 'center',
+  })
+  canvas.add(circulo, numero)
+  canvas.setActiveObject(numero)
+  canvas.renderAll()
+  atualizarCamadas()
+}
+
+function adicionarEstrela() {
+  const { w } = tamanhoAtivo()
+  const raioExt = w * 0.09
+  const raioInt = raioExt * 0.42
+  const pontos = []
+  for (let i = 0; i < 10; i++) {
+    const raio = i % 2 === 0 ? raioExt : raioInt
+    const angulo = (Math.PI / 5) * i - Math.PI / 2
+    pontos.push({ x: raioExt + raio * Math.cos(angulo), y: raioExt + raio * Math.sin(angulo) })
+  }
+  const estrela = new Polygon(pontos, { left: w * 0.1, top: w * 0.1, fill: props.corDestaque })
+  canvas.add(estrela)
+  canvas.setActiveObject(estrela)
   canvas.renderAll()
   atualizarCamadas()
 }
@@ -582,13 +747,12 @@ function aplicarCorTexto() {
   canvas.renderAll()
 }
 function aplicarCorForma() {
-  if (objetoSelecionado.value?.type !== 'rect') return
+  if (!['rect', 'circle', 'polygon'].includes(objetoSelecionado.value?.type)) return
   objetoSelecionado.value.set({ fill: propForma.value.fill })
   canvas.renderAll()
 }
 function aplicarCorFundo() {
-  canvas.backgroundColor = corFundoAtual.value
-  canvas.renderAll()
+  reaplicarFundoBase()
 }
 
 function selecionarCamada(i) {
