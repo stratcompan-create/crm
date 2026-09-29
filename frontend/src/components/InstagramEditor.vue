@@ -1,7 +1,7 @@
 <template>
   <div class="flex min-h-0 flex-1">
     <!-- Canvas -->
-    <div class="flex flex-1 flex-col items-center gap-4 overflow-auto bg-gradient-to-b from-surface-gray-1 to-surface-gray-2 p-8">
+    <div ref="canvasArea" class="flex flex-1 flex-col items-center gap-4 overflow-auto bg-gradient-to-b from-surface-gray-1 to-surface-gray-2 p-8">
       <div class="rounded-lg shadow-lg ring-1 ring-black/5 transition-shadow duration-300 hover:shadow-xl">
         <canvas ref="canvasEl" class="rounded-lg" />
       </div>
@@ -174,6 +174,7 @@
               @click="corFundoAtual = p.cor; aplicarCorFundo()"
             />
           </div>
+          <div class="mb-1 text-p-sm text-ink-gray-6">{{ __('Outra cor (clique pra escolher qualquer uma)') }}</div>
           <input type="color" class="h-8 w-full cursor-pointer rounded border border-outline-gray-2" v-model="corFundoAtual" @input="aplicarCorFundo" />
           <FormControl
             type="select"
@@ -372,6 +373,7 @@ const emit = defineEmits(['salvo', 'aplicar-layout-proximo', 'aplicar-layout-tod
 const PROPRIEDADES_EXTRA = ['papel']
 
 const canvasEl = ref(null)
+const canvasArea = ref(null)
 const fileInput = ref(null)
 const objetoSelecionado = ref(null)
 const camadas = ref([])
@@ -401,6 +403,30 @@ let alvoUpload = null
 
 function tamanhoAtivo() {
   return TAMANHOS[props.tipo] || TAMANHOS.Carrossel
+}
+
+// Calcula o zoom pra caber no espaço disponível da tela (sem cortar o card nem
+// deixar ele minúsculo), em vez de um zoom fixo que so funciona num tamanho de
+// janela especifico.
+function calcularEscala() {
+  const { w, h } = tamanhoAtivo()
+  const area = canvasArea.value
+  const larguraDisponivel = (area?.clientWidth || 480) - 64
+  const alturaDisponivel = (area?.clientHeight || 640) - 120
+  const escala = Math.min(larguraDisponivel / w, alturaDisponivel / h, 0.9)
+  return Math.max(escala, 0.1)
+}
+
+// Zoom (posição/tamanho dos objetos) + tamanho em tela (CSS) sempre juntos -
+// so a tela (CSS) muda, a resolução real do canvas nunca muda, entao o PNG
+// exportado continua saindo na resolução cheia (1080px+).
+function ajustarEscalaTela() {
+  if (!canvas) return
+  const { w, h } = tamanhoAtivo()
+  const escala = calcularEscala()
+  canvas.setZoom(escala)
+  canvas.setDimensions({ width: w * escala, height: h * escala }, { cssOnly: true })
+  canvas._escalaTela = escala
 }
 
 function rotuloObjeto(o) {
@@ -444,16 +470,20 @@ async function montarCanvas() {
   await document.fonts.ready
   const { w, h } = tamanhoAtivo()
   if (props.slide.canvas) {
+    // loadFromJSON não mexe no tamanho do canvas (nem resolução real nem tela) -
+    // só o zoom da tela precisa ser reaplicado depois, senão o card fica do
+    // tamanho cheio (1080px) na tela em vez de caber no espaço disponível
     await canvas.loadFromJSON(props.slide.canvas)
-    canvas.setDimensions({ width: props.slide.canvas.width || w, height: props.slide.canvas.height || h })
-    corFundoAtual.value = typeof canvas.backgroundColor === 'string' ? canvas.backgroundColor : props.corMarca
+    ajustarEscalaTela()
+    corFundoAtual.value = layoutAtual.fundoCor || (typeof canvas.backgroundColor === 'string' ? canvas.backgroundColor : props.corMarca)
     canvas.renderAll()
   } else {
     construirSlide(canvas, {
       tipo: props.tipo, modelo: props.modelo, slide: props.slide,
       corMarca: props.corMarca, corDestaque: props.corDestaque, corNeutra: props.corNeutra, nomeMarca: props.nomeMarca,
     })
-    corFundoAtual.value = corDeFundo(props.modelo, props.corMarca)
+    ajustarEscalaTela()
+    corFundoAtual.value = layoutAtual.fundoCor || corDeFundo(props.modelo, props.corMarca)
     if (layoutAtual.logoAtivo && props.logoUrl) {
       await aplicarLogo(canvas, { logoUrl: props.logoUrl, posicao: layoutAtual.logoPosicao, w, h })
       canvas.renderAll()
@@ -464,18 +494,17 @@ async function montarCanvas() {
 
 onMounted(() => {
   canvas = new Canvas(canvasEl.value, { width: tamanhoAtivo().w, height: tamanhoAtivo().h })
-  const escalaTela = 0.37
-  canvas.setZoom(escalaTela)
-  canvas.setDimensions({ width: tamanhoAtivo().w * escalaTela, height: tamanhoAtivo().h * escalaTela }, { cssOnly: true })
-  canvas._escalaTela = escalaTela
+  ajustarEscalaTela()
   canvas.on('selection:created', aoSelecionar)
   canvas.on('selection:updated', aoSelecionar)
   canvas.on('selection:cleared', aoLimparSelecao)
   canvas.on('object:modified', atualizarCamadas)
   montarCanvas()
+  window.addEventListener('resize', ajustarEscalaTela)
 })
 
 onBeforeUnmount(() => {
+  window.removeEventListener('resize', ajustarEscalaTela)
   canvas?.dispose()
 })
 
@@ -752,6 +781,8 @@ function aplicarCorForma() {
   canvas.renderAll()
 }
 function aplicarCorFundo() {
+  layoutAtual.fundoCor = corFundoAtual.value
+  props.slide.layout = { ...layoutAtual }
   reaplicarFundoBase()
 }
 

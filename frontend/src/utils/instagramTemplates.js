@@ -63,6 +63,7 @@ export function layoutPadraoDe(modelo) {
     sombraEstilo: 'nenhuma',
     sombraOpacidade: 60,
     fundoPadrao: 'nenhum',
+    fundoCor: '',
     fundoGradiente: false,
     fundoCor2: '',
     textoContorno: false,
