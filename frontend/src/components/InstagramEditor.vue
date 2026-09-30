@@ -396,7 +396,7 @@ import LucideListOrdered from '~icons/lucide/list-ordered'
 import LucideStar from '~icons/lucide/star'
 import { Button, FormControl, call, toast } from 'frappe-ui'
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
-import { Canvas, Textbox, Rect, Circle, Polygon, FabricImage } from 'fabric'
+import { Canvas, Textbox, Rect, Circle, Polygon, FabricImage, Line } from 'fabric'
 import {
   TAMANHOS, POSICOES, POSICOES_LOGO, FUNDO_PADROES, SOMBRA_ESTILOS, FONTES,
   layoutPadraoDe, corDeFundo, corFundoFinal, construirSlide, construirBlocoTexto,
@@ -451,9 +451,51 @@ const opcoesFontes = FONTES.map((f) => ({ label: f, value: f }))
 let canvas = null
 let alvoUpload = null
 let alvoExtra = null
+let linhaGuiaV = null
+let linhaGuiaH = null
 
 function tamanhoAtivo() {
   return TAMANHOS[props.tipo] || TAMANHOS.Carrossel
+}
+
+// Guias de alinhamento (igual Canva/Figma): quando o centro do elemento que
+// está sendo arrastado chega perto do centro do card (na horizontal ou na
+// vertical), gruda ali e mostra uma linha pontilhada - some ao soltar.
+function limparGuias() {
+  if (linhaGuiaV) { canvas.remove(linhaGuiaV); linhaGuiaV = null }
+  if (linhaGuiaH) { canvas.remove(linhaGuiaH); linhaGuiaH = null }
+}
+
+function aoMoverObjeto(e) {
+  const obj = e.target
+  if (!obj) return
+  limparGuias()
+  const { w, h } = tamanhoAtivo()
+  const limiar = Math.max(w, h) * 0.008
+  const b = obj.getBoundingRect()
+  const centroX = b.left + b.width / 2
+  const centroY = b.top + b.height / 2
+  const alvoX = w / 2
+  const alvoY = h / 2
+
+  if (Math.abs(centroX - alvoX) < limiar) {
+    obj.left += alvoX - centroX
+    linhaGuiaV = new Line([alvoX, 0, alvoX, h], {
+      stroke: '#ff4d6d', strokeWidth: 1.5, strokeDashArray: [6, 4],
+      selectable: false, evented: false, excludeFromExport: true, originX: 'left', originY: 'top',
+    })
+    canvas.add(linhaGuiaV)
+  }
+  if (Math.abs(centroY - alvoY) < limiar) {
+    obj.top += alvoY - centroY
+    linhaGuiaH = new Line([0, alvoY, w, alvoY], {
+      stroke: '#ff4d6d', strokeWidth: 1.5, strokeDashArray: [6, 4],
+      selectable: false, evented: false, excludeFromExport: true, originX: 'left', originY: 'top',
+    })
+    canvas.add(linhaGuiaH)
+  }
+  obj.setCoords()
+  canvas.renderAll()
 }
 
 // Calcula o zoom pra caber no espaço disponível da tela (sem cortar o card nem
@@ -559,6 +601,9 @@ onMounted(() => {
   canvas.on('selection:updated', aoSelecionar)
   canvas.on('selection:cleared', aoLimparSelecao)
   canvas.on('object:modified', atualizarCamadas)
+  canvas.on('object:moving', aoMoverObjeto)
+  canvas.on('object:modified', limparGuias)
+  canvas.on('mouse:up', limparGuias)
   montarCanvas()
   window.addEventListener('resize', ajustarEscalaTela)
 })

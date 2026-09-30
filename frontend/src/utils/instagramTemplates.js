@@ -82,7 +82,7 @@ export function layoutPadraoDe(modelo) {
   // alinhado com a mesma margem do avatar/nome, não centralizado no card
   // inteiro (senão ele flutua longe do resto da identidade).
   if (modelo === 'twitter') return { ...base, posicao: 'sup-esq', margemH: 18.6, margemV: 49 }
-  if (modelo === 'citacao') return { ...base, posicao: 'sup-cen', margemH: 9, margemV: 8 }
+  if (modelo === 'citacao') return { ...base, posicao: 'sup-cen', margemH: 9, margemV: 24 }
   return base
 }
 
