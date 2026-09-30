@@ -17,7 +17,7 @@ from frappe.utils import add_days, getdate, nowdate
 from crm.api.instagram import GRAPH_BASE, TIMEOUT, _get_settings, _managers_only
 
 CACHE_MINUTES = 30
-PERIODS = (7, 14, 30)
+PERIODS = (7, 14, 30, 90)
 TOTAL_METRICS = (
 	"reach,views,profile_views,accounts_engaged,total_interactions,likes,comments,shares,saves,website_clicks"
 )
@@ -257,3 +257,138 @@ def get_insights(days: int = 30, refresh: int = 0) -> dict:
 	frappe.cache().set_value(key, {k: v for k, v in result.items()}, expires_in_sec=CACHE_MINUTES * 60)
 	result["crm"] = _crm_numbers(days)
 	return result
+
+
+# ------------------------------------------------------------------ relatório em PDF
+
+def _num(v) -> str:
+	return f"{int(v or 0):,}".replace(",", ".")
+
+
+def _data_br(iso: str) -> str:
+	return "/".join(reversed(iso.split("-"))) if iso else ""
+
+
+def _metric_row(label: str, current, previous) -> str:
+	current, previous = current or 0, previous or 0
+	if not previous:
+		var = "<span style='color:#999'>—</span>"
+	else:
+		pct = round((current - previous) / previous * 100)
+		sinal = "+" if pct >= 0 else ""
+		cor = "#1a7d3d" if pct >= 0 else "#c0392b"
+		var = f"<span style='color:{cor}'>{sinal}{pct}%</span>"
+	return (
+		f"<tr><td>{label}</td><td class='r'>{_num(current)}</td>"
+		f"<td class='r' style='color:#888'>{_num(previous)}</td><td class='r'>{var}</td></tr>"
+	)
+
+
+@frappe.whitelist(methods=["POST"])
+def export_metrics_pdf(days: int = 30):
+	"""PDF do relatório de métricas do Instagram (perfil, comparativo com o período
+	anterior e melhores posts) - guarda em Arquivos > Instagram."""
+	import glob
+	import os
+
+	from frappe.utils.pdf import get_pdf
+
+	from crm.api.estilo import valid_hex
+	from crm.api.prospeccao import _ensure_folder
+
+	_managers_only()
+	days = int(days)
+	if days not in PERIODS:
+		days = 30
+
+	data = get_insights(days=days, refresh=0)
+	settings = frappe.get_single("FCRM Settings")
+	color = valid_hex(settings.get("brand_color"), "#042d3c")
+	accent = valid_hex(settings.get("brand_accent"), "#8aa1a9")
+	brand_name = settings.get("brand_name") or ""
+	today = getdate(nowdate())
+
+	perfil = data["perfil"]
+	atual, anterior = data["atual"], data["anterior"]
+	fol = data["seguidores_variacao"]
+
+	if fol.get("delta") is None:
+		seguidores_var = "<span style='color:#999'>—</span>"
+	else:
+		sinal = "+" if fol["delta"] >= 0 else ""
+		cor = "#1a7d3d" if fol["delta"] >= 0 else "#c0392b"
+		seguidores_var = f"<span style='color:{cor}'>{sinal}{fol['delta']}</span>"
+
+	metric_rows = "".join([
+		_metric_row(_("Alcance"), atual.get("reach"), anterior.get("reach")),
+		_metric_row(_("Visualizações"), atual.get("views"), anterior.get("views")),
+		_metric_row(_("Visitas ao perfil"), atual.get("profile_views"), anterior.get("profile_views")),
+		_metric_row(_("Interações"), atual.get("total_interactions"), anterior.get("total_interactions")),
+		_metric_row(_("Curtidas"), atual.get("likes"), anterior.get("likes")),
+		_metric_row(_("Comentários"), atual.get("comments"), anterior.get("comments")),
+		_metric_row(_("Salvos"), atual.get("saves"), anterior.get("saves")),
+		_metric_row(_("Cliques no link da bio"), atual.get("website_clicks"), anterior.get("website_clicks")),
+	])
+
+	top_posts = sorted(data.get("posts", []), key=lambda p: p.get("alcance", 0), reverse=True)[:8]
+	posts_rows = "".join(
+		f"<tr><td>{frappe.utils.escape_html(p.get('tipo', ''))}</td>"
+		f"<td>{_data_br(p.get('data', ''))}</td>"
+		f"<td class='r'>{_num(p.get('alcance'))}</td><td class='r'>{_num(p.get('interacoes'))}</td>"
+		f"<td class='r'>{p.get('taxa', 0)}%</td></tr>"
+		for p in top_posts
+	) or f"<tr><td colspan='5' style='color:#999'>{_('Sem posts no período')}</td></tr>"
+
+	html = f"""<html><head><meta charset="utf-8"><style>
+		body {{ font-family: Arial, Helvetica, sans-serif; color:#1a1a1a; padding:32px; }}
+		h1 {{ color:{color}; font-size:24px; margin:0 0 4px 0; }}
+		h2 {{ color:{color}; font-size:15px; margin:28px 0 8px 0; }}
+		.sub {{ color:#666; font-size:12px; margin-bottom:4px; }}
+		.kpis {{ display:flex; gap:16px; margin:20px 0; }}
+		.kpi {{ flex:1; border:1px solid #eee; border-radius:6px; padding:12px; }}
+		.kpi .l {{ font-size:10px; text-transform:uppercase; color:#888; }}
+		.kpi .v {{ font-size:20px; font-weight:bold; color:#1a1a1a; margin-top:2px; }}
+		.kpi .d {{ font-size:11px; margin-top:2px; }}
+		table.t {{ width:100%; border-collapse:collapse; }}
+		table.t th {{ text-align:left; font-size:11px; text-transform:uppercase; color:#666; border-bottom:2px solid {accent}; padding:8px 4px; }}
+		table.t td {{ padding:8px 4px; border-bottom:1px solid #eee; font-size:12px; }}
+		.r {{ text-align:right; }}
+		.foot {{ margin-top:24px; font-size:10px; color:#999; }}
+	</style></head><body>
+		<h1>{_("Relatório do Instagram")}</h1>
+		<div class="sub">{frappe.utils.escape_html(brand_name)} · @{frappe.utils.escape_html(perfil.get('usuario') or '')} · {_("últimos {0} dias, comparado aos {0} anteriores").format(days)}</div>
+		<div class="sub">{_("Gerado em")} {today.strftime('%d/%m/%Y')}</div>
+
+		<div class="kpis">
+			<div class="kpi"><div class="l">{_("Seguidores")}</div><div class="v">{_num(perfil.get('seguidores'))}</div><div class="d">{seguidores_var}</div></div>
+			<div class="kpi"><div class="l">{_("Publicações")}</div><div class="v">{_num(perfil.get('publicacoes'))}</div></div>
+			<div class="kpi"><div class="l">{_("Alcance no período")}</div><div class="v">{_num(atual.get('reach'))}</div></div>
+		</div>
+
+		<h2>{_("Comparativo com o período anterior")}</h2>
+		<table class="t">
+			<tr><th>{_("Métrica")}</th><th class="r">{_("Período atual")}</th><th class="r">{_("Período anterior")}</th><th class="r">{_("Variação")}</th></tr>
+			{metric_rows}
+		</table>
+
+		<h2>{_("Melhores posts do período")}</h2>
+		<table class="t">
+			<tr><th>{_("Tipo")}</th><th>{_("Data")}</th><th class="r">{_("Alcance")}</th><th class="r">{_("Interações")}</th><th class="r">{_("Taxa")}</th></tr>
+			{posts_rows}
+		</table>
+
+		<div class="foot">{_("Gerado automaticamente pelo CRM a partir dos dados do Instagram.")}</div>
+	</body></html>"""
+
+	pdf = get_pdf(html)
+	folder = _ensure_folder("Instagram")
+	base = f"Relatorio Instagram {days}d - {today.isoformat()}"
+	for old in frappe.get_all("File", filters={"folder": folder, "file_name": ["like", f"{base}%"]}, pluck="name"):
+		frappe.delete_doc("File", old, ignore_permissions=True, force=True)
+	for stale in glob.glob(frappe.get_site_path("private", "files", f"{base}*.pdf")):
+		os.remove(stale)
+	file_doc = frappe.get_doc(
+		{"doctype": "File", "file_name": f"{base}.pdf", "folder": folder, "is_private": 1, "content": pdf}
+	)
+	file_doc.insert(ignore_permissions=True)
+	return {"file_url": file_doc.file_url, "file_name": file_doc.file_name}

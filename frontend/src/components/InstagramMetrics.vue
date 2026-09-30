@@ -17,6 +17,7 @@
       <div class="flex items-center gap-3 text-p-sm text-ink-gray-5">
         <span v-if="data?.atualizado_em">{{ __('Atualizado às {0}', [hora(data.atualizado_em)]) }}</span>
         <Button :label="__('Atualizar')" :loading="resource.loading" @click="load(true)" />
+        <Button variant="outline" :label="__('Exportar relatório')" :loading="exportando" @click="exportarRelatorio" />
       </div>
     </div>
 
@@ -134,12 +135,25 @@
 </template>
 
 <script setup>
-import { Button, FormControl, createResource } from 'frappe-ui'
+import { Button, FormControl, call, createResource, toast } from 'frappe-ui'
 import { computed, onMounted, ref } from 'vue'
 
-const periods = [7, 14, 30]
+const periods = [7, 14, 30, 90]
 const days = ref(30)
 const sortBy = ref('recentes')
+const exportando = ref(false)
+
+async function exportarRelatorio() {
+  exportando.value = true
+  try {
+    const r = await call('crm.api.instagram_metricas.export_metrics_pdf', { days: days.value })
+    window.open(r.file_url, '_blank')
+  } catch (e) {
+    toast.error(e.messages?.join(', ') || e.message || __('Não consegui gerar o relatório agora.'))
+  } finally {
+    exportando.value = false
+  }
+}
 
 const resource = createResource({
   url: 'crm.api.instagram_metricas.get_insights',
