@@ -56,7 +56,7 @@ export const FONTES = [
 
 export function layoutPadraoDe(modelo) {
   const base = {
-    posicao: 'inf-esq',
+    posicao: 'meio-cen',
     margemH: 14,
     margemV: 19,
     glass: false,
@@ -75,8 +75,7 @@ export function layoutPadraoDe(modelo) {
     escala: 100,
     espacamento: 115,
   }
-  if (modelo === 'twitter') return { ...base, posicao: 'sup-esq', margemH: 18.6, margemV: 47 }
-  if (modelo === 'citacao') return { ...base, posicao: 'sup-esq', margemV: 8 }
+  if (modelo === 'citacao') return { ...base, posicao: 'sup-cen', margemV: 8 }
   return base
 }
 
