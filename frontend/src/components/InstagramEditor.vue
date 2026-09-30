@@ -417,16 +417,17 @@ function calcularEscala() {
   return Math.max(escala, 0.1)
 }
 
-// Zoom (posição/tamanho dos objetos) + tamanho em tela (CSS) sempre juntos -
-// so a tela (CSS) muda, a resolução real do canvas nunca muda, entao o PNG
-// exportado continua saindo na resolução cheia (1080px+).
+// Só encolhe o TAMANHO NA TELA (CSS) - a resolução real do canvas (onde os
+// objetos são desenhados) nunca muda, o navegador só exibe o desenho cheio
+// menor. NÃO usar canvas.setZoom aqui: zoom encolhe onde os objetos são
+// desenhados DENTRO da resolução cheia (que continua do tamanho normal) -
+// then o CSS encolhe de novo por cima, resultando no conteúdo espremido
+// num cantinho e o resto do card em branco.
 function ajustarEscalaTela() {
   if (!canvas) return
   const { w, h } = tamanhoAtivo()
   const escala = calcularEscala()
-  canvas.setZoom(escala)
   canvas.setDimensions({ width: w * escala, height: h * escala }, { cssOnly: true })
-  canvas._escalaTela = escala
 }
 
 function rotuloObjeto(o) {
@@ -795,7 +796,8 @@ function selecionarCamada(i) {
 }
 
 function baixarPng() {
-  const url = canvas.toDataURL({ format: 'png', multiplier: 1 / canvas._escalaTela })
+  // sem zoom, a resolução real do canvas já é a cheia (1080px+) - sem multiplicador
+  const url = canvas.toDataURL({ format: 'png' })
   const a = document.createElement('a')
   a.href = url
   a.download = `slide-${props.indice + 1}.png`
