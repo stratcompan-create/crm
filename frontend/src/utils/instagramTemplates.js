@@ -111,37 +111,37 @@ export function aplicarPadraoFundo(canvas, { padrao, w, h, clara }) {
   if (padrao === 'grade') {
     const passo = w / 18
     for (let x = passo; x < w; x += passo) {
-      objetos.push(new Rect({ left: x, top: 0, width: 1, height: h, fill: cor, selectable: false, evented: false }))
+      objetos.push(new Rect({ left: x, top: 0, width: 1, height: h, fill: cor, selectable: false, evented: false, originX: 'left', originY: 'top' }))
     }
     for (let y = passo; y < h; y += passo) {
-      objetos.push(new Rect({ left: 0, top: y, width: w, height: 1, fill: cor, selectable: false, evented: false }))
+      objetos.push(new Rect({ left: 0, top: y, width: w, height: 1, fill: cor, selectable: false, evented: false, originX: 'left', originY: 'top' }))
     }
   } else if (padrao === 'bolinhas') {
     const passo = w / 14
     const r = w * 0.006
     for (let y = passo / 2; y < h; y += passo) {
       for (let x = passo / 2; x < w; x += passo) {
-        objetos.push(new Circle({ left: x - r, top: y - r, radius: r, fill: cor, selectable: false, evented: false }))
+        objetos.push(new Circle({ left: x - r, top: y - r, radius: r, fill: cor, selectable: false, evented: false, originX: 'left', originY: 'top' }))
       }
     }
   } else if (padrao === 'linhas-h') {
     const passo = h / 22
     for (let y = passo; y < h; y += passo) {
-      objetos.push(new Rect({ left: 0, top: y, width: w, height: 1, fill: cor, selectable: false, evented: false }))
+      objetos.push(new Rect({ left: 0, top: y, width: w, height: 1, fill: cor, selectable: false, evented: false, originX: 'left', originY: 'top' }))
     }
   } else if (padrao === 'linhas-d' || padrao === 'xadrez-d') {
     const passo = w / 16
     for (let d = -h; d < w + h; d += passo) {
       objetos.push(new Rect({
         left: d, top: 0, width: 1, height: h * 1.6, fill: cor, angle: 45,
-        selectable: false, evented: false,
+        selectable: false, evented: false, originX: 'left', originY: 'top',
       }))
     }
     if (padrao === 'xadrez-d') {
       for (let d = -h; d < w + h; d += passo) {
         objetos.push(new Rect({
           left: d, top: 0, width: 1, height: h * 1.6, fill: cor, angle: -45,
-          selectable: false, evented: false,
+          selectable: false, evented: false, originX: 'left', originY: 'top',
         }))
       }
     }
@@ -163,7 +163,7 @@ export function aplicarSombra(canvas, { estilo, opacidade, w, h }) {
   else coords = { x1: 0, y1: 0, x2: 0, y2: h } // "completa" aproximada com base forte
 
   const retangulo = new Rect({
-    left: 0, top: 0, width: w, height: h, selectable: false, evented: false, papel: 'sombra',
+    left: 0, top: 0, width: w, height: h, selectable: false, evented: false, papel: 'sombra', originX: 'left', originY: 'top',
   })
   retangulo.set('fill', new Gradient({
     type: 'linear',
@@ -195,7 +195,7 @@ export async function aplicarLogo(canvas, { logoUrl, posicao, w, h }) {
     'inf-dir': { left: w - margem - alvo, top: h - margem - alturaFinal },
   }
   const pos = posicoes[posicao] || posicoes['inf-dir']
-  img.set({ ...pos, papel: 'logo', selectable: false, evented: false })
+  img.set({ ...pos, papel: 'logo', selectable: false, evented: false, originX: 'left', originY: 'top' })
   canvas.add(img)
 }
 
@@ -249,14 +249,14 @@ export function construirBlocoTexto(canvas, { slide, layout, w, h, corTitulo, co
 
   const titulo = slide.titulo
     ? new Textbox(slide.titulo, {
-        left: area.left, top: 0, width: area.largura,
+        left: area.left, top: 0, width: area.largura, originX: 'left', originY: 'top',
         fontSize: tamTitulo, fontWeight: 'bold', fontFamily: layout.fonteTitulo || 'Poppins',
         fill: corTitulo, lineHeight: espacamento, textAlign: alinhamento, ...extra,
       })
     : null
   const corpo = slide.corpo
     ? new Textbox(slide.corpo, {
-        left: area.left, top: 0, width: area.largura,
+        left: area.left, top: 0, width: area.largura, originX: 'left', originY: 'top',
         fontSize: tamCorpo, fontFamily: layout.fonteCorpo || 'Poppins',
         fill: corCorpo, lineHeight: espacamento, textAlign: alinhamento, ...extra,
       })
@@ -289,7 +289,7 @@ export function construirBlocoTexto(canvas, { slide, layout, w, h, corTitulo, co
     const painel = new Rect({
       left: area.left - pad, top: topoBloco - pad, width: area.largura + pad * 2, height: alturaTotal + pad * 2,
       rx: 16, ry: 16, fill: 'rgba(255,255,255,.1)', stroke: 'rgba(255,255,255,.18)', strokeWidth: 1,
-      selectable: false, evented: false, papel: 'glass',
+      selectable: false, evented: false, papel: 'glass', originX: 'left', originY: 'top',
     })
     canvas.add(painel)
     canvas.sendObjectToBack(painel)
@@ -309,23 +309,23 @@ function elementosCapa(canvas, { w, h, tipo, nomeMarca }) {
   const handleTexto = '@' + (nomeMarca || __('suamarca')).toLowerCase().replace(/\s+/g, '')
 
   const handleTopo = new Textbox(handleTexto, {
-    left: margemTopo, top: h * 0.055, width: w * 0.45,
+    left: margemTopo, top: h * 0.055, width: w * 0.45, originX: 'left', originY: 'top',
     fontSize: Math.round(h * 0.019), fontFamily: 'Poppins', fill: '#4a4a4a', papel: 'marca',
   })
   const tagTopo = new Textbox(tipo || '', {
-    left: w - margemTopo - w * 0.32, top: h * 0.055, width: w * 0.32,
+    left: w - margemTopo - w * 0.32, top: h * 0.055, width: w * 0.32, originX: 'left', originY: 'top',
     fontSize: Math.round(h * 0.019), fontFamily: 'Poppins', fill: '#4a4a4a', textAlign: 'right', papel: 'marca',
   })
   canvas.add(handleTopo, tagTopo)
 
   const rodapeEsq = new Textbox(tipo || '', {
-    left: margemTopo, top: h * 0.93, width: w * 0.4,
+    left: margemTopo, top: h * 0.93, width: w * 0.4, originX: 'left', originY: 'top',
     fontSize: Math.round(h * 0.018), fontFamily: 'Poppins', fill: '#8a8a8a', papel: 'marca',
   })
   canvas.add(rodapeEsq)
   if (tipo === 'Carrossel') {
     const rodapeDir = new Textbox(__('Arraste'), {
-      left: w - margemTopo - w * 0.32, top: h * 0.93, width: w * 0.32,
+      left: w - margemTopo - w * 0.32, top: h * 0.93, width: w * 0.32, originX: 'left', originY: 'top',
       fontSize: Math.round(h * 0.018), fontFamily: 'Poppins', fill: '#8a8a8a', textAlign: 'right', papel: 'marca',
     })
     canvas.add(rodapeDir)
@@ -342,26 +342,26 @@ function elementosPerfil(canvas, { w, h, nomeMarca }) {
   const avatarTop = h * 0.404
 
   const avatar = new Circle({
-    left: margemEsq, top: avatarTop, radius: avatarD / 2, fill: '#3a3a3a', selectable: false, evented: false, papel: 'marca',
+    left: margemEsq, top: avatarTop, radius: avatarD / 2, fill: '#3a3a3a', selectable: false, evented: false, papel: 'marca', originX: 'left', originY: 'top',
   })
   canvas.add(avatar)
 
   const nomeLeft = margemEsq + avatarD + w * 0.018
   const nomeTop = avatarTop - h * 0.006
   const nome = new Textbox(nomeTexto, {
-    left: nomeLeft, top: nomeTop,
+    left: nomeLeft, top: nomeTop, originX: 'left', originY: 'top',
     width: w * 0.55, fontSize: Math.round(w * 0.03), fontWeight: 'bold', fontFamily: 'Poppins', fill: '#1c1c1c', papel: 'marca',
   })
   const selo = new Circle({
     left: nomeLeft + nomeTexto.length * w * 0.0175 + 8,
-    top: nomeTop - h * 0.001, radius: w * 0.011, fill: '#3897f0', selectable: false, evented: false, papel: 'marca',
+    top: nomeTop - h * 0.001, radius: w * 0.011, fill: '#3897f0', selectable: false, evented: false, papel: 'marca', originX: 'left', originY: 'top',
   })
   const check = new Textbox('✓', {
-    left: selo.left - w * 0.0065, top: selo.top - w * 0.008,
+    left: selo.left - w * 0.0065, top: selo.top - w * 0.008, originX: 'left', originY: 'top',
     fontSize: Math.round(w * 0.016), fontFamily: 'Poppins', fill: '#ffffff', selectable: false, evented: false, papel: 'marca',
   })
   const handle = new Textbox('@' + nomeTexto.toLowerCase().replace(/\s+/g, ''), {
-    left: nomeLeft, top: nomeTop + Math.round(w * 0.03) + 2,
+    left: nomeLeft, top: nomeTop + Math.round(w * 0.03) + 2, originX: 'left', originY: 'top',
     width: w * 0.55, fontSize: Math.round(w * 0.018), fontFamily: 'Poppins', fill: '#8a8a8a', papel: 'marca',
   })
   canvas.add(nome, selo, check, handle)
@@ -369,7 +369,7 @@ function elementosPerfil(canvas, { w, h, nomeMarca }) {
 
 function elementosCitacao(canvas, { w, h }) {
   const espacoImagem = new Rect({
-    left: w * 0.09, top: h * 0.54, width: w * 0.82, height: h * 0.37, rx: 20, ry: 20,
+    left: w * 0.09, top: h * 0.54, width: w * 0.82, height: h * 0.37, rx: 20, ry: 20, originX: 'left', originY: 'top',
     fill: '#f2f2f2', stroke: '#d8d8d8', strokeWidth: 1, strokeDashArray: [6, 6], papel: 'marca',
   })
   canvas.add(espacoImagem)

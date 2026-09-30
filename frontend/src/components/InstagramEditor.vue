@@ -643,7 +643,7 @@ function aplicarEmTodos() {
 
 function adicionarTexto() {
   const { w } = tamanhoAtivo()
-  const t = new Textbox(__('Novo texto'), { left: w * 0.1, top: w * 0.1, width: w * 0.6, fontSize: Math.round(w * 0.04), fill: '#ffffff', fontFamily: 'Poppins' })
+  const t = new Textbox(__('Novo texto'), { left: w * 0.1, top: w * 0.1, width: w * 0.6, fontSize: Math.round(w * 0.04), fill: '#ffffff', fontFamily: 'Poppins', originX: 'left', originY: 'top' })
   canvas.add(t)
   canvas.setActiveObject(t)
   canvas.renderAll()
@@ -652,7 +652,7 @@ function adicionarTexto() {
 
 function adicionarForma() {
   const { w } = tamanhoAtivo()
-  const r = new Rect({ left: w * 0.1, top: w * 0.1, width: w * 0.3, height: w * 0.2, fill: props.corDestaque })
+  const r = new Rect({ left: w * 0.1, top: w * 0.1, width: w * 0.3, height: w * 0.2, fill: props.corDestaque, originX: 'left', originY: 'top' })
   canvas.add(r)
   canvas.setActiveObject(r)
   canvas.renderAll()
@@ -666,7 +666,7 @@ function adicionarSeta() {
     { x: 0, y: tam * 0.32 }, { x: tam * 0.6, y: tam * 0.32 }, { x: tam * 0.6, y: 0 },
     { x: tam, y: tam * 0.5 }, { x: tam * 0.6, y: tam }, { x: tam * 0.6, y: tam * 0.68 }, { x: 0, y: tam * 0.68 },
   ]
-  const seta = new Polygon(pontos, { left: w * 0.1, top: w * 0.1, fill: props.corDestaque })
+  const seta = new Polygon(pontos, { left: w * 0.1, top: w * 0.1, fill: props.corDestaque, originX: 'left', originY: 'top' })
   canvas.add(seta)
   canvas.setActiveObject(seta)
   canvas.renderAll()
@@ -676,7 +676,7 @@ function adicionarSeta() {
 function adicionarAspas() {
   const { w } = tamanhoAtivo()
   const aspas = new Textbox('"', {
-    left: w * 0.1, top: w * 0.06, width: w * 0.3,
+    left: w * 0.1, top: w * 0.06, width: w * 0.3, originX: 'left', originY: 'top',
     fontSize: Math.round(w * 0.22), fontFamily: 'Playfair Display', fontWeight: 'bold', fill: props.corDestaque,
   })
   canvas.add(aspas)
@@ -688,9 +688,9 @@ function adicionarAspas() {
 function adicionarNumeracao() {
   const { w } = tamanhoAtivo()
   const d = w * 0.12
-  const circulo = new Circle({ left: w * 0.1, top: w * 0.1, radius: d / 2, fill: props.corDestaque })
+  const circulo = new Circle({ left: w * 0.1, top: w * 0.1, radius: d / 2, fill: props.corDestaque, originX: 'left', originY: 'top' })
   const numero = new Textbox('1', {
-    left: w * 0.1, top: w * 0.1 + d * 0.22, width: d,
+    left: w * 0.1, top: w * 0.1 + d * 0.22, width: d, originX: 'left', originY: 'top',
     fontSize: Math.round(d * 0.5), fontFamily: 'Poppins', fontWeight: 'bold', fill: '#ffffff', textAlign: 'center',
   })
   canvas.add(circulo, numero)
@@ -709,7 +709,7 @@ function adicionarEstrela() {
     const angulo = (Math.PI / 5) * i - Math.PI / 2
     pontos.push({ x: raioExt + raio * Math.cos(angulo), y: raioExt + raio * Math.sin(angulo) })
   }
-  const estrela = new Polygon(pontos, { left: w * 0.1, top: w * 0.1, fill: props.corDestaque })
+  const estrela = new Polygon(pontos, { left: w * 0.1, top: w * 0.1, fill: props.corDestaque, originX: 'left', originY: 'top' })
   canvas.add(estrela)
   canvas.setActiveObject(estrela)
   canvas.renderAll()
@@ -747,13 +747,13 @@ async function onFileSelecionado(ev) {
   const img = await FabricImage.fromURL(url, { crossOrigin: 'anonymous' })
   const { w } = tamanhoAtivo()
   if (alvoUpload && alvoUpload.type === 'image') {
-    img.set({ left: alvoUpload.left, top: alvoUpload.top, scaleX: alvoUpload.scaleX, scaleY: alvoUpload.scaleY })
+    img.set({ left: alvoUpload.left, top: alvoUpload.top, scaleX: alvoUpload.scaleX, scaleY: alvoUpload.scaleY, originX: 'left', originY: 'top' })
     canvas.remove(alvoUpload)
     canvas.add(img)
     canvas.setActiveObject(img)
   } else {
     img.scaleToWidth(w * 0.5)
-    img.set({ left: w * 0.25, top: w * 0.25 })
+    img.set({ left: w * 0.25, top: w * 0.25, originX: 'left', originY: 'top' })
     canvas.add(img)
     canvas.setActiveObject(img)
   }
