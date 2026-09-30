@@ -82,7 +82,10 @@ export function layoutPadraoDe(modelo) {
   // alinhado com a mesma margem do avatar/nome, não centralizado no card
   // inteiro (senão ele flutua longe do resto da identidade).
   if (modelo === 'twitter') return { ...base, posicao: 'sup-esq', margemH: 18.6, margemV: 49 }
-  if (modelo === 'citacao') return { ...base, posicao: 'sup-cen', margemH: 9, margemV: 24 }
+  // Citacao: o texto fica centralizado no card de verdade (nao so "no espaco
+  // que sobra") - a caixa de imagem fica menor e mais pra baixo (ou mais pra
+  // cima, se a posicao for "cima") pra nao disputar espaco com o centro.
+  if (modelo === 'citacao') return { ...base, posicao: 'meio-cen', margemH: 9, margemV: 10 }
   return base
 }
 
@@ -401,8 +404,8 @@ function elementosPerfil(canvas, { w, h, nomeMarca }) {
 // usado tanto pra desenhar o espaço reservado (quando ainda não tem imagem)
 // quanto pra encaixar a imagem de verdade depois de enviada.
 export function caixaCitacao(posicao, w, h) {
-  const top = posicao === 'cima' ? h * 0.09 : h * 0.54
-  return { left: w * 0.09, top, width: w * 0.82, height: h * 0.37 }
+  const top = posicao === 'cima' ? h * 0.08 : h * 0.6
+  return { left: w * 0.09, top, width: w * 0.82, height: h * 0.3 }
 }
 
 export function elementosCitacao(canvas, { w, h, imagemPosicao, temImagem }) {

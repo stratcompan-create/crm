@@ -396,7 +396,7 @@ import LucideListOrdered from '~icons/lucide/list-ordered'
 import LucideStar from '~icons/lucide/star'
 import { Button, FormControl, call, toast } from 'frappe-ui'
 import { computed, onBeforeUnmount, onMounted, reactive, ref, watch } from 'vue'
-import { Canvas, Textbox, Rect, Circle, Polygon, FabricImage, Line } from 'fabric'
+import { Canvas, Textbox, Rect, Circle, Polygon, FabricImage, Line, Shadow } from 'fabric'
 import {
   TAMANHOS, POSICOES, POSICOES_LOGO, FUNDO_PADROES, SOMBRA_ESTILOS, FONTES,
   layoutPadraoDe, corDeFundo, corFundoFinal, construirSlide, construirBlocoTexto,
@@ -481,7 +481,8 @@ function aoMoverObjeto(e) {
   if (Math.abs(centroX - alvoX) < limiar) {
     obj.left += alvoX - centroX
     linhaGuiaV = new Line([alvoX, 0, alvoX, h], {
-      stroke: '#ff4d6d', strokeWidth: 1.5, strokeDashArray: [6, 4],
+      stroke: '#ff1744', strokeWidth: w * 0.006, strokeDashArray: [w * 0.014, w * 0.009],
+      shadow: new Shadow({ color: 'rgba(255,23,68,.5)', blur: w * 0.01 }),
       selectable: false, evented: false, excludeFromExport: true, originX: 'left', originY: 'top',
     })
     canvas.add(linhaGuiaV)
@@ -489,7 +490,8 @@ function aoMoverObjeto(e) {
   if (Math.abs(centroY - alvoY) < limiar) {
     obj.top += alvoY - centroY
     linhaGuiaH = new Line([0, alvoY, w, alvoY], {
-      stroke: '#ff4d6d', strokeWidth: 1.5, strokeDashArray: [6, 4],
+      stroke: '#ff1744', strokeWidth: w * 0.006, strokeDashArray: [w * 0.014, w * 0.009],
+      shadow: new Shadow({ color: 'rgba(255,23,68,.5)', blur: w * 0.01 }),
       selectable: false, evented: false, excludeFromExport: true, originX: 'left', originY: 'top',
     })
     canvas.add(linhaGuiaH)
