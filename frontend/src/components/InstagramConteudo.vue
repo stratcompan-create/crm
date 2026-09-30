@@ -74,7 +74,7 @@
               :key="m.value"
               type="button"
               class="flex flex-col items-center gap-1 rounded-lg p-1 transition-transform duration-150 hover:-translate-y-0.5"
-              @click="modelo = m.value"
+              @click="selecionarModelo(m.value)"
             >
               <div
                 class="w-14 overflow-hidden rounded-lg shadow-sm ring-2 ring-offset-2 transition-all duration-150"
@@ -266,6 +266,19 @@ function selecionarTipo(novoTipo) {
     return
   }
   iniciarRascunho(novoTipo)
+}
+
+// Trocar de modelo tem que remontar o layout do modelo escolhido - sem isso,
+// o canvas/layout que já estava salvo (às vezes com texto arrastado à mão)
+// continuava valendo por cima do modelo novo, e parecia "bugado" em qualquer
+// modelo que a pessoa clicasse.
+function selecionarModelo(novoModelo) {
+  if (novoModelo === modelo.value) return
+  modelo.value = novoModelo
+  slides.value.forEach((s) => {
+    delete s.canvas
+    delete s.layout
+  })
 }
 
 function novaConversa() {
