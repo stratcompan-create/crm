@@ -588,7 +588,7 @@ function reaplicarFundoPadrao() {
   if (!canvas) return
   removerPorPapel('padrao-fundo')
   const { w, h } = tamanhoAtivo()
-  aplicarPadraoFundo(canvas, { padrao: layoutAtual.fundoPadrao, w, h, clara: props.modelo === 'citacao' })
+  aplicarPadraoFundo(canvas, { padrao: layoutAtual.fundoPadrao, w, h, clara: ['citacao', 'padrao', 'twitter'].includes(props.modelo) })
   canvas.renderAll()
 }
 

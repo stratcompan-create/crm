@@ -75,13 +75,20 @@ export function layoutPadraoDe(modelo) {
     escala: 100,
     espacamento: 115,
   }
-  if (modelo === 'twitter') return { ...base, posicao: 'meio-esq', margemV: 42 }
+  if (modelo === 'twitter') return { ...base, posicao: 'sup-esq', margemH: 18.6, margemV: 47 }
   if (modelo === 'citacao') return { ...base, posicao: 'sup-esq', margemV: 8 }
   return base
 }
 
+// Modelos "claros" (fundo claro, texto escuro) - Padrão e Estilo Twitter
+// seguem a referência de mercado (MyPostFlow) e usam essa base como padrão;
+// a pessoa ainda pode trocar pra qualquer cor no seletor de fundo.
+export const COR_CLARA_PADRAO = '#f2efe4'
+
 export function corDeFundo(modelo, corMarca) {
-  return modelo === 'citacao' ? '#ffffff' : corMarca
+  if (modelo === 'citacao') return '#ffffff'
+  if (modelo === 'padrao' || modelo === 'twitter') return COR_CLARA_PADRAO
+  return corMarca
 }
 
 // ------------------------------------------------------------------ fundo
@@ -206,12 +213,12 @@ function areaConteudo(w, h, layout) {
 // (mudou posição/margem/fonte) sem remontar o slide inteiro.
 export function estiloTextoPara(modelo, corDestaque, w, h) {
   if (modelo === 'twitter') {
-    return { corTitulo: '#ffffff', corCorpo: '#d0d0d0', tamanhoTituloBase: w * 0.036, tamanhoCorpoBase: w * 0.028 }
+    return { corTitulo: '#3a3a3a', corCorpo: '#8a8a8a', tamanhoTituloBase: w * 0.024, tamanhoCorpoBase: w * 0.02 }
   }
   if (modelo === 'citacao') {
     return { corTitulo: corDestaque, corCorpo: '#666666', tamanhoTituloBase: w * 0.062, tamanhoCorpoBase: w * 0.034 }
   }
-  return { corTitulo: '#ffffff', corCorpo: 'rgba(255,255,255,.55)', tamanhoTituloBase: h * 0.065, tamanhoCorpoBase: h * 0.028 }
+  return { corTitulo: '#1c1c1c', corCorpo: '#6b6b6b', tamanhoTituloBase: h * 0.065, tamanhoCorpoBase: h * 0.028 }
 }
 
 function estiloExtraTexto(layout, w) {
@@ -295,85 +302,68 @@ export function construirBlocoTexto(canvas, { slide, layout, w, h, corTitulo, co
 
 // ------------------------------------------------------------------ elementos fixos de marca por modelo
 
+// Modelo "Padrão" (Minimalista): só handle no topo, categoria no topo direito,
+// e categoria + "Arraste" no rodapé. Sem selo/pill no meio - o título+corpo já
+// ocupa a metade de baixo do card (via layoutPadraoDe: posicao inf-esq).
 function elementosCapa(canvas, { w, h, tipo, nomeMarca }) {
   const margemTopo = w * 0.06
   const handleTexto = '@' + (nomeMarca || __('suamarca')).toLowerCase().replace(/\s+/g, '')
 
   const handleTopo = new Textbox(handleTexto, {
-    left: margemTopo, top: h * 0.02, width: w * 0.45,
-    fontSize: Math.round(h * 0.021), fontFamily: 'Poppins', fill: 'rgba(255,255,255,.7)', papel: 'marca',
+    left: margemTopo, top: h * 0.055, width: w * 0.45,
+    fontSize: Math.round(h * 0.019), fontFamily: 'Poppins', fill: '#4a4a4a', papel: 'marca',
   })
   const tagTopo = new Textbox(tipo || '', {
-    left: w - margemTopo - w * 0.32, top: h * 0.02, width: w * 0.32,
-    fontSize: Math.round(h * 0.021), fontFamily: 'Poppins', fill: 'rgba(255,255,255,.7)', textAlign: 'right', papel: 'marca',
+    left: w - margemTopo - w * 0.32, top: h * 0.055, width: w * 0.32,
+    fontSize: Math.round(h * 0.019), fontFamily: 'Poppins', fill: '#4a4a4a', textAlign: 'right', papel: 'marca',
   })
   canvas.add(handleTopo, tagTopo)
 
-  const pillTop = h * 0.5
-  const pillHeight = h * 0.048
-  const avatarD = pillHeight * 0.74
-  const pillPad = w * 0.012
-  const pillWidth = pillPad * 3 + avatarD + handleTexto.length * w * 0.016
-  const margemConteudo = w * 0.14
-
-  const pill = new Rect({
-    left: margemConteudo, top: pillTop, width: pillWidth, height: pillHeight,
-    rx: pillHeight / 2, ry: pillHeight / 2, fill: 'rgba(255,255,255,.12)', papel: 'marca',
-  })
-  const avatarPill = new Circle({
-    left: margemConteudo + pillPad, top: pillTop + (pillHeight - avatarD) / 2, radius: avatarD / 2, fill: '#ffffff', papel: 'marca',
-  })
-  const handlePill = new Textbox(handleTexto, {
-    left: margemConteudo + pillPad * 2 + avatarD, top: pillTop + pillHeight * 0.24,
-    width: pillWidth, fontSize: Math.round(h * 0.021), fontFamily: 'Poppins', fill: '#ffffff', papel: 'marca',
-  })
-  canvas.add(pill, avatarPill, handlePill)
-
   const rodapeEsq = new Textbox(tipo || '', {
-    left: margemTopo, top: h * 0.95, width: w * 0.4,
-    fontSize: Math.round(h * 0.02), fontFamily: 'Poppins', fill: 'rgba(255,255,255,.45)', papel: 'marca',
+    left: margemTopo, top: h * 0.93, width: w * 0.4,
+    fontSize: Math.round(h * 0.018), fontFamily: 'Poppins', fill: '#8a8a8a', papel: 'marca',
   })
   canvas.add(rodapeEsq)
   if (tipo === 'Carrossel') {
     const rodapeDir = new Textbox(__('Arraste'), {
-      left: w - margemTopo - w * 0.32, top: h * 0.95, width: w * 0.32,
-      fontSize: Math.round(h * 0.02), fontFamily: 'Poppins', fill: 'rgba(255,255,255,.45)', textAlign: 'right', papel: 'marca',
+      left: w - margemTopo - w * 0.32, top: h * 0.93, width: w * 0.32,
+      fontSize: Math.round(h * 0.018), fontFamily: 'Poppins', fill: '#8a8a8a', textAlign: 'right', papel: 'marca',
     })
     canvas.add(rodapeDir)
   }
 }
 
+// Modelo "Estilo Twitter" (Profile): avatar pequeno + nome em negrito + selo
+// de verificado, com o @handle logo abaixo - tudo compacto, mesma margem
+// esquerda do título/corpo (que renderiza como se fosse a bio/post abaixo).
 function elementosPerfil(canvas, { w, h, nomeMarca }) {
   const nomeTexto = nomeMarca || __('Sua marca')
-  const avatarD = w * 0.08
-  const avatarLeft = w * 0.18
-  const avatarTop = h * 0.42
+  const margemEsq = w * 0.186
+  const avatarD = w * 0.045
+  const avatarTop = h * 0.404
 
-  const avatar = new Circle({ left: avatarLeft, top: avatarTop, radius: avatarD / 2, fill: '#2f2f2f', papel: 'marca' })
-  const marca = new Textbox('?', {
-    left: avatarLeft, top: avatarTop + avatarD * 0.18, width: avatarD,
-    fontSize: Math.round(avatarD * 0.5), fontFamily: 'Poppins', fill: 'rgba(255,255,255,.35)',
-    textAlign: 'center', selectable: false, papel: 'marca',
+  const avatar = new Circle({
+    left: margemEsq, top: avatarTop, radius: avatarD / 2, fill: '#3a3a3a', selectable: false, evented: false, papel: 'marca',
   })
-  canvas.add(avatar, marca)
+  canvas.add(avatar)
 
-  const nomeLeft = avatarLeft + avatarD + w * 0.02
-  const nomeTop = avatarTop + h * 0.013
+  const nomeLeft = margemEsq + avatarD + w * 0.018
+  const nomeTop = avatarTop - h * 0.006
   const nome = new Textbox(nomeTexto, {
     left: nomeLeft, top: nomeTop,
-    width: w * 0.6, fontSize: Math.round(w * 0.036), fontWeight: 'bold', fontFamily: 'Poppins', fill: '#ffffff', papel: 'marca',
+    width: w * 0.55, fontSize: Math.round(w * 0.03), fontWeight: 'bold', fontFamily: 'Poppins', fill: '#1c1c1c', papel: 'marca',
   })
   const selo = new Circle({
-    left: nomeLeft + nomeTexto.length * w * 0.021 + 10,
-    top: nomeTop + w * 0.005, radius: w * 0.014, fill: '#3897f0', papel: 'marca',
+    left: nomeLeft + nomeTexto.length * w * 0.0175 + 8,
+    top: nomeTop - h * 0.001, radius: w * 0.011, fill: '#3897f0', selectable: false, evented: false, papel: 'marca',
   })
   const check = new Textbox('✓', {
-    left: selo.left - w * 0.008, top: selo.top - w * 0.011,
-    fontSize: Math.round(w * 0.02), fontFamily: 'Poppins', fill: '#ffffff', selectable: false, papel: 'marca',
+    left: selo.left - w * 0.0065, top: selo.top - w * 0.008,
+    fontSize: Math.round(w * 0.016), fontFamily: 'Poppins', fill: '#ffffff', selectable: false, evented: false, papel: 'marca',
   })
   const handle = new Textbox('@' + nomeTexto.toLowerCase().replace(/\s+/g, ''), {
-    left: nomeLeft, top: nomeTop + Math.round(w * 0.036) + 4,
-    width: w * 0.6, fontSize: Math.round(w * 0.022), fontFamily: 'Poppins', fill: '#9fb0b5', papel: 'marca',
+    left: nomeLeft, top: nomeTop + Math.round(w * 0.03) + 2,
+    width: w * 0.55, fontSize: Math.round(w * 0.018), fontFamily: 'Poppins', fill: '#8a8a8a', papel: 'marca',
   })
   canvas.add(nome, selo, check, handle)
 }
@@ -391,7 +381,7 @@ function elementosCitacao(canvas, { w, h }) {
 export function construirSlide(canvas, { tipo, modelo, slide, corMarca, corDestaque, nomeMarca }) {
   const { w, h } = TAMANHOS[tipo] || TAMANHOS.Carrossel
   const layout = { ...layoutPadraoDe(modelo), ...(slide.layout || {}) }
-  const claraDeFundo = modelo === 'citacao'
+  const claraDeFundo = ['citacao', 'padrao', 'twitter'].includes(modelo)
 
   canvas.setDimensions({ width: w, height: h })
   const corBase = corDeFundo(modelo, corMarca)
