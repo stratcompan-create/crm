@@ -61,6 +61,7 @@
         </button>
       </div>
       <input ref="fileInput" type="file" accept="image/*" class="hidden" @change="onFileSelecionado" />
+      <input ref="fileInputExtra" type="file" accept="image/*" class="hidden" @change="onFileSelecionadoExtra" />
 
       <!-- Texto & IA -->
       <div class="border-t border-outline-gray-1 pt-3">
@@ -195,6 +196,52 @@
               :value="layoutAtual.fundoCor2 || corDestaque"
               @input="atualizarLayout({ fundoCor2: $event.target.value })"
             />
+          </div>
+          <div class="mt-1 text-p-sm text-ink-gray-6">{{ __('Imagem de fundo (cobre o slide inteiro)') }}</div>
+          <div class="flex gap-2">
+            <Button
+              class="flex-1" variant="outline" size="sm"
+              :label="layoutAtual.fundoImagem ? __('Trocar imagem') : __('Adicionar imagem')"
+              :loading="enviandoFundo"
+              @click="abrirUploadFundo"
+            />
+            <Button v-if="layoutAtual.fundoImagem" variant="ghost" size="sm" :label="__('Remover')" @click="removerFundoImagem" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Imagem da citação -->
+      <div v-if="modelo === 'citacao'" class="mt-4 border-t border-outline-gray-1 pt-3">
+        <button type="button" class="mb-2 flex w-full items-center justify-between text-p-sm font-medium text-ink-gray-7" @click="secoes.citacaoImagem = !secoes.citacaoImagem">
+          {{ __('Imagem da citação') }}
+          <LucideChevronDown class="size-3.5 transition-transform" :class="secoes.citacaoImagem ? '' : '-rotate-90'" />
+        </button>
+        <div v-if="secoes.citacaoImagem" class="flex flex-col gap-2">
+          <div class="flex gap-2">
+            <Button
+              class="flex-1" variant="outline" size="sm"
+              :label="layoutAtual.citacaoImagem ? __('Trocar imagem') : __('Adicionar imagem')"
+              :loading="enviandoCitacao"
+              @click="abrirUploadCitacao"
+            />
+            <Button v-if="layoutAtual.citacaoImagem" variant="ghost" size="sm" :label="__('Remover')" @click="removerImagemCitacao" />
+          </div>
+          <div class="mb-1 text-p-sm text-ink-gray-6">{{ __('Posição da caixa') }}</div>
+          <div class="grid grid-cols-2 gap-1">
+            <button
+              type="button" class="rounded border px-1 py-1.5 text-[10px]"
+              :class="(layoutAtual.imagemPosicao || 'baixo') === 'cima' ? 'border-ink-gray-9 bg-surface-gray-3 font-medium text-ink-gray-9' : 'border-outline-gray-2 text-ink-gray-6 hover:bg-surface-gray-2'"
+              @click="atualizarLayout({ imagemPosicao: 'cima' })"
+            >
+              {{ __('Em cima') }}
+            </button>
+            <button
+              type="button" class="rounded border px-1 py-1.5 text-[10px]"
+              :class="(layoutAtual.imagemPosicao || 'baixo') === 'baixo' ? 'border-ink-gray-9 bg-surface-gray-3 font-medium text-ink-gray-9' : 'border-outline-gray-2 text-ink-gray-6 hover:bg-surface-gray-2'"
+              @click="atualizarLayout({ imagemPosicao: 'baixo' })"
+            >
+              {{ __('Embaixo') }}
+            </button>
           </div>
         </div>
       </div>
@@ -353,7 +400,7 @@ import { Canvas, Textbox, Rect, Circle, Polygon, FabricImage } from 'fabric'
 import {
   TAMANHOS, POSICOES, POSICOES_LOGO, FUNDO_PADROES, SOMBRA_ESTILOS, FONTES,
   layoutPadraoDe, corDeFundo, corFundoFinal, construirSlide, construirBlocoTexto,
-  aplicarPadraoFundo, aplicarSombra, aplicarLogo, estiloTextoPara,
+  aplicarPadraoFundo, aplicarSombra, aplicarLogo, aplicarFundoImagem, aplicarImagemCitacao, elementosCitacao, estiloTextoPara,
 } from '@/utils/instagramTemplates'
 
 const props = defineProps({
@@ -375,16 +422,19 @@ const PROPRIEDADES_EXTRA = ['papel']
 const canvasEl = ref(null)
 const canvasArea = ref(null)
 const fileInput = ref(null)
+const fileInputExtra = ref(null)
 const objetoSelecionado = ref(null)
 const camadas = ref([])
 const salvando = ref(false)
 const gerandoConteudo = ref(false)
 const refinando = ref(false)
+const enviandoFundo = ref(false)
+const enviandoCitacao = ref(false)
 const instrucaoRefinar = ref('')
 const tituloEdit = ref(props.slide.titulo || '')
 const corpoEdit = ref(props.slide.corpo || '')
 const corFundoAtual = ref(props.corMarca)
-const secoes = reactive({ texto: true, layout: false, sombra: false, fundo: false, tipografia: false, logo: false })
+const secoes = reactive({ texto: true, layout: false, sombra: false, fundo: false, tipografia: false, logo: false, citacaoImagem: false })
 
 const layoutAtual = reactive({ ...layoutPadraoDe(props.modelo), ...(props.slide.layout || {}) })
 
@@ -400,6 +450,7 @@ const opcoesFontes = FONTES.map((f) => ({ label: f, value: f }))
 
 let canvas = null
 let alvoUpload = null
+let alvoExtra = null
 
 function tamanhoAtivo() {
   return TAMANHOS[props.tipo] || TAMANHOS.Carrossel
@@ -485,6 +536,14 @@ async function montarCanvas() {
     })
     ajustarEscalaTela()
     corFundoAtual.value = layoutAtual.fundoCor || corDeFundo(props.modelo, props.corMarca)
+    if (layoutAtual.fundoImagem) {
+      await aplicarFundoImagem(canvas, { url: layoutAtual.fundoImagem, w, h })
+      canvas.renderAll()
+    }
+    if (props.modelo === 'citacao' && layoutAtual.citacaoImagem) {
+      await aplicarImagemCitacao(canvas, { url: layoutAtual.citacaoImagem, posicao: layoutAtual.imagemPosicao, w, h })
+      canvas.renderAll()
+    }
     if (layoutAtual.logoAtivo && props.logoUrl) {
       await aplicarLogo(canvas, { logoUrl: props.logoUrl, posicao: layoutAtual.logoPosicao, w, h })
       canvas.renderAll()
@@ -619,6 +678,30 @@ async function reaplicarLogo() {
   atualizarCamadas()
 }
 
+async function reaplicarFundoImagem() {
+  if (!canvas) return
+  removerPorPapel('fundo-imagem')
+  const { w, h } = tamanhoAtivo()
+  if (layoutAtual.fundoImagem) {
+    await aplicarFundoImagem(canvas, { url: layoutAtual.fundoImagem, w, h })
+  }
+  canvas.renderAll()
+  atualizarCamadas()
+}
+
+async function reaplicarImagemCitacao() {
+  if (!canvas || props.modelo !== 'citacao') return
+  removerPorPapel('citacao-imagem', 'marca')
+  const { w, h } = tamanhoAtivo()
+  if (layoutAtual.citacaoImagem) {
+    await aplicarImagemCitacao(canvas, { url: layoutAtual.citacaoImagem, posicao: layoutAtual.imagemPosicao, w, h })
+  } else {
+    elementosCitacao(canvas, { w, h, imagemPosicao: layoutAtual.imagemPosicao, temImagem: false })
+  }
+  canvas.renderAll()
+  atualizarCamadas()
+}
+
 function atualizarLayout(mudancas) {
   Object.assign(layoutAtual, mudancas)
   props.slide.layout = { ...layoutAtual }
@@ -626,6 +709,8 @@ function atualizarLayout(mudancas) {
   if ('sombraEstilo' in mudancas || 'sombraOpacidade' in mudancas) reaplicarSombra()
   if ('fundoGradiente' in mudancas || 'fundoCor2' in mudancas) reaplicarFundoBase()
   if ('logoAtivo' in mudancas || 'logoPosicao' in mudancas) reaplicarLogo()
+  if ('fundoImagem' in mudancas) reaplicarFundoImagem()
+  if ('citacaoImagem' in mudancas || 'imagemPosicao' in mudancas) reaplicarImagemCitacao()
   reaplicarTexto()
 }
 
@@ -733,16 +818,7 @@ async function onFileSelecionado(ev) {
   const file = ev.target.files?.[0]
   ev.target.value = ''
   if (!file) return
-  const formData = new FormData()
-  formData.append('file', file)
-  formData.append('is_private', '0')
-  const resp = await fetch('/api/method/upload_file', {
-    method: 'POST',
-    headers: { 'X-Frappe-CSRF-Token': window.csrf_token },
-    body: formData,
-  })
-  const data = await resp.json()
-  const url = data?.message?.file_url
+  const url = await uploadArquivo(file)
   if (!url) return
   const img = await FabricImage.fromURL(url, { crossOrigin: 'anonymous' })
   const { w } = tamanhoAtivo()
@@ -759,6 +835,59 @@ async function onFileSelecionado(ev) {
   }
   canvas.renderAll()
   atualizarCamadas()
+}
+
+// Upload que não vira objeto solto no canvas - só guarda a URL no layout
+// (imagem de fundo do slide inteiro, ou a foto da caixa da citação).
+async function uploadArquivo(file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('is_private', '0')
+  const resp = await fetch('/api/method/upload_file', {
+    method: 'POST',
+    headers: { 'X-Frappe-CSRF-Token': window.csrf_token },
+    body: formData,
+  })
+  const data = await resp.json()
+  return data?.message?.file_url || ''
+}
+
+function abrirUploadFundo() {
+  alvoExtra = 'fundo'
+  fileInputExtra.value?.click()
+}
+
+function abrirUploadCitacao() {
+  alvoExtra = 'citacao'
+  fileInputExtra.value?.click()
+}
+
+async function onFileSelecionadoExtra(ev) {
+  const file = ev.target.files?.[0]
+  ev.target.value = ''
+  if (!file || !alvoExtra) return
+  const carregando = alvoExtra === 'fundo' ? enviandoFundo : enviandoCitacao
+  carregando.value = true
+  try {
+    const url = await uploadArquivo(file)
+    if (!url) {
+      toast.error(__('Não consegui enviar a imagem agora.'))
+      return
+    }
+    if (alvoExtra === 'fundo') atualizarLayout({ fundoImagem: url })
+    else atualizarLayout({ citacaoImagem: url })
+  } finally {
+    carregando.value = false
+    alvoExtra = null
+  }
+}
+
+function removerFundoImagem() {
+  atualizarLayout({ fundoImagem: '' })
+}
+
+function removerImagemCitacao() {
+  atualizarLayout({ citacaoImagem: '' })
 }
 
 function aplicarFonte() {

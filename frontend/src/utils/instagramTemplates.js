@@ -57,7 +57,7 @@ export const FONTES = [
 export function layoutPadraoDe(modelo) {
   const base = {
     posicao: 'meio-cen',
-    margemH: 14,
+    margemH: 12,
     margemV: 19,
     glass: false,
     sombraEstilo: 'nenhuma',
@@ -66,6 +66,9 @@ export function layoutPadraoDe(modelo) {
     fundoCor: '',
     fundoGradiente: false,
     fundoCor2: '',
+    fundoImagem: '',
+    citacaoImagem: '',
+    imagemPosicao: 'baixo',
     textoContorno: false,
     textoSombra: false,
     logoAtivo: false,
@@ -75,7 +78,11 @@ export function layoutPadraoDe(modelo) {
     escala: 100,
     espacamento: 115,
   }
-  if (modelo === 'citacao') return { ...base, posicao: 'sup-cen', margemV: 8 }
+  // Estilo Twitter: o texto principal é o "post" logo abaixo do perfil - fica
+  // alinhado com a mesma margem do avatar/nome, não centralizado no card
+  // inteiro (senão ele flutua longe do resto da identidade).
+  if (modelo === 'twitter') return { ...base, posicao: 'sup-esq', margemH: 18.6, margemV: 49 }
+  if (modelo === 'citacao') return { ...base, posicao: 'sup-cen', margemH: 9, margemV: 8 }
   return base
 }
 
@@ -176,6 +183,29 @@ export function aplicarSombra(canvas, { estilo, opacidade, w, h }) {
   canvas.add(retangulo)
 }
 
+// Imagem cobrindo o slide inteiro (recorta o excesso, como um "cover" de
+// CSS), atrás de tudo - continua a mostrar a cor de fundo nas bordas se a
+// proporção da imagem não bater exatamente com a do slide.
+export async function aplicarFundoImagem(canvas, { url, w, h }) {
+  if (!url) return
+  let img
+  try {
+    img = await FabricImage.fromURL(url, { crossOrigin: 'anonymous' })
+  } catch {
+    return
+  }
+  const escala = Math.max(w / img.width, h / img.height)
+  const larguraFinal = img.width * escala
+  const alturaFinal = img.height * escala
+  img.set({
+    left: (w - larguraFinal) / 2, top: (h - alturaFinal) / 2,
+    originX: 'left', originY: 'top', scaleX: escala, scaleY: escala,
+    papel: 'fundo-imagem', selectable: false, evented: false,
+  })
+  canvas.add(img)
+  canvas.sendObjectToBack(img)
+}
+
 export async function aplicarLogo(canvas, { logoUrl, posicao, w, h }) {
   if (!logoUrl) return
   let img
@@ -212,12 +242,12 @@ function areaConteudo(w, h, layout) {
 // (mudou posição/margem/fonte) sem remontar o slide inteiro.
 export function estiloTextoPara(modelo, corDestaque, w, h) {
   if (modelo === 'twitter') {
-    return { corTitulo: '#3a3a3a', corCorpo: '#8a8a8a', tamanhoTituloBase: w * 0.024, tamanhoCorpoBase: w * 0.02 }
+    return { corTitulo: '#2d2d2d', corCorpo: '#767676', tamanhoTituloBase: w * 0.042, tamanhoCorpoBase: w * 0.03 }
   }
   if (modelo === 'citacao') {
     return { corTitulo: corDestaque, corCorpo: '#666666', tamanhoTituloBase: w * 0.062, tamanhoCorpoBase: w * 0.034 }
   }
-  return { corTitulo: '#1c1c1c', corCorpo: '#6b6b6b', tamanhoTituloBase: h * 0.065, tamanhoCorpoBase: h * 0.028 }
+  return { corTitulo: '#1c1c1c', corCorpo: '#6b6b6b', tamanhoTituloBase: h * 0.058, tamanhoCorpoBase: h * 0.028 }
 }
 
 function estiloExtraTexto(layout, w) {
@@ -367,12 +397,50 @@ function elementosPerfil(canvas, { w, h, nomeMarca }) {
   canvas.add(nome, selo, check, handle)
 }
 
-function elementosCitacao(canvas, { w, h }) {
+// A caixa de imagem da citação pode ficar embaixo (padrão) ou em cima -
+// usado tanto pra desenhar o espaço reservado (quando ainda não tem imagem)
+// quanto pra encaixar a imagem de verdade depois de enviada.
+export function caixaCitacao(posicao, w, h) {
+  const top = posicao === 'cima' ? h * 0.09 : h * 0.54
+  return { left: w * 0.09, top, width: w * 0.82, height: h * 0.37 }
+}
+
+export function elementosCitacao(canvas, { w, h, imagemPosicao, temImagem }) {
+  if (temImagem) return
+  const caixa = caixaCitacao(imagemPosicao, w, h)
   const espacoImagem = new Rect({
-    left: w * 0.09, top: h * 0.54, width: w * 0.82, height: h * 0.37, rx: 20, ry: 20, originX: 'left', originY: 'top',
+    ...caixa, rx: 20, ry: 20, originX: 'left', originY: 'top',
     fill: '#f2f2f2', stroke: '#d8d8d8', strokeWidth: 1, strokeDashArray: [6, 6], papel: 'marca',
   })
   canvas.add(espacoImagem)
+}
+
+// Imagem de verdade dentro da caixa da citação - cobre a caixa toda
+// (recorta o excesso, como um "cover" de CSS) e ganha as mesmas bordas
+// arredondadas do espaço reservado que ela substitui.
+export async function aplicarImagemCitacao(canvas, { url, posicao, w, h }) {
+  if (!url) return
+  let img
+  try {
+    img = await FabricImage.fromURL(url, { crossOrigin: 'anonymous' })
+  } catch {
+    return
+  }
+  const caixa = caixaCitacao(posicao, w, h)
+  const escala = Math.max(caixa.width / img.width, caixa.height / img.height)
+  const larguraFinal = img.width * escala
+  const alturaFinal = img.height * escala
+  img.set({
+    left: caixa.left - (larguraFinal - caixa.width) / 2,
+    top: caixa.top - (alturaFinal - caixa.height) / 2,
+    originX: 'left', originY: 'top', scaleX: escala, scaleY: escala,
+    clipPath: new Rect({
+      left: caixa.left, top: caixa.top, width: caixa.width, height: caixa.height,
+      rx: 20, ry: 20, originX: 'left', originY: 'top', absolutePositioned: true,
+    }),
+    papel: 'citacao-imagem', selectable: false, evented: false,
+  })
+  canvas.add(img)
 }
 
 // ------------------------------------------------------------------ montagem geral
@@ -390,7 +458,7 @@ export function construirSlide(canvas, { tipo, modelo, slide, corMarca, corDesta
   aplicarSombra(canvas, { estilo: layout.sombraEstilo, opacidade: layout.sombraOpacidade, w, h })
 
   if (modelo === 'twitter') elementosPerfil(canvas, { w, h, nomeMarca })
-  else if (modelo === 'citacao') elementosCitacao(canvas, { w, h })
+  else if (modelo === 'citacao') elementosCitacao(canvas, { w, h, imagemPosicao: layout.imagemPosicao, temImagem: !!layout.citacaoImagem })
   else elementosCapa(canvas, { w, h, tipo, nomeMarca })
 
   construirBlocoTexto(canvas, { slide, layout, w, h, ...estiloTextoPara(modelo, corDestaque, w, h) })
