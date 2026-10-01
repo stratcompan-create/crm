@@ -385,13 +385,19 @@ function elementosPerfil(canvas, { w, h, nomeMarca }) {
     left: nomeLeft, top: nomeTop, originX: 'left', originY: 'top',
     width: w * 0.55, fontSize: Math.round(w * 0.03), fontWeight: 'bold', fontFamily: 'Poppins', fill: '#1c1c1c', papel: 'marca',
   })
+  // a largura do nome varia por fonte/letras - medir o texto renderizado de
+  // verdade (calcTextWidth) em vez de estimar por quantidade de caracteres,
+  // senão o selo "flutua" longe do nome dependendo do texto da marca
+  const nomeLargura = nome.calcTextWidth()
+  const seloRaio = w * 0.011
+  const seloLeft = nomeLeft + nomeLargura + w * 0.008
+  const seloTop = nomeTop - h * 0.001
   const selo = new Circle({
-    left: nomeLeft + nomeTexto.length * w * 0.0175 + 8,
-    top: nomeTop - h * 0.001, radius: w * 0.011, fill: '#3897f0', selectable: false, evented: false, papel: 'marca', originX: 'left', originY: 'top',
+    left: seloLeft, top: seloTop, radius: seloRaio, fill: '#3897f0', selectable: false, evented: false, papel: 'marca', originX: 'left', originY: 'top',
   })
   const check = new Textbox('✓', {
-    left: selo.left - w * 0.0065, top: selo.top - w * 0.008, originX: 'left', originY: 'top',
-    fontSize: Math.round(w * 0.016), fontFamily: 'Poppins', fill: '#ffffff', selectable: false, evented: false, papel: 'marca',
+    left: seloLeft + seloRaio, top: seloTop + seloRaio, originX: 'center', originY: 'center', textAlign: 'center',
+    width: seloRaio * 2, fontSize: Math.round(w * 0.016), fontWeight: 'bold', fontFamily: 'Poppins', fill: '#ffffff', selectable: false, evented: false, papel: 'marca',
   })
   const handle = new Textbox('@' + nomeTexto.toLowerCase().replace(/\s+/g, ''), {
     left: nomeLeft, top: nomeTop + Math.round(w * 0.03) + 2, originX: 'left', originY: 'top',
