@@ -818,6 +818,11 @@ def delete_bulk_docs(doctype: str, items: str | list, delete_linked: bool = Fals
 	items = frappe.parse_json(items)
 	if not isinstance(items, list):
 		frappe.throw(_("Items must be a list"))
+	# doctypes com autoname "autoincrement" (ex.: CRM Task) tem o "name" como
+	# numero - o navegador manda os ids do JSON como int, nao como string, e
+	# isso quebra mais na frente (frappe.get_doc, join de nomes pro log de
+	# falha etc. esperam sempre string). Normaliza aqui, uma vez so.
+	items = [str(item) for item in items]
 
 	for doc in items:
 		try:

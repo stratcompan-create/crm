@@ -31,6 +31,7 @@ MODULES = [
     "instagram_echo_leitura",
     "assinatura_proposta",
     "instagram_metricas",
+    "exclusao_em_massa",
 ]
 
 
