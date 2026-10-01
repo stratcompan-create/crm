@@ -6,6 +6,15 @@
         <canvas ref="canvasEl" class="rounded-lg" />
       </div>
       <div class="flex items-center gap-2">
+        <button
+          type="button"
+          class="flex size-8 items-center justify-center rounded-lg border border-outline-gray-2 text-ink-gray-6 hover:bg-surface-gray-2 disabled:cursor-not-allowed disabled:opacity-40"
+          :title="__('Desfazer última alteração')"
+          :disabled="!podeDesfazer"
+          @click="desfazer"
+        >
+          <LucideUndo2 class="size-4" />
+        </button>
         <Button variant="outline" size="sm" :label="__('Baixar PNG')" @click="baixarPng" />
         <Button variant="solid" size="sm" :label="__('Salvar')" :loading="salvando" @click="salvar" />
       </div>
@@ -389,6 +398,7 @@ import LucideType from '~icons/lucide/type'
 import LucideImage from '~icons/lucide/image'
 import LucideSquare from '~icons/lucide/square'
 import LucideTrash2 from '~icons/lucide/trash-2'
+import LucideUndo2 from '~icons/lucide/undo-2'
 import LucideChevronDown from '~icons/lucide/chevron-down'
 import LucideArrowRight from '~icons/lucide/arrow-right'
 import LucideQuote from '~icons/lucide/quote'
@@ -453,6 +463,42 @@ let alvoUpload = null
 let alvoExtra = null
 let linhaGuiaV = null
 let linhaGuiaH = null
+
+// Desfazer: pilha de estados anteriores do canvas (só desse slide - zera ao
+// trocar de slide). Cada ação "registra o passo" ANTES de mudar o canvas,
+// guardando pra onde voltar; um debounce curto evita empilhar um passo por
+// tecla digitada ou por cada pixel de um arrasto de slider.
+let pilhaDesfazer = []
+const LIMITE_DESFAZER = 25
+const JANELA_DEBOUNCE_MS = 600
+let ultimoRegistroDesfazer = 0
+const podeDesfazer = ref(false)
+
+function registrarPasso() {
+  if (!canvas) return
+  const agora = Date.now()
+  if (agora - ultimoRegistroDesfazer < JANELA_DEBOUNCE_MS) return
+  ultimoRegistroDesfazer = agora
+  pilhaDesfazer.push(JSON.stringify(canvas.toObject(PROPRIEDADES_EXTRA)))
+  if (pilhaDesfazer.length > LIMITE_DESFAZER) pilhaDesfazer.shift()
+  podeDesfazer.value = true
+}
+
+async function desfazer() {
+  if (!canvas || !pilhaDesfazer.length) return
+  const estado = pilhaDesfazer.pop()
+  await canvas.loadFromJSON(JSON.parse(estado))
+  ajustarEscalaTela()
+  canvas.renderAll()
+  atualizarCamadas()
+  const tituloObj = canvas.getObjects().find((o) => o.papel === 'titulo')
+  const corpoObj = canvas.getObjects().find((o) => o.papel === 'corpo')
+  if (tituloObj) { props.slide.titulo = tituloObj.text; tituloEdit.value = tituloObj.text }
+  if (corpoObj) { props.slide.corpo = corpoObj.text; corpoEdit.value = corpoObj.text }
+  podeDesfazer.value = pilhaDesfazer.length > 0
+  // o próximo registro não deve respeitar o debounce do passo que acabou de ser desfeito
+  ultimoRegistroDesfazer = 0
+}
 
 function tamanhoAtivo() {
   return TAMANHOS[props.tipo] || TAMANHOS.Carrossel
@@ -606,6 +652,8 @@ onMounted(() => {
   canvas.on('object:moving', aoMoverObjeto)
   canvas.on('object:modified', limparGuias)
   canvas.on('mouse:up', limparGuias)
+  canvas.on('before:transform', registrarPasso)
+  canvas.on('text:editing:entered', registrarPasso)
   montarCanvas()
   window.addEventListener('resize', ajustarEscalaTela)
 })
@@ -623,12 +671,16 @@ watch(() => [props.conversa, props.indice], () => {
   instrucaoRefinar.value = ''
   Object.assign(layoutAtual, layoutPadraoDe(props.modelo), props.slide.layout || {})
   canvas.clear()
+  pilhaDesfazer = []
+  podeDesfazer.value = false
+  ultimoRegistroDesfazer = 0
   montarCanvas()
 })
 
 // ------------------------------------------------------------------ texto & IA
 
 function aoEditarTexto() {
+  registrarPasso()
   props.slide.titulo = tituloEdit.value
   props.slide.corpo = corpoEdit.value
   delete props.slide.canvas
@@ -639,6 +691,7 @@ async function gerarConteudoSlide() {
   gerandoConteudo.value = true
   try {
     const r = await call('crm.api.conteudo.gerar_texto_slide', { conversa: props.conversa, indice: props.indice })
+    registrarPasso()
     props.slide.titulo = r.titulo
     props.slide.corpo = r.corpo
     delete props.slide.canvas
@@ -659,6 +712,7 @@ async function refinarSlide() {
     const r = await call('crm.api.conteudo.gerar_texto_slide', {
       conversa: props.conversa, indice: props.indice, instrucao: instrucaoRefinar.value,
     })
+    registrarPasso()
     props.slide.titulo = r.titulo
     props.slide.corpo = r.corpo
     delete props.slide.canvas
@@ -750,6 +804,7 @@ async function reaplicarImagemCitacao() {
 }
 
 function atualizarLayout(mudancas) {
+  registrarPasso()
   Object.assign(layoutAtual, mudancas)
   props.slide.layout = { ...layoutAtual }
   if ('fundoPadrao' in mudancas) reaplicarFundoPadrao()
@@ -774,6 +829,7 @@ function aplicarEmTodos() {
 // ------------------------------------------------------------------ ferramentas gerais
 
 function adicionarTexto() {
+  registrarPasso()
   const { w } = tamanhoAtivo()
   const t = new Textbox(__('Novo texto'), { left: w * 0.1, top: w * 0.1, width: w * 0.6, fontSize: Math.round(w * 0.04), fill: '#ffffff', fontFamily: 'Poppins', originX: 'left', originY: 'top' })
   canvas.add(t)
@@ -783,6 +839,7 @@ function adicionarTexto() {
 }
 
 function adicionarForma() {
+  registrarPasso()
   const { w } = tamanhoAtivo()
   const r = new Rect({ left: w * 0.1, top: w * 0.1, width: w * 0.3, height: w * 0.2, fill: props.corDestaque, originX: 'left', originY: 'top' })
   canvas.add(r)
@@ -792,6 +849,7 @@ function adicionarForma() {
 }
 
 function adicionarSeta() {
+  registrarPasso()
   const { w } = tamanhoAtivo()
   const tam = w * 0.2
   const pontos = [
@@ -806,6 +864,7 @@ function adicionarSeta() {
 }
 
 function adicionarAspas() {
+  registrarPasso()
   const { w } = tamanhoAtivo()
   const aspas = new Textbox('"', {
     left: w * 0.1, top: w * 0.06, width: w * 0.3, originX: 'left', originY: 'top',
@@ -818,6 +877,7 @@ function adicionarAspas() {
 }
 
 function adicionarNumeracao() {
+  registrarPasso()
   const { w } = tamanhoAtivo()
   const d = w * 0.12
   const circulo = new Circle({ left: w * 0.1, top: w * 0.1, radius: d / 2, fill: props.corDestaque, originX: 'left', originY: 'top' })
@@ -832,6 +892,7 @@ function adicionarNumeracao() {
 }
 
 function adicionarEstrela() {
+  registrarPasso()
   const { w } = tamanhoAtivo()
   const raioExt = w * 0.09
   const raioInt = raioExt * 0.42
@@ -850,6 +911,7 @@ function adicionarEstrela() {
 
 function removerSelecionado() {
   if (!objetoSelecionado.value) return
+  registrarPasso()
   canvas.remove(objetoSelecionado.value)
   canvas.discardActiveObject()
   canvas.renderAll()
@@ -868,6 +930,7 @@ async function onFileSelecionado(ev) {
   const url = await uploadArquivo(file)
   if (!url) return
   const img = await FabricImage.fromURL(url, { crossOrigin: 'anonymous' })
+  registrarPasso()
   const { w } = tamanhoAtivo()
   if (alvoUpload && alvoUpload.type === 'image') {
     img.set({ left: alvoUpload.left, top: alvoUpload.top, scaleX: alvoUpload.scaleX, scaleY: alvoUpload.scaleY, originX: 'left', originY: 'top' })
@@ -939,25 +1002,30 @@ function removerImagemCitacao() {
 
 function aplicarFonte() {
   if (objetoSelecionado.value?.type !== 'textbox') return
+  registrarPasso()
   objetoSelecionado.value.set({ fontFamily: propTexto.value.fontFamily })
   canvas.renderAll()
 }
 function aplicarTamanho() {
   if (objetoSelecionado.value?.type !== 'textbox') return
+  registrarPasso()
   objetoSelecionado.value.set({ fontSize: Number(propTexto.value.fontSize) || 32 })
   canvas.renderAll()
 }
 function aplicarCorTexto() {
   if (objetoSelecionado.value?.type !== 'textbox') return
+  registrarPasso()
   objetoSelecionado.value.set({ fill: propTexto.value.fill })
   canvas.renderAll()
 }
 function aplicarCorForma() {
   if (!['rect', 'circle', 'polygon'].includes(objetoSelecionado.value?.type)) return
+  registrarPasso()
   objetoSelecionado.value.set({ fill: propForma.value.fill })
   canvas.renderAll()
 }
 function aplicarCorFundo() {
+  registrarPasso()
   layoutAtual.fundoCor = corFundoAtual.value
   props.slide.layout = { ...layoutAtual }
   reaplicarFundoBase()
