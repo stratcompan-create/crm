@@ -44,18 +44,34 @@ def run():
 	assign_add({"doctype": "CRM Task", "name": t1.name, "assign_to": [frappe.session.user]})
 	frappe.db.commit()
 
-	antes = frappe.db.count("Error Log")
-
-	# exatamente como o navegador manda pra um doctype autoincrement: uma
-	# lista de NÚMEROS json, não de strings
-	resultado = delete_bulk_docs("CRM Task", json.dumps([int(t1.name), int(t2.name)]))
+	# o @frappe.whitelist() do Frappe só valida o TIPO dos argumentos contra
+	# a anotação da função (ex.: "docname: str") quando a chamada vem de uma
+	# requisição HTTP de verdade - "bench execute" não ativa isso sozinho, e
+	# sem essa flag o teste passaria mesmo se o bug voltasse. in_test=True
+	# ativa a mesma validação (frappe.whitelist checa local.request OR
+	# local.flags.in_test).
+	flag_anterior = frappe.local.flags.in_test
+	frappe.local.flags.in_test = True
+	try:
+		# exatamente como o navegador manda pra um doctype autoincrement: uma
+		# lista de NÚMEROS json, não de strings
+		resultado = delete_bulk_docs("CRM Task", json.dumps([int(t1.name), int(t2.name)]))
+	finally:
+		frappe.local.flags.in_test = flag_anterior
 
 	ck("delete_bulk_docs não lança exceção com ids inteiros", resultado == "success")
 	ck("tarefa 1 (com vínculos) foi excluída de verdade", not frappe.db.exists("CRM Task", t1.name))
 	ck("tarefa 2 (sem vínculos) foi excluída de verdade", not frappe.db.exists("CRM Task", t2.name))
 
-	depois = frappe.db.count("Error Log")
-	ck("não registrou nenhum Error Log novo (antes vazava 'Bulk Delete Error')", depois == antes, f"antes={antes} depois={depois}")
+	# checa especificamente pela assinatura do bug (não uma contagem geral de
+	# Error Log, que pode variar por ruído de outros testes da suíte rodando
+	# por perto) - era exatamente essa mensagem que aparecia na Saúde do sistema
+	vazou_bug = frappe.get_all(
+		"Error Log",
+		filters={"method": ["like", f"%linked docs for CRM Task {t1.name}%"]},
+		limit=1,
+	)
+	ck("não vazou o erro 'Argument docname should be... int instead' pra CRM Task", not vazou_bug, vazou_bug)
 
 	frappe.db.commit()
 	return res
