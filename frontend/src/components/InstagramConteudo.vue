@@ -132,6 +132,23 @@
               >
                 <LucideCopy class="size-3.5" />
               </button>
+              <button
+                type="button"
+                class="flex size-7 items-center justify-center rounded-full border border-outline-gray-2 text-ink-gray-6 hover:bg-surface-gray-2"
+                :title="__('Adicionar slide')"
+                @click="adicionarSlide"
+              >
+                <LucidePlus class="size-3.5" />
+              </button>
+              <button
+                type="button"
+                class="flex size-7 items-center justify-center rounded-full border border-outline-gray-2 text-ink-gray-6 hover:bg-surface-gray-2 disabled:cursor-not-allowed disabled:opacity-40"
+                :title="__('Excluir slide')"
+                :disabled="slides.length <= 1"
+                @click="excluirSlideAtivo"
+              >
+                <LucideTrash2 class="size-3.5" />
+              </button>
             </div>
             <div class="flex items-center gap-2">
               <Button variant="ghost" size="sm" :label="__('Baixar Todos')" :loading="baixandoTodos" @click="baixarTodos" />
@@ -141,6 +158,12 @@
                 size="sm"
                 :label="statusConversa === 'Agendado' ? __('Reagendar') : __('Agendar')"
                 @click="mostrarAgendar = true"
+              />
+              <Button
+                variant="solid"
+                size="sm"
+                :label="statusConversa === 'Publicado' ? __('Publicar de novo') : __('Publicar no Instagram')"
+                @click="mostrarPublicar = true"
               />
             </div>
           </div>
@@ -183,18 +206,40 @@
         <Button variant="solid" :label="__('Salvar legenda')" :loading="salvandoLegenda" @click="salvarLegenda" />
       </template>
     </Dialog>
+
+    <Dialog v-model="mostrarPublicar" :options="{ title: __('Publicar no Instagram'), size: 'sm' }">
+      <template #body-content>
+        <div class="flex flex-col gap-3 text-p-sm text-ink-gray-7">
+          <p>
+            {{
+              tipo === 'Carrossel'
+                ? __('Isso publica todos os slides como um carrossel, agora, direto no feed do Instagram conectado. Não dá pra desfazer.')
+                : __('Isso publica o slide 1, agora, direto no feed do Instagram conectado. Não dá pra desfazer.')
+            }}
+          </p>
+          <p v-if="!legenda" class="text-ink-amber-6">
+            {{ __('Sem legenda ainda — vai publicar em branco. Feche e use "Legenda" antes, se quiser escrever uma.') }}
+          </p>
+        </div>
+      </template>
+      <template #actions>
+        <Button variant="solid" :label="__('Publicar agora')" :loading="publicando" @click="publicarInstagram" />
+      </template>
+    </Dialog>
   </div>
 </template>
 
 <script setup>
 import LucideCopy from '~icons/lucide/copy'
+import LucidePlus from '~icons/lucide/plus'
+import LucideTrash2 from '~icons/lucide/trash-2'
 import SparkleIcon from '@/components/Icons/SparkleIcon.vue'
 import InstagramEditor from '@/components/InstagramEditor.vue'
 import InstagramModeloPreview from '@/components/InstagramModeloPreview.vue'
 import { getSettings } from '@/stores/settings'
 import { Button, Dialog, ErrorMessage, FormControl, call, createResource, toast } from 'frappe-ui'
 import { computed, nextTick, onMounted, ref } from 'vue'
-import { baixarTodosSlides } from '@/utils/instagramExport'
+import { baixarTodosSlides, renderizarSlidePng } from '@/utils/instagramExport'
 
 const { _settings: settings } = getSettings()
 const brandName = computed(() => settings.doc?.brand_name || 'Sua marca')
@@ -458,6 +503,38 @@ async function duplicarSlide() {
   }
 }
 
+const adicionando = ref(false)
+
+async function adicionarSlide() {
+  if (!conversa.value || adicionando.value) return
+  adicionando.value = true
+  try {
+    const r = await call('crm.api.conteudo.adicionar_slide', { conversa: conversa.value, indice: slideAtivo.value })
+    slides.value = r.slides
+    slideAtivo.value = r.novo_indice
+  } catch (e) {
+    toast.error(e.messages?.join(', ') || e.message || __('Não consegui adicionar o slide.'))
+  } finally {
+    adicionando.value = false
+  }
+}
+
+const excluindo = ref(false)
+
+async function excluirSlideAtivo() {
+  if (!conversa.value || excluindo.value || slides.value.length <= 1) return
+  excluindo.value = true
+  try {
+    const r = await call('crm.api.conteudo.excluir_slide', { conversa: conversa.value, indice: slideAtivo.value })
+    slides.value = r.slides
+    slideAtivo.value = r.novo_indice
+  } catch (e) {
+    toast.error(e.messages?.join(', ') || e.message || __('Não consegui excluir o slide.'))
+  } finally {
+    excluindo.value = false
+  }
+}
+
 const baixandoTodos = ref(false)
 
 async function baixarTodos() {
@@ -478,6 +555,69 @@ async function baixarTodos() {
     )
   } finally {
     baixandoTodos.value = false
+  }
+}
+
+const mostrarPublicar = ref(false)
+const publicando = ref(false)
+
+async function uploadArquivo(file) {
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('is_private', '0')
+  const resp = await fetch('/api/method/upload_file', {
+    method: 'POST',
+    headers: { 'X-Frappe-CSRF-Token': window.csrf_token },
+    body: formData,
+  })
+  const data = await resp.json()
+  return data?.message?.file_url || ''
+}
+
+function dataUrlParaBlob(dataUrl) {
+  const [cabecalho, base64] = dataUrl.split(',')
+  const mime = cabecalho.match(/:(.*?);/)[1]
+  const bin = atob(base64)
+  const bytes = new Uint8Array(bin.length)
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i)
+  return new Blob([bytes], { type: mime })
+}
+
+async function publicarInstagram() {
+  if (!conversa.value || !slides.value.length || publicando.value) return
+  publicando.value = true
+  try {
+    const ctx = {
+      tipo: tipo.value,
+      modelo: modelo.value,
+      corMarca: corFundo.value,
+      corDestaque: corDestaqueUI.value,
+      corNeutra: settings.doc?.brand_neutral || '#f4f2ed',
+      nomeMarca: brandName.value,
+    }
+    // a Meta busca essas imagens nos servidores dela - precisa ser a URL pública
+    // completa, não só o caminho relativo que o upload_file devolve
+    const origem = window.location.origin
+    const slidesParaPublicar = tipo.value === 'Carrossel' ? slides.value : slides.value.slice(0, 1)
+    const urls = []
+    for (const slide of slidesParaPublicar) {
+      const dataUrl = await renderizarSlidePng(slide, ctx)
+      const arquivo = new File([dataUrlParaBlob(dataUrl)], `slide-${urls.length + 1}.png`, { type: 'image/png' })
+      const fileUrl = await uploadArquivo(arquivo)
+      if (!fileUrl) throw new Error(__('Não consegui enviar uma das imagens.'))
+      urls.push(origem + fileUrl)
+    }
+    await call('crm.api.conteudo.publicar_instagram', {
+      conversa: conversa.value,
+      urls: JSON.stringify(urls),
+    })
+    statusConversa.value = 'Publicado'
+    mostrarPublicar.value = false
+    toast.success(__('Publicado no Instagram!'))
+  } catch (e) {
+    toast.error(e.messages?.join(', ') || e.message || __('Não consegui publicar no Instagram.'))
+  } finally {
+    publicando.value = false
   }
 }
 

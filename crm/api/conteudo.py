@@ -304,6 +304,39 @@ def duplicar_slide(conversa: str, indice) -> dict:
 
 
 @frappe.whitelist()
+def adicionar_slide(conversa: str, indice=None) -> dict:
+	"""Insere um slide em branco (sem titulo/corpo/layout) logo depois do indice
+	dado, ou no final se indice nao for passado."""
+	doc = frappe.get_doc("CRM Conteudo Conversa", conversa)
+	doc.check_permission("write")
+	slides = json.loads(doc.slides or "[]")
+	pos = int(indice) + 1 if indice is not None and str(indice) != "" else len(slides)
+	slides.insert(pos, {"titulo": "", "corpo": ""})
+	doc.slides = json.dumps(slides)
+	doc.save()
+	return {"slides": slides, "novo_indice": pos}
+
+
+@frappe.whitelist()
+def excluir_slide(conversa: str, indice) -> dict:
+	"""Remove um slide. Nunca deixa a conversa sem nenhum slide - o ultimo nao
+	pode ser removido (a pessoa edita o texto dele em vez de ficar sem slide)."""
+	doc = frappe.get_doc("CRM Conteudo Conversa", conversa)
+	doc.check_permission("write")
+	slides = json.loads(doc.slides or "[]")
+	indice = int(indice)
+	if indice < 0 or indice >= len(slides):
+		frappe.throw("Esse slide não existe mais nessa conversa.")
+	if len(slides) <= 1:
+		frappe.throw("Não dá pra remover o único slide - edite o texto dele em vez disso.")
+	slides.pop(indice)
+	doc.slides = json.dumps(slides)
+	doc.save()
+	novo_indice = min(indice, len(slides) - 1)
+	return {"slides": slides, "novo_indice": novo_indice}
+
+
+@frappe.whitelist()
 def aplicar_layout_todos(conversa: str, layout: str) -> dict:
 	"""Aplica o mesmo layout (posicao, margem, fonte, sombra, fundo, etc.) em todos os
 	slides da conversa. Apaga o canvas salvo de cada um pra eles remontarem do zero com
@@ -365,3 +398,121 @@ def gerar_legenda(conversa: str) -> dict:
 	doc.legenda = legenda
 	doc.save()
 	return {"legenda": legenda}
+
+
+# ------------------------------------------------------------------ publicação de verdade no Instagram
+
+# Endpoint DIFERENTE do usado pras mensagens (que é webhook + /me/messages) -
+# esse é a API de Publicação de Conteúdo da Meta. Mesmo token/conexão, mas
+# precisa da permissão "instagram_content_publish" aprovada no app da Meta,
+# que pode ainda não ter sido liberada (é uma revisão separada da de mensagens).
+PUBLICACAO_TIMEOUT = 30
+PUBLICACAO_TENTATIVAS = 12
+PUBLICACAO_ESPERA_SEGUNDOS = 2
+
+
+def _ig_get(path: str, token: str, **params) -> dict:
+	import requests
+
+	from crm.api.instagram import GRAPH_BASE
+
+	params["access_token"] = token
+	resp = requests.get(f"{GRAPH_BASE}{path}", params=params, timeout=PUBLICACAO_TIMEOUT)
+	return _ig_parse(resp)
+
+
+def _ig_post(path: str, token: str, **data) -> dict:
+	import requests
+
+	from crm.api.instagram import GRAPH_BASE
+
+	data["access_token"] = token
+	resp = requests.post(f"{GRAPH_BASE}{path}", data=data, timeout=PUBLICACAO_TIMEOUT)
+	return _ig_parse(resp)
+
+
+def _ig_parse(resp) -> dict:
+	try:
+		j = resp.json()
+	except ValueError:
+		j = {}
+	if resp.status_code >= 400 or (isinstance(j, dict) and "error" in j):
+		err = j.get("error", {}) if isinstance(j, dict) else {}
+		frappe.log_error("Gerador de conteúdo: a Meta recusou a publicação", f"{err.get('code')}: {err.get('message')}")
+		frappe.throw(_erro_publicacao_amigavel(err))
+	return j
+
+
+def _erro_publicacao_amigavel(err: dict) -> str:
+	code = err.get("code")
+	if code in (10, 200, 3):
+		return (
+			"A Meta recusou a publicação — o mais provável é que a permissão "
+			"\"instagram_content_publish\" ainda não foi aprovada pra esse app (é uma "
+			"revisão separada da que libera as mensagens). Confirme no painel de "
+			"desenvolvedor da Meta se essa permissão já está ativa pra conta conectada."
+		)
+	mensagem = err.get("message") or "erro desconhecido"
+	return f"A Meta recusou a publicação: {mensagem}"
+
+
+def _esperar_containers_prontos(container_ids: list, token: str):
+	import time
+
+	for _ in range(PUBLICACAO_TENTATIVAS):
+		pendente = False
+		for cid in container_ids:
+			status = _ig_get(f"/{cid}", token, fields="status_code").get("status_code")
+			if status == "ERROR":
+				frappe.throw("A Meta não conseguiu processar uma das imagens. Tente publicar de novo.")
+			if status != "FINISHED":
+				pendente = True
+		if not pendente:
+			return
+		time.sleep(PUBLICACAO_ESPERA_SEGUNDOS)
+	frappe.throw("A Meta demorou demais pra processar as imagens. Tente de novo em instantes.")
+
+
+@frappe.whitelist(methods=["POST"])
+def publicar_instagram(conversa: str, urls: str) -> dict:
+	"""Publica de verdade no feed do Instagram (não é o download/agendar de antes -
+	usa a API de Publicação de Conteúdo da Meta). "urls" é uma lista JSON com a URL
+	PÚBLICA de cada slide já renderizado em PNG e enviado (a Meta busca essas URLs
+	nos servidores dela, por isso precisam ser acessíveis de fora, não localhost)."""
+	from crm.api.instagram import _get_settings, _managers_only
+
+	_managers_only()
+	doc = frappe.get_doc("CRM Conteudo Conversa", conversa)
+	doc.check_permission("write")
+
+	settings = _get_settings()
+	token = settings.get_password("access_token", raise_exception=False)
+	ig_user_id = settings.instagram_business_account_id
+	if not settings.enabled or not token or not ig_user_id:
+		frappe.throw("Conecte o Instagram em Configurações → Instagram antes de publicar.")
+
+	lista_urls = json.loads(urls) if isinstance(urls, str) else urls
+	if not lista_urls:
+		frappe.throw("Não há imagens pra publicar.")
+
+	legenda = doc.legenda or ""
+
+	if doc.tipo == "Carrossel" and len(lista_urls) > 1:
+		filhos = [_ig_post(f"/{ig_user_id}/media", token, image_url=u, is_carousel_item="true")["id"] for u in lista_urls]
+		_esperar_containers_prontos(filhos, token)
+		pai = _ig_post(f"/{ig_user_id}/media", token, media_type="CAROUSEL", children=",".join(filhos), caption=legenda)
+		container_id = pai["id"]
+	elif doc.tipo == "Story":
+		container = _ig_post(f"/{ig_user_id}/media", token, image_url=lista_urls[0], media_type="STORIES")
+		container_id = container["id"]
+	else:
+		container = _ig_post(f"/{ig_user_id}/media", token, image_url=lista_urls[0], caption=legenda)
+		container_id = container["id"]
+
+	_esperar_containers_prontos([container_id], token)
+	publicado = _ig_post(f"/{ig_user_id}/media_publish", token, creation_id=container_id)
+
+	doc.status = "Publicado"
+	doc.instagram_media_id = publicado.get("id") or ""
+	doc.save()
+	return {"ok": True, "media_id": doc.instagram_media_id}

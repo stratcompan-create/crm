@@ -206,6 +206,115 @@ def run():
 			frappe.delete_doc("CRM Conteudo Conversa", r_rasc2["conversa"], force=True, ignore_permissions=True)
 			frappe.delete_doc("CRM Conteudo Conversa", r_rasc3["conversa"], force=True, ignore_permissions=True)
 
+			# adicionar_slide: insere em branco depois do indice dado, ou no final sem indice
+			antes_add = json.loads(frappe.db.get_value("CRM Conteudo Conversa", conversa_criada, "slides"))
+			r_add = gc.adicionar_slide(conversa_criada, 0)
+			ck("adicionar_slide devolve o novo indice certo", r_add["novo_indice"] == 1)
+			ck(
+				"adicionar_slide insere um slide em branco logo depois",
+				len(r_add["slides"]) == len(antes_add) + 1 and r_add["slides"][1] == {"titulo": "", "corpo": ""},
+			)
+			r_add_fim = gc.adicionar_slide(conversa_criada)
+			ck(
+				"adicionar_slide sem indice insere no final",
+				r_add_fim["novo_indice"] == len(r_add_fim["slides"]) - 1,
+			)
+
+			# excluir_slide: remove o slide pedido, nunca deixa a conversa vazia
+			antes_del = json.loads(frappe.db.get_value("CRM Conteudo Conversa", conversa_criada, "slides"))
+			r_del = gc.excluir_slide(conversa_criada, 1)
+			ck("excluir_slide remove o slide certo", len(r_del["slides"]) == len(antes_del) - 1)
+
+			erro_del_indice = None
+			try:
+				gc.excluir_slide(conversa_criada, 99)
+			except frappe.ValidationError as e:
+				erro_del_indice = str(e)
+			ck("excluir_slide recusa indice que nao existe", bool(erro_del_indice))
+
+			frappe.db.set_value(
+				"CRM Conteudo Conversa", conversa_criada, "slides",
+				json.dumps([{"titulo": "Único", "corpo": "Sobrou só esse"}]),
+			)
+			erro_del_ultimo = None
+			try:
+				gc.excluir_slide(conversa_criada, 0)
+			except frappe.ValidationError as e:
+				erro_del_ultimo = str(e)
+			ck("excluir_slide recusa apagar o último slide", bool(erro_del_ultimo))
+
+			# publicar_instagram: sem conexão recusa com mensagem clara
+			ig_settings = frappe.get_single("CRM Instagram Settings")
+			estado_ig = (ig_settings.enabled, ig_settings.get_password("access_token", raise_exception=False), ig_settings.instagram_business_account_id)
+			frappe.db.set_single_value("CRM Instagram Settings", "enabled", 0)
+			erro_sem_conexao = None
+			try:
+				gc.publicar_instagram(conversa_criada, json.dumps(["https://exemplo.com/1.png"]))
+			except frappe.ValidationError as e:
+				erro_sem_conexao = str(e)
+			ck("publicar_instagram sem Instagram conectado recusa com mensagem clara", erro_sem_conexao and "conecte" in erro_sem_conexao.lower())
+
+			# publicar_instagram: Post único, fluxo completo com a Graph API mockada
+			frappe.db.set_single_value("CRM Instagram Settings", "enabled", 1)
+			frappe.db.set_single_value("CRM Instagram Settings", "access_token", "token-fake")
+			frappe.db.set_single_value("CRM Instagram Settings", "instagram_business_account_id", "IGFAKE123")
+			frappe.db.set_value("CRM Conteudo Conversa", conversa_criada, "tipo", "Post")
+			frappe.db.set_value("CRM Conteudo Conversa", conversa_criada, "legenda", "Legenda de teste")
+
+			chamadas_post = []
+
+			def fake_post(url, data=None, timeout=None):
+				chamadas_post.append((url, data))
+				class R:
+					status_code = 200
+					def json(self):
+						if url.endswith("/media_publish"):
+							return {"id": "MEDIA_PUBLICADA_1"}
+						return {"id": "CONTAINER_1"}
+				return R()
+
+			def fake_get(url, params=None, timeout=None):
+				class R:
+					status_code = 200
+					def json(self):
+						return {"status_code": "FINISHED"}
+				return R()
+
+			with mock.patch("requests.post", fake_post), mock.patch("requests.get", fake_get):
+				r_pub = gc.publicar_instagram(conversa_criada, json.dumps(["https://exemplo.com/1.png"]))
+				ck("publicar_instagram devolve o id da publicação", r_pub["media_id"] == "MEDIA_PUBLICADA_1")
+			ck(
+				"publicar_instagram manda a legenda no container",
+				any("caption" in (d or {}) and d["caption"] == "Legenda de teste" for _, d in chamadas_post),
+			)
+			ck(
+				"publicar_instagram chama media_publish com o creation_id certo",
+				any(u.endswith("/media_publish") and d.get("creation_id") == "CONTAINER_1" for u, d in chamadas_post),
+			)
+			status_pub = frappe.db.get_value("CRM Conteudo Conversa", conversa_criada, "status")
+			ck("publicar_instagram marca a conversa como Publicado", status_pub == "Publicado")
+			media_id_salvo = frappe.db.get_value("CRM Conteudo Conversa", conversa_criada, "instagram_media_id")
+			ck("publicar_instagram salva o instagram_media_id", media_id_salvo == "MEDIA_PUBLICADA_1")
+
+			# publicar_instagram: Carrossel com mais de uma imagem cria os containers filhos e o pai
+			frappe.db.set_value("CRM Conteudo Conversa", conversa_criada, "tipo", "Carrossel")
+			frappe.db.set_value("CRM Conteudo Conversa", conversa_criada, "status", "Rascunho")
+			chamadas_post.clear()
+			with mock.patch("requests.post", fake_post), mock.patch("requests.get", fake_get):
+				gc.publicar_instagram(conversa_criada, json.dumps(["https://exemplo.com/1.png", "https://exemplo.com/2.png"]))
+			ck(
+				"publicar_instagram (carrossel) cria um container por imagem como is_carousel_item",
+				sum(1 for _, d in chamadas_post if d.get("is_carousel_item") == "true") == 2,
+			)
+			ck(
+				"publicar_instagram (carrossel) cria o container pai com media_type CAROUSEL",
+				any(d.get("media_type") == "CAROUSEL" and d.get("children") == "CONTAINER_1,CONTAINER_1" for _, d in chamadas_post),
+			)
+
+			frappe.db.set_single_value("CRM Instagram Settings", "enabled", estado_ig[0])
+			frappe.db.set_single_value("CRM Instagram Settings", "access_token", estado_ig[1] or "")
+			frappe.db.set_single_value("CRM Instagram Settings", "instagram_business_account_id", estado_ig[2] or "")
+
 			frappe.delete_doc("CRM Conteudo Conversa", conversa_criada, force=True, ignore_permissions=True)
 	finally:
 		ficha.save_ai_key(chave_original or "")

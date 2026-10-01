@@ -16,7 +16,8 @@
   "section_break_1",
   "mensagens",
   "slides",
-  "legenda"
+  "legenda",
+  "instagram_media_id"
  ],
  "fields": [
   {
@@ -72,6 +73,12 @@
    "fieldname": "legenda",
    "fieldtype": "Long Text",
    "label": "Legenda"
+  },
+  {
+   "fieldname": "instagram_media_id",
+   "fieldtype": "Data",
+   "label": "ID da publicação no Instagram",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
