@@ -32,6 +32,7 @@ MODULES = [
     "assinatura_proposta",
     "instagram_metricas",
     "exclusao_em_massa",
+    "horas",
 ]
 
 

@@ -1,0 +1,99 @@
+{
+ "actions": [],
+ "creation": "2026-10-03 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-10-03 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "FCRM",
+ "owner": "Administrator",
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "autoname": "hash",
+ "naming_rule": "Random",
+ "name": "CRM Horas",
+ "field_order": [
+  "deal",
+  "usuario",
+  "data",
+  "horas",
+  "frente",
+  "observacoes"
+ ],
+ "fields": [
+  {
+   "fieldname": "deal",
+   "fieldtype": "Link",
+   "label": "Negócio",
+   "options": "CRM Deal",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "usuario",
+   "fieldtype": "Link",
+   "label": "Quem trabalhou",
+   "options": "User",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "data",
+   "fieldtype": "Date",
+   "label": "Data",
+   "in_list_view": 1,
+   "default": "Today",
+   "reqd": 1
+  },
+  {
+   "fieldname": "horas",
+   "fieldtype": "Float",
+   "label": "Horas",
+   "in_list_view": 1,
+   "precision": "2",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "frente",
+   "fieldtype": "Select",
+   "label": "Frente",
+   "options": "Vídeo\nCRM\nSite\nTráfego\nReunião\nOutro",
+   "default": "Outro",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "observacoes",
+   "fieldtype": "Small Text",
+   "label": "Observações"
+  }
+ ],
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "write": 1,
+   "role": "System Manager"
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "write": 1,
+   "role": "Sales Manager"
+  },
+  {
+   "read": 1,
+   "write": 1,
+   "role": "Sales User"
+  }
+ ]
+}

@@ -92,6 +92,28 @@
         </div>
       </div>
     </div>
+
+    <div v-if="isAgency" class="rounded-lg border border-outline-gray-2 p-5">
+      <div class="mb-1 text-p-base-medium text-ink-gray-8">{{ __('Rentabilidade por cliente') }}</div>
+      <div class="mb-4 text-p-sm text-ink-gray-5">
+        {{ __('Mensalidade ÷ horas lançadas no mês (aba Horas, dentro do negócio). Os piores R$/hora primeiro.') }}
+      </div>
+      <div v-if="rentabilidade.data?.piores?.length" class="flex flex-col divide-y divide-outline-gray-1">
+        <div v-for="item in rentabilidade.data.piores" :key="item.deal" class="flex items-center justify-between py-2 text-p-sm">
+          <span class="text-ink-gray-8">{{ item.cliente }}</span>
+          <span class="font-medium text-ink-gray-7">
+            {{ formatCurrency(item.efetivo) }}/h · {{ formatHoras(item.horas) }}h no mês
+          </span>
+        </div>
+      </div>
+      <div v-else class="flex h-16 items-center justify-center text-p-sm text-ink-gray-4">
+        {{ __('Nenhuma hora lançada neste mês ainda.') }}
+      </div>
+      <div v-if="rentabilidade.data?.sem_registro?.length" class="mt-3 border-t border-outline-gray-1 pt-3 text-p-sm text-ink-gray-5">
+        {{ __('Sem hora lançada este mês:') }}
+        <span class="text-ink-gray-7">{{ rentabilidade.data.sem_registro.map((s) => s.cliente).join(', ') }}</span>
+      </div>
+    </div>
   </div>
 </template>
 <script setup>
@@ -137,6 +159,12 @@ const trend = createResource({
 const breakdown = createResource({ url: 'crm.api.financeiro.get_revenue_breakdown', auto: true })
 const mrr = createResource({ url: 'crm.api.financeiro.get_mrr', auto: true })
 
+const isAgency = computed(() => (window.crm_profile || 'agencia') === 'agencia')
+const rentabilidade = createResource({
+  url: 'crm.api.horas.rentabilidade_clientes',
+  auto: isAgency.value,
+})
+
 function barWidth(servico) {
   const valores = breakdown.data?.servicos?.map((s) => s.pago + s.pendente) || [0]
   const max = Math.max(...valores, 1)
@@ -158,5 +186,9 @@ function selecionarPeriodo(offset) {
 function formatCurrency(value) {
   value = value || 0
   return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value)
+}
+
+function formatHoras(value) {
+  return (Number(value) || 0).toLocaleString('pt-BR', { maximumFractionDigits: 2 })
 }
 </script>

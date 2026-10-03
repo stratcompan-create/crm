@@ -398,6 +398,9 @@
     <div v-else-if="title == 'Ficha'" class="h-full flex flex-col px-3 sm:px-10">
       <FichaArea :doctype="doctype" :docname="docname" />
     </div>
+    <div v-else-if="title == 'Horas'" class="h-full flex flex-col px-3 sm:px-10">
+      <HorasArea :doctype="doctype" :docname="docname" />
+    </div>
     <div v-else-if="title == 'Budget'" class="h-full flex flex-col px-3 sm:px-10">
       <BudgetArea :doctype="doctype" :docname="docname" />
     </div>
@@ -463,6 +466,7 @@ import AttachmentArea from '@/components/Activities/AttachmentArea.vue'
 import DataFields from '@/components/Activities/DataFields.vue'
 import DocumentosArea from '@/components/Activities/DocumentosArea.vue'
 import FichaArea from '@/components/Activities/FichaArea.vue'
+import HorasArea from '@/components/Activities/HorasArea.vue'
 import BudgetArea from '@/components/Activities/BudgetArea.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import ActivityIcon from '@/components/Icons/ActivityIcon.vue'
