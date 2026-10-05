@@ -4,9 +4,10 @@ Roda no site atual (bench --site SITE execute crm.tests.run_smoke.run_all). Cria
 """
 
 import frappe, json
+from unittest import mock
 from frappe.utils import add_days, nowdate, getdate
 from datetime import datetime, timedelta
-from crm.api import automacoes as au, agenda, saude
+from crm.api import automacoes as au, agenda, saude, saude_sistema
 
 
 def run():
@@ -59,6 +60,13 @@ def run():
         # 7. saúde + 11. relatório
         sv=saude.get_business_health(); ck("painel de saúde", len(sv["itens"])>=5, str([(i["key"],i["count"]) for i in sv["itens"]]))
         rep=au.build_weekly_report(); html=au._report_html(rep); ck("relatório semanal", "Resumo da semana" in html and rep["atrasado"]>=0)
+        ck("relatório semanal traz a seção de funcionamento do sistema", "Funcionamento do sistema" in html)
+        with mock.patch.object(saude_sistema, "run_checks", return_value=[{"key":"erros","label":"Erros do sistema","ok":True,"mensagem":"Nenhum erro."}]):
+            rep_ok=au.build_weekly_report(); html_ok=au._report_html(rep_ok)
+            ck("sistema sem problema: mostra status geral tranquilo", "Tudo funcionando normalmente" in html_ok)
+        with mock.patch.object(saude_sistema, "run_checks", return_value=[{"key":"backup","label":"Backup","ok":False,"mensagem":"O último backup tem 400 horas."}]):
+            rep_bad=au.build_weekly_report(); html_bad=au._report_html(rep_bad)
+            ck("sistema com problema: lista o problema real, não o status tranquilo", "400 horas" in html_bad and "Tudo funcionando normalmente" not in html_bad)
     finally:
         frappe.db.rollback()
         for dt,n in reversed(made):

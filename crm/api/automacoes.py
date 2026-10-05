@@ -586,6 +586,17 @@ def _metrics(start, end) -> dict:
 	}
 
 
+def _sistema_summary(start) -> dict:
+	"""Resumo do funcionamento técnico do sistema na semana (erros, agendador, backups,
+	Drive, Instagram, disco) - mesmas checagens da Saúde do sistema, só que olhando a
+	semana inteira em vez da última hora."""
+	from crm.api import saude_sistema
+
+	itens = saude_sistema.run_checks(str(start))
+	problemas = [i for i in itens if not i["ok"]]
+	return {"ok": not problemas, "problemas": problemas}
+
+
 def build_weekly_report(start=None, end=None) -> dict:
 	if not start:
 		start, end = _week_bounds()
@@ -594,6 +605,7 @@ def build_weekly_report(start=None, end=None) -> dict:
 	report = _metrics(start, end)
 	report["anterior"] = previous
 	report["periodo"] = f"{_date_br(start)} a {_date_br(end)}"
+	report["sistema"] = _sistema_summary(start)
 
 	def money(filters):
 		return flt(frappe.get_all("CRM Honorario", filters=filters, fields=["sum(valor) as t"])[0].t)
@@ -627,6 +639,24 @@ def _delta(now, before, money=False) -> str:
 	return f"<span style='color:{color};font-size:12px'> {arrow} {abs(pct)}% vs. semana anterior</span>"
 
 
+def _row_html(label, value) -> str:
+	return (
+		f"<tr><td style='padding:8px 12px;color:#555;border-bottom:1px solid #eef1f3'>{label}</td>"
+		f"<td style='padding:8px 12px;text-align:right;border-bottom:1px solid #eef1f3'>"
+		f"<b style='color:#042d3c'>{value}</b></td></tr>"
+	)
+
+
+def _sistema_rows(sistema: dict | None) -> list:
+	sistema = sistema or {"ok": True, "problemas": []}
+	if sistema["ok"]:
+		return [_row_html("Status geral", "Tudo funcionando normalmente, sem problemas na semana ✓")]
+	return [
+		_row_html(frappe.utils.escape_html(p["label"]), frappe.utils.escape_html(p["mensagem"]))
+		for p in sistema["problemas"]
+	]
+
+
 def _report_html(r: dict) -> str:
 	from crm.api import estilo
 
@@ -658,6 +688,7 @@ def _report_html(r: dict) -> str:
 		f"<div style='background:{_head['bg']};color:{_head['ink']};padding:18px 20px;border-radius:8px;border-bottom:3px solid {_head['rule']}'>"
 		f"<div style='font-size:20px;font-weight:bold'>Resumo da semana</div>"
 		f"<div style='opacity:.8;font-size:13px;margin-top:2px'>{_brand()} · {r['periodo']}</div></div>"
+		+ block("Funcionamento do sistema", _sistema_rows(r.get("sistema")))
 		+ block("Prospecção e vendas", [
 			row("Abordagens", r["abordados"], _delta(r["abordados"], prev.get("abordados"))),
 			row("Leads novos", r["leads_novos"], _delta(r["leads_novos"], prev.get("leads_novos"))),
