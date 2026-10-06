@@ -18,8 +18,6 @@ def run():
     try:
         cfg=au.get_config(); ck("config com padrões", cfg.cobranca_dias_antes==3 and "{nome}" in cfg.cobranca_mensagem)
         ck("influenciadoras_ativo nasce desligado por padrão", cfg.influenciadoras_ativo==0)
-        ck("meu_site_ativo nasce ligado por padrao", cfg.meu_site_ativo==1)
-        ck("assistente_ativo nasce ligado por padrao", cfg.assistente_ativo==1)
         au.save_settings(json.dumps({"parcelas_padrao":3,"agenda_ativa":1,"agenda_responsavel":"Administrator"}))
         # 1. distribuição
         from frappe.utils import cint

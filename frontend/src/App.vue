@@ -5,7 +5,7 @@
     <Layout v-else-if="session.isLoggedIn" class="isolate">
       <router-view :key="$route.fullPath" />
     </Layout>
-    <AssistenteClaude v-if="session.isLoggedIn && !!window.assistente_ativo" />
+    <AssistenteClaude v-if="session.isLoggedIn" />
     <Dialogs />
     <DoctypeModals />
     <EventNotificationPopup />
@@ -26,17 +26,8 @@ import { toast } from 'frappe-ui'
 const session = sessionStore()
 provide('session', session)
 
-// `useTheme()` auto-inicializa no primeiro uso (efeito colateral da propria
-// lib): se nao achar nada salvo, ja escreve 'system' no localStorage sozinho -
-// entao checar `localStorage.getItem('theme') DEPOIS de chamar useTheme() (como
-// era feito antes) sempre via algo salvo e nunca forcava 'light' de verdade. Le
-// o valor salvo ANTES de chamar useTheme(), pra pegar o estado real da visita.
-const storedTheme = localStorage.getItem('theme')
 const { setTheme } = useTheme()
-// 'system' segue o SO e podia cair em modo escuro sem o usuario pedir - so
-// mantem tema salvo quando foi uma escolha explicita (claro ou escuro) feita
-// no seletor de tema; qualquer outra coisa (nada salvo, ou 'system') vira claro.
-if (storedTheme !== 'light' && storedTheme !== 'dark') {
+if (!localStorage.getItem('theme')) {
   setTheme('light')
 }
 
@@ -47,17 +38,6 @@ onMounted(() => {
   if (result === 'ok') toast.success(__('Google Drive conectado. Configure a pasta em Configurações → Integrações.'))
   else toast.error(__('Não foi possível conectar o Google Drive. Tente de novo.'))
   params.delete('gdrive')
-  const qs = params.toString()
-  window.history.replaceState({}, '', window.location.pathname + (qs ? `?${qs}` : ''))
-})
-
-onMounted(() => {
-  const params = new URLSearchParams(window.location.search)
-  const result = params.get('gcal')
-  if (!result) return
-  if (result === 'ok') toast.success(__('Google Agenda conectado.'))
-  else toast.error(__('Não foi possível conectar o Google Agenda. Tente de novo.'))
-  params.delete('gcal')
   const qs = params.toString()
   window.history.replaceState({}, '', window.location.pathname + (qs ? `?${qs}` : ''))
 })

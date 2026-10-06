@@ -45,9 +45,7 @@
   "agenda_link",
   "agenda_mensagem",
   "anthropic_api_key",
-  "influenciadoras_ativo",
-  "meu_site_ativo",
-  "assistente_ativo"
+  "influenciadoras_ativo"
  ],
  "fields": [
   {
@@ -219,18 +217,6 @@
    "fieldtype": "Check",
    "label": "Gestão de influenciadoras ligada",
    "default": "0"
-  },
-  {
-   "fieldname": "meu_site_ativo",
-   "fieldtype": "Check",
-   "label": "Aba \"Meu Site\" ligada",
-   "default": "1"
-  },
-  {
-   "fieldname": "assistente_ativo",
-   "fieldtype": "Check",
-   "label": "Assistente de suporte (chat) ligado",
-   "default": "1"
   }
  ],
  "permissions": [

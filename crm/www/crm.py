@@ -89,8 +89,6 @@ def get_boot():
 			"translated_messages": get_boot_messages(),
 			"crm_profile": get_profile(),
 			"influenciadoras_ativo": cint(_influenciadoras_ativo()),
-			"meu_site_ativo": cint(_config_flag("meu_site_ativo", 1)),
-			"assistente_ativo": cint(_config_flag("assistente_ativo", 1)),
 			"timezone": {
 				"system": get_system_timezone(),
 				"user": frappe.db.get_value("User", frappe.session.user, "time_zone")
@@ -111,8 +109,6 @@ def get_brand() -> dict:
 		"name": settings.get("brand_name") or "",
 		"logo": settings.get("brand_logo") or "",
 		"favicon": settings.get("favicon") or "",
-		# cor de destaque (aba/item ativo) - ver frontend/src/stores/settings.js
-		"accent": settings.get("brand_accent") or "",
 	}
 
 
@@ -143,18 +139,12 @@ def get_state_options() -> dict[str, list[str]]:
 def _influenciadoras_ativo() -> int:
 	"""Runs inside ``get_boot`` like ``get_state_options`` above - must never raise,
 	so a missing/unmigrated config degrades to "desligado" instead of breaking the page."""
-	return _config_flag("influenciadoras_ativo", 0)
-
-
-def _config_flag(key: str, default: int) -> int:
-	"""Same safety as above, generalized: a boot failure here must never break the
-	whole page load, so any problem reading the config degrades to the default."""
 	try:
 		from crm.api.automacoes import get_config
 
-		return get_config().get(key, default)
+		return get_config().influenciadoras_ativo
 	except Exception:
-		return default
+		return 0
 
 
 def get_default_route():

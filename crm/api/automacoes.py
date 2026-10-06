@@ -41,7 +41,7 @@ CONFIG_FIELDS = (
 	"posvenda_avaliacao_link posvenda_avaliacao_mensagem posvenda_indicacao_dias posvenda_indicacao_mensagem "
 	"relatorio_ativo relatorio_email relatorio_destinatarios agenda_ativa agenda_titulo agenda_duracao agenda_dias "
 	"agenda_inicio agenda_fim agenda_antecedencia agenda_dias_a_frente agenda_responsavel agenda_link "
-	"agenda_mensagem influenciadoras_ativo meu_site_ativo assistente_ativo"
+	"agenda_mensagem influenciadoras_ativo"
 ).split()
 
 DEFAULTS = {
@@ -69,10 +69,6 @@ DEFAULTS = {
 	"agenda_antecedencia": 4,
 	"agenda_dias_a_frente": 14,
 	"influenciadoras_ativo": 0,
-	# ligados por padrao - desliga so pra quem nao usa (ex.: cliente sem site
-	# proprio, ou que ja paga por um assistente de IA proprio)
-	"meu_site_ativo": 1,
-	"assistente_ativo": 1,
 }
 
 

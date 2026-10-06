@@ -23,7 +23,6 @@ MODULES = [
     "modelos_e_estilos",
     "favicon_marca",
     "favicon_crm_spa",
-    "login_marca",
     "idioma_usuario",
     "gerador_conteudo",
     "pagamento_link",
@@ -35,7 +34,6 @@ MODULES = [
     "exclusao_em_massa",
     "horas",
     "influenciadoras",
-    "gcalendar",
 ]
 
 

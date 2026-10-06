@@ -72,7 +72,6 @@ import InstagramSettings from '@/components/Settings/InstagramSettings.vue'
 import ModelosDocumentosSettings from '@/components/Settings/ModelosDocumentosSettings.vue'
 import AutomacoesSettings from '@/components/Settings/AutomacoesSettings.vue'
 import GoogleDriveSettings from '@/components/Settings/GoogleDriveSettings.vue'
-import GoogleCalendarSettings from '@/components/Settings/GoogleCalendarSettings.vue'
 import InstagramIcon from '@/components/Icons/InstagramIcon.vue'
 import LeadSyncSourcePage from '@/components/Settings/LeadSyncing/LeadSyncSourcePage.vue'
 import DefaultsSettings from '@/components/Settings/DefaultsSettings.vue'
@@ -271,12 +270,6 @@ const tabs = computed(() => {
           label: __('Google Drive'),
           icon: 'hard-drive',
           component: markRaw(GoogleDriveSettings),
-          condition: () => isManager(),
-        },
-        {
-          label: __('Google Agenda'),
-          icon: 'calendar',
-          component: markRaw(GoogleCalendarSettings),
           condition: () => isManager(),
         },
         {
