@@ -5,11 +5,13 @@ import { computed, reactive } from 'vue'
 // very first paint instead of a generic placeholder while settings load.
 const brand = reactive({ ...(window.crm_brand || {}) })
 
-const BLANK_ICON =
-  'data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=='
+// icone da agencia (losango Stratcompany) - mesmo fallback do lado do servidor
+// (crm.html, /login, /agendar, /documentos), pra nunca cair no icone generico do
+// Frappe/Frappe Cloud quando o cliente ainda nao tem favicon proprio.
+const AGENCIA_FAVICON = '/assets/crm/images/marca-agencia.png'
 
 function applyBrandToHead() {
-  const href = brand.favicon || BLANK_ICON
+  const href = brand.favicon || AGENCIA_FAVICON
   for (const rel of ['icon', 'apple-touch-icon']) {
     let link = document.querySelector(`link[rel="${rel}"]`)
     if (!link) {

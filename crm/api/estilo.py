@@ -151,11 +151,18 @@ def preview_pdf(
 
 # ------------------------------------------------------------------ favicon nas páginas públicas
 
+# icone da agencia (losango Stratcompany) - vive nos assets do app, nao no
+# "/files" de um site especifico, entao toda marca nova ja nasce com ele sem
+# precisar subir nada. E o que aparece quando o cliente ainda nao tem
+# logo/favicon proprio.
+AGENCIA_FAVICON = "/assets/crm/images/marca-agencia.png"
+
+
 def sync_website_favicon(doc=None, method=None):
 	"""Login, /agendar, /documentos e as demais páginas públicas usam o favicon de
 	"Website Settings", não o de "FCRM Settings" (o da marca, configurado em Configurações).
 	Sem isso, essas páginas mostram o ícone padrão do Frappe. Roda sozinho sempre que a marca
 	é salva; chamamos também uma vez à parte para acertar o que já estava configurado antes."""
-	favicon = frappe.db.get_single_value("FCRM Settings", "favicon")
-	if favicon and frappe.db.get_single_value("Website Settings", "favicon") != favicon:
+	favicon = frappe.db.get_single_value("FCRM Settings", "favicon") or AGENCIA_FAVICON
+	if frappe.db.get_single_value("Website Settings", "favicon") != favicon:
 		frappe.db.set_single_value("Website Settings", "favicon", favicon)
