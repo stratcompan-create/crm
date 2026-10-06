@@ -1,6 +1,9 @@
 <template>
   <div class="flex h-screen w-screen">
-    <AppSidebar />
+    <!-- Influenciadoras já é duas colunas (lista + parcerias) - sem a barra lateral
+         principal aqui sobra mais largura pra isso. TopNav continua de pé, então a
+         navegação pro resto do sistema não se perde. -->
+    <AppSidebar v-if="$route.name !== 'Influenciadoras'" />
     <div class="flex-1 flex flex-col h-full overflow-auto bg-surface-base">
       <TopNav />
       <AppHeader />
