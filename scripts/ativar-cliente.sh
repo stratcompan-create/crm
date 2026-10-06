@@ -15,8 +15,14 @@ WEBSITE="${4:-}"
 PROFILE="${5:-agencia}"   # agencia | escritorio (pessoa física) | escritorio_empresarial (atende empresas)
 
 BACKEND="${BACKEND:-frappe-backend-1}"
-[ -f /root/frappe.env ] && set -a && . /root/frappe.env && set +a
-DB_ROOT_PASSWORD="${DB_ROOT_PASSWORD:-${DB_PASSWORD:-}}"
+# Le so a chave DB_PASSWORD do frappe.env, sem dar "source" no arquivo inteiro -
+# esse arquivo tem linhas (ex.: SITES_RULE com Host(...)) que nao sao bash valido,
+# entao um "source" ingenuo quebra o script por causa de uma variavel que nem usamos.
+DB_PASSWORD_DO_ENV=""
+if [ -f /root/frappe.env ]; then
+  DB_PASSWORD_DO_ENV="$(grep -m1 '^DB_PASSWORD=' /root/frappe.env | cut -d= -f2-)"
+fi
+DB_ROOT_PASSWORD="${DB_ROOT_PASSWORD:-${DB_PASSWORD:-$DB_PASSWORD_DO_ENV}}"
 : "${DB_ROOT_PASSWORD:?defina DB_ROOT_PASSWORD}"
 ADMIN_PASSWORD="${ADMIN_PASSWORD:-$(openssl rand -base64 12 | tr -d '=+/')}"
 
@@ -24,7 +30,10 @@ echo ">> Criando site $SITE"
 docker exec "$BACKEND" bench new-site "$SITE" \
   --mariadb-root-password "$DB_ROOT_PASSWORD" \
   --admin-password "$ADMIN_PASSWORD" \
-  --install-app crm --set-default=false
+  --install-app crm
+# sem --set-default: "bench new-site" so aceita esse flag sem valor (e-lo
+# marcaria esse site novo como o site padrao do bench, o que nao queremos
+# quando ja existe um site principal rodando ali)
 
 LOGO_ARGS=()
 if [ -n "$LOGO" ]; then
