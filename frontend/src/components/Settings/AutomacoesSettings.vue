@@ -109,6 +109,32 @@
         </div>
       </section>
 
+      <!-- Meu Site -->
+      <section class="rounded-lg border border-outline-gray-2 p-4">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <div class="text-base-semibold text-ink-gray-9">{{ __('Aba "Meu Site"') }}</div>
+            <p class="mt-1 text-p-sm text-ink-gray-6">
+              {{ __('Mostra uma aba com o site do escritorio embutido no CRM. Desligue para quem ainda nao tem site proprio.') }}
+            </p>
+          </div>
+          <Toggle v-model="cfg.meu_site_ativo" />
+        </div>
+      </section>
+
+      <!-- Assistente de suporte -->
+      <section class="rounded-lg border border-outline-gray-2 p-4">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <div class="text-base-semibold text-ink-gray-9">{{ __('Assistente de suporte (chat)') }}</div>
+            <p class="mt-1 text-p-sm text-ink-gray-6">
+              {{ __('Chat fixo no CRM que tira duvida de como usar o sistema e explica os dados da tela atual. Desligue para quem ja tem o proprio assistente de IA e nao precisa de outro.') }}
+            </p>
+          </div>
+          <Toggle v-model="cfg.assistente_ativo" />
+        </div>
+      </section>
+
       <!-- Inteligência artificial -->
       <section class="rounded-lg border border-outline-gray-2 p-4">
         <div class="text-base-semibold text-ink-gray-9">{{ __('Inteligência artificial (Claude)') }}</div>

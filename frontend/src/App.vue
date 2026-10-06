@@ -5,7 +5,7 @@
     <Layout v-else-if="session.isLoggedIn" class="isolate">
       <router-view :key="$route.fullPath" />
     </Layout>
-    <AssistenteClaude v-if="session.isLoggedIn" />
+    <AssistenteClaude v-if="session.isLoggedIn && !!window.assistente_ativo" />
     <Dialogs />
     <DoctypeModals />
     <EventNotificationPopup />
