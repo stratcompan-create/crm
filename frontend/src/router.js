@@ -169,6 +169,11 @@ const routes = [
     component: () => import('@/pages/Contas.vue'),
   },
   {
+    path: '/influenciadoras',
+    name: 'Influenciadoras',
+    component: () => import('@/pages/Influenciadoras.vue'),
+  },
+  {
     path: '/equipe',
     name: 'Equipe',
     component: () => import('@/pages/Equipe.vue'),

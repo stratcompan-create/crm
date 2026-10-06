@@ -1,0 +1,104 @@
+{
+ "actions": [],
+ "creation": "2026-10-06 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-10-06 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "FCRM",
+ "owner": "Administrator",
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "autoname": "hash",
+ "naming_rule": "Random",
+ "name": "CRM Parceria",
+ "field_order": [
+  "influenciadora",
+  "marca",
+  "status",
+  "valor",
+  "data_gravacao",
+  "prazo_entrega",
+  "briefing",
+  "observacoes"
+ ],
+ "fields": [
+  {
+   "fieldname": "influenciadora",
+   "fieldtype": "Link",
+   "label": "Influenciadora",
+   "options": "CRM Influenciadora",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "marca",
+   "fieldtype": "Data",
+   "label": "Marca / Empresa parceira",
+   "in_list_view": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Negociando\nFechada\nEm produção\nEntregue\nCancelada",
+   "default": "Negociando",
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "valor",
+   "fieldtype": "Currency",
+   "label": "Valor",
+   "options": "BRL"
+  },
+  {
+   "fieldname": "data_gravacao",
+   "fieldtype": "Date",
+   "label": "Data de gravação"
+  },
+  {
+   "fieldname": "prazo_entrega",
+   "fieldtype": "Date",
+   "label": "Prazo de entrega",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "briefing",
+   "fieldtype": "Small Text",
+   "label": "Briefing / direcionamento"
+  },
+  {
+   "fieldname": "observacoes",
+   "fieldtype": "Small Text",
+   "label": "Observações"
+  }
+ ],
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "write": 1,
+   "role": "System Manager"
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "write": 1,
+   "role": "Sales Manager"
+  },
+  {
+   "read": 1,
+   "write": 1,
+   "role": "Sales User"
+  }
+ ]
+}

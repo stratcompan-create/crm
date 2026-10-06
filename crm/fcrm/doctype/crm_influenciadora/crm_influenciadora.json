@@ -1,0 +1,79 @@
+{
+ "actions": [],
+ "creation": "2026-10-06 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-10-06 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "FCRM",
+ "owner": "Administrator",
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "autoname": "hash",
+ "naming_rule": "Random",
+ "name": "CRM Influenciadora",
+ "field_order": [
+  "nome",
+  "instagram",
+  "nicho",
+  "seguidores_aprox",
+  "observacoes"
+ ],
+ "fields": [
+  {
+   "fieldname": "nome",
+   "fieldtype": "Data",
+   "label": "Nome",
+   "in_list_view": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "instagram",
+   "fieldtype": "Data",
+   "label": "Instagram (@)",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "nicho",
+   "fieldtype": "Data",
+   "label": "Nicho",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "seguidores_aprox",
+   "fieldtype": "Int",
+   "label": "Seguidores (aprox.)",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "observacoes",
+   "fieldtype": "Small Text",
+   "label": "Observações"
+  }
+ ],
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "write": 1,
+   "role": "System Manager"
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "read": 1,
+   "write": 1,
+   "role": "Sales Manager"
+  },
+  {
+   "read": 1,
+   "write": 1,
+   "role": "Sales User"
+  }
+ ]
+}

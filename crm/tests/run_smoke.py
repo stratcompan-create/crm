@@ -33,6 +33,7 @@ MODULES = [
     "instagram_metricas",
     "exclusao_em_massa",
     "horas",
+    "influenciadoras",
 ]
 
 

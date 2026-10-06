@@ -228,6 +228,7 @@
 <script setup>
 import BrushCleaningIcon from '~icons/lucide/brush-cleaning'
 import AccountsIcon from '~icons/lucide/building-2'
+import InfluencersIcon from '~icons/lucide/megaphone'
 import TeamIcon from '~icons/lucide/users'
 import TargetIcon from '~icons/lucide/target'
 import WorkflowIcon from '~icons/lucide/workflow'
@@ -522,6 +523,12 @@ const links = [
     label: 'Contas',
     icon: AccountsIcon,
     to: 'Contas',
+    condition: () => isAgency.value,
+  },
+  {
+    label: 'Influenciadoras',
+    icon: InfluencersIcon,
+    to: 'Influenciadoras',
     condition: () => isAgency.value,
   },
   {
