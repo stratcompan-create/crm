@@ -529,7 +529,7 @@ const links = [
     label: 'Influenciadoras',
     icon: InfluencersIcon,
     to: 'Influenciadoras',
-    condition: () => isAgency.value,
+    condition: () => isAgency.value && !!window.influenciadoras_ativo,
   },
   {
     label: 'Equipe',

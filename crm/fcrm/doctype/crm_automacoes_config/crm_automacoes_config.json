@@ -44,7 +44,8 @@
   "agenda_responsavel",
   "agenda_link",
   "agenda_mensagem",
-  "anthropic_api_key"
+  "anthropic_api_key",
+  "influenciadoras_ativo"
  ],
  "fields": [
   {
@@ -210,6 +211,12 @@
    "fieldname": "anthropic_api_key",
    "fieldtype": "Password",
    "label": "Chave da API da Anthropic"
+  },
+  {
+   "fieldname": "influenciadoras_ativo",
+   "fieldtype": "Check",
+   "label": "Gestão de influenciadoras ligada",
+   "default": "0"
   }
  ],
  "permissions": [

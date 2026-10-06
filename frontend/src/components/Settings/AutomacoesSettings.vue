@@ -96,6 +96,19 @@
         <Field class="mt-3" :label="__('Aviso na página (opcional)')"><FormControl v-model="cfg.agenda_mensagem" type="textarea" :rows="2" /></Field>
       </section>
 
+      <!-- Influenciadoras -->
+      <section class="rounded-lg border border-outline-gray-2 p-4">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <div class="text-base-semibold text-ink-gray-9">{{ __('Carteira de influenciadoras') }}</div>
+            <p class="mt-1 text-p-sm text-ink-gray-6">
+              {{ __('Mostra uma seção no menu lateral pra gerenciar influenciadoras e as parcerias de marca de cada uma. Desligado por padrão — ligue só nos CRMs que realmente usam isso.') }}
+            </p>
+          </div>
+          <Toggle v-model="cfg.influenciadoras_ativo" />
+        </div>
+      </section>
+
       <!-- Inteligência artificial -->
       <section class="rounded-lg border border-outline-gray-2 p-4">
         <div class="text-base-semibold text-ink-gray-9">{{ __('Inteligência artificial (Claude)') }}</div>

@@ -88,6 +88,7 @@ def get_boot():
 			"translated_doctypes": get_translated_doctypes(),
 			"translated_messages": get_boot_messages(),
 			"crm_profile": get_profile(),
+			"influenciadoras_ativo": cint(_influenciadoras_ativo()),
 			"timezone": {
 				"system": get_system_timezone(),
 				"user": frappe.db.get_value("User", frappe.session.user, "time_zone")
@@ -133,6 +134,17 @@ def get_state_options() -> dict[str, list[str]]:
 		# Degrade silently to free-text: this runs in boot, so the except branch
 		# must not do anything that can itself raise (e.g. logging to a missing dir).
 		return {}
+
+
+def _influenciadoras_ativo() -> int:
+	"""Runs inside ``get_boot`` like ``get_state_options`` above - must never raise,
+	so a missing/unmigrated config degrades to "desligado" instead of breaking the page."""
+	try:
+		from crm.api.automacoes import get_config
+
+		return get_config().influenciadoras_ativo
+	except Exception:
+		return 0
 
 
 def get_default_route():
