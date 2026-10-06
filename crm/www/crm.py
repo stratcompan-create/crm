@@ -109,6 +109,8 @@ def get_brand() -> dict:
 		"name": settings.get("brand_name") or "",
 		"logo": settings.get("brand_logo") or "",
 		"favicon": settings.get("favicon") or "",
+		# cor de destaque (aba/item ativo) - ver frontend/src/stores/settings.js
+		"accent": settings.get("brand_accent") or "",
 	}
 
 

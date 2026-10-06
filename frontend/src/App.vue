@@ -26,8 +26,17 @@ import { toast } from 'frappe-ui'
 const session = sessionStore()
 provide('session', session)
 
+// `useTheme()` auto-inicializa no primeiro uso (efeito colateral da propria
+// lib): se nao achar nada salvo, ja escreve 'system' no localStorage sozinho -
+// entao checar `localStorage.getItem('theme') DEPOIS de chamar useTheme() (como
+// era feito antes) sempre via algo salvo e nunca forcava 'light' de verdade. Le
+// o valor salvo ANTES de chamar useTheme(), pra pegar o estado real da visita.
+const storedTheme = localStorage.getItem('theme')
 const { setTheme } = useTheme()
-if (!localStorage.getItem('theme')) {
+// 'system' segue o SO e podia cair em modo escuro sem o usuario pedir - so
+// mantem tema salvo quando foi uma escolha explicita (claro ou escuro) feita
+// no seletor de tema; qualquer outra coisa (nada salvo, ou 'system') vira claro.
+if (storedTheme !== 'light' && storedTheme !== 'dark') {
   setTheme('light')
 }
 
