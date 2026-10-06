@@ -35,6 +35,7 @@ MODULES = [
     "exclusao_em_massa",
     "horas",
     "influenciadoras",
+    "gcalendar",
 ]
 
 

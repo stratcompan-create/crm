@@ -36,7 +36,10 @@ def _busy(start: datetime, end: datetime) -> list[tuple[datetime, datetime]]:
 		filters={"status": "Agendada", "inicio": ["<", end], "fim": [">", start]},
 		fields=["inicio", "fim"],
 	)
-	return [(get_datetime(r.inicio), get_datetime(r.fim)) for r in rows]
+	busy = [(get_datetime(r.inicio), get_datetime(r.fim)) for r in rows]
+	from crm.api import gcalendar
+	busy += gcalendar.obter_ocupado(start, end)
+	return busy
 
 
 def _slots_for(day, cfg) -> list[datetime]:
@@ -153,6 +156,8 @@ def book(nome: str, email: str, telefone: str, data: str, horario: str, mensagem
 		}
 	).insert(ignore_permissions=True)
 	_add_to_calendar(meeting, lead, title, start, end, responsavel)
+	from crm.api import gcalendar
+	gcalendar.criar_evento(title, start, end, meeting.observacoes or "", meeting.email)
 	if frappe.db.get_value("CRM Lead", lead, "status") == "New" and frappe.db.exists("CRM Lead Status", "Contacted"):
 		frappe.db.set_value("CRM Lead", lead, "status", "Contacted")
 	_confirm_by_email(meeting, cfg, start, end)

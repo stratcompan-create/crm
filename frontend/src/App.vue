@@ -51,6 +51,17 @@ onMounted(() => {
   window.history.replaceState({}, '', window.location.pathname + (qs ? `?${qs}` : ''))
 })
 
+onMounted(() => {
+  const params = new URLSearchParams(window.location.search)
+  const result = params.get('gcal')
+  if (!result) return
+  if (result === 'ok') toast.success(__('Google Agenda conectado.'))
+  else toast.error(__('Não foi possível conectar o Google Agenda. Tente de novo.'))
+  params.delete('gcal')
+  const qs = params.toString()
+  window.history.replaceState({}, '', window.location.pathname + (qs ? `?${qs}` : ''))
+})
+
 const MobileLayout = defineAsyncComponent(
   () => import('./components/Layouts/MobileLayout.vue'),
 )
