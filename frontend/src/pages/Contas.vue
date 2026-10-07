@@ -32,15 +32,16 @@
       <ListHeaderItem v-for="column in columns" :key="column.key" :item="column" />
     </ListHeader>
     <ListRows v-slot="{ column, item, row }" class="mx-3 sm:mx-5" :rows="rows" doctype="CRM Client Account">
-      <Button
-        v-if="column.key === 'acoes'"
-        class="shrink-0"
-        variant="ghost"
-        size="sm"
-        :disabled="!row.url"
-        :label="__('Abrir')"
-        @click.stop="openAccount(row.url)"
-      />
+      <div v-if="column.key === 'acoes'" class="flex w-full justify-end">
+        <Button
+          class="shrink-0"
+          variant="ghost"
+          size="sm"
+          :disabled="!row.url"
+          :label="__('Abrir')"
+          @click.stop="openAccount(row.url)"
+        />
+      </div>
       <ListRowItem
         v-else
         :item="item"
@@ -104,7 +105,7 @@ const rows = computed(() => {
 const columns = computed(() => {
   const cols = accounts.value?.data?.columns || []
   if (!cols.length) return cols
-  return [...cols, { key: 'acoes', label: __('Ações'), type: 'Data', width: '8rem' }]
+  return [...cols, { key: 'acoes', label: __('Ações'), type: 'Data', width: '9rem', align: 'right' }]
 })
 
 function parseRows(data, columns = []) {
