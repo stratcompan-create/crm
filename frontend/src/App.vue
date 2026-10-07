@@ -5,7 +5,7 @@
     <Layout v-else-if="session.isLoggedIn" class="isolate">
       <router-view :key="$route.fullPath" />
     </Layout>
-    <AssistenteClaude v-if="session.isLoggedIn && !!window.assistente_ativo" />
+    <AssistenteClaude v-if="session.isLoggedIn && assistenteAtivo" />
     <Dialogs />
     <DoctypeModals />
     <EventNotificationPopup />
@@ -25,6 +25,13 @@ import { toast } from 'frappe-ui'
 
 const session = sessionStore()
 provide('session', session)
+
+// `window` dentro do <template> nao e reconhecido como o global do navegador -
+// o Vue tenta achar uma propriedade "window" no proprio componente, nao acha, e
+// quebra a tela inteira tentando ler a propriedade seguinte de undefined. Por
+// isso essa leitura tem que vir de aqui (JS comum, fora do template), nunca
+// direto de "window.algo" dentro de uma expressao do <template>.
+const assistenteAtivo = computed(() => !!window.assistente_ativo)
 
 // `useTheme()` auto-inicializa no primeiro uso (efeito colateral da propria
 // lib): se nao achar nada salvo, ja escreve 'system' no localStorage sozinho -
