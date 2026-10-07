@@ -1,0 +1,28 @@
+{
+	"actions": [],
+	"autoname": "hash",
+	"creation": "2026-10-07 00:00:00.000000",
+	"doctype": "DocType",
+	"engine": "InnoDB",
+	"field_order": ["valor_centavos", "status", "link_pagamento"],
+	"fields": [
+		{"fieldname": "valor_centavos", "fieldtype": "Int", "label": "Valor (centavos)", "read_only": 1, "reqd": 1},
+		{"default": "Pendente", "fieldname": "status", "fieldtype": "Select", "label": "Status", "options": "Pendente\nPago", "read_only": 1},
+		{"fieldname": "link_pagamento", "fieldtype": "Small Text", "label": "Link de pagamento", "read_only": 1}
+	],
+	"index_web_pages_for_search": 1,
+	"links": [],
+	"modified": "2026-10-07 00:00:00.000000",
+	"modified_by": "Administrator",
+	"module": "FCRM",
+	"name": "CRM Credito IA Compra",
+	"owner": "Administrator",
+	"permissions": [
+		{"create": 1, "delete": 1, "read": 1, "write": 1, "role": "System Manager"},
+		{"read": 1, "write": 1, "role": "Sales Manager"}
+	],
+	"row_format": "Dynamic",
+	"sort_field": "creation",
+	"sort_order": "DESC",
+	"states": []
+}

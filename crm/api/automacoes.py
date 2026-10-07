@@ -41,7 +41,7 @@ CONFIG_FIELDS = (
 	"posvenda_avaliacao_link posvenda_avaliacao_mensagem posvenda_indicacao_dias posvenda_indicacao_mensagem "
 	"relatorio_ativo relatorio_email relatorio_destinatarios agenda_ativa agenda_titulo agenda_duracao agenda_dias "
 	"agenda_inicio agenda_fim agenda_antecedencia agenda_dias_a_frente agenda_responsavel agenda_link "
-	"agenda_mensagem influenciadoras_ativo meu_site_ativo assistente_ativo"
+	"agenda_mensagem influenciadoras_ativo meu_site_ativo assistente_ativo credito_ia_ativo"
 ).split()
 
 DEFAULTS = {
@@ -73,6 +73,8 @@ DEFAULTS = {
 	# proprio, ou que ja paga por um assistente de IA proprio)
 	"meu_site_ativo": 1,
 	"assistente_ativo": 1,
+	# desligado por padrao - so liga pra quem entrou no modelo de saldo pre-pago
+	"credito_ia_ativo": 0,
 }
 
 

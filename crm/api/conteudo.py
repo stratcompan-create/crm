@@ -9,6 +9,7 @@ import urllib.error
 import urllib.request
 
 import frappe
+from frappe import _
 
 MODEL = "claude-sonnet-5"
 MAX_TOKENS = 2000
@@ -47,6 +48,11 @@ def _brand_context() -> dict:
 
 
 def _call_claude(api_key: str, system: str, mensagens: list) -> str:
+	from crm.api import credito_ia
+
+	if not credito_ia.saldo_suficiente():
+		frappe.throw(_("O saldo de IA acabou. Compre mais crédito em Configurações para continuar usando."))
+
 	body = json.dumps({
 		"model": MODEL,
 		"max_tokens": MAX_TOKENS,
@@ -64,6 +70,7 @@ def _call_claude(api_key: str, system: str, mensagens: list) -> str:
 	)
 	with urllib.request.urlopen(req, timeout=60) as resp:
 		data = json.loads(resp.read())
+	credito_ia.registrar_uso(data.get("usage"))
 	return "".join(bloco.get("text", "") for bloco in data.get("content", []))
 
 

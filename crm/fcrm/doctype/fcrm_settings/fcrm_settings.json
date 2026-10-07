@@ -44,6 +44,7 @@
   "integracoes_ia_tab",
   "infinitepay_handle",
   "webhook_secret_pagamento",
+  "webhook_secret_credito_ia",
   "dropdown_items_tab",
   "dropdown_items",
   "persona_captured"
@@ -298,6 +299,14 @@
    "hidden": 1,
    "read_only": 1,
    "description": "Gerado automaticamente - usado pra validar o webhook do InfinitePay."
+  },
+  {
+   "fieldname": "webhook_secret_credito_ia",
+   "fieldtype": "Data",
+   "label": "Webhook secret (credito de IA)",
+   "hidden": 1,
+   "read_only": 1,
+   "description": "Gerado automaticamente - usado pra validar o webhook da recarga de credito de IA."
   }
  ],
  "index_web_pages_for_search": 1,

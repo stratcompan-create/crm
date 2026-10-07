@@ -186,9 +186,13 @@ def save_ai_key(chave: str = ""):
 
 
 def _ask_claude(transcript: str) -> dict:
+	from crm.api import credito_ia
+
 	key = _api_key()
 	if not key:
 		frappe.throw(_("A chave da IA ainda não foi cadastrada. Peça a um gestor em Configurações → Automações."))
+	if not credito_ia.saldo_suficiente():
+		frappe.throw(_("O saldo de IA acabou. Compre mais crédito em Configurações para continuar usando."))
 	try:
 		resp = requests.post(
 			API_URL,
@@ -209,7 +213,9 @@ def _ask_claude(transcript: str) -> dict:
 	if not resp.ok:
 		frappe.log_error("Ficha: resposta da IA com erro", resp.text[:1500])
 		frappe.throw(_("A IA não conseguiu analisar a transcrição. Tente de novo."))
-	text = "".join(b.get("text", "") for b in resp.json().get("content", []) if b.get("type") == "text")
+	resp_data = resp.json()
+	credito_ia.registrar_uso(resp_data.get("usage"))
+	text = "".join(b.get("text", "") for b in resp_data.get("content", []) if b.get("type") == "text")
 	match = re.search(r"\{.*\}", text, re.S)
 	try:
 		data = json.loads(match.group(0)) if match else {}

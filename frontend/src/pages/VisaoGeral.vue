@@ -5,6 +5,8 @@
     </template>
   </LayoutHeader>
 
+  <CreditoIABar />
+
   <div class="flex gap-1 border-b border-outline-gray-1 px-4 pt-1">
     <button
       v-for="t in tabs"
@@ -117,6 +119,7 @@
   </div>
 </template>
 <script setup>
+import CreditoIABar from '@/components/CreditoIABar.vue'
 import LayoutHeader from '@/components/LayoutHeader.vue'
 import EmptyState from '@/components/ListViews/EmptyState.vue'
 import FolderIcon from '~icons/lucide/folder'

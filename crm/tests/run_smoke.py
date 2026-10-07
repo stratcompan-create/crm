@@ -36,6 +36,7 @@ MODULES = [
     "horas",
     "influenciadoras",
     "gcalendar",
+    "credito_ia",
 ]
 
 

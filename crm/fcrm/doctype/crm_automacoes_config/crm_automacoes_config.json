@@ -47,7 +47,8 @@
   "anthropic_api_key",
   "influenciadoras_ativo",
   "meu_site_ativo",
-  "assistente_ativo"
+  "assistente_ativo",
+  "credito_ia_ativo"
  ],
  "fields": [
   {
@@ -231,6 +232,12 @@
    "fieldtype": "Check",
    "label": "Assistente de suporte (chat) ligado",
    "default": "1"
+  },
+  {
+   "fieldname": "credito_ia_ativo",
+   "fieldtype": "Check",
+   "label": "Controle de saldo de IA ligado (cobranca pre-paga)",
+   "default": "0"
   }
  ],
  "permissions": [

@@ -135,6 +135,19 @@
         </div>
       </section>
 
+      <!-- Saldo de IA -->
+      <section class="rounded-lg border border-outline-gray-2 p-4">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <div class="text-base-semibold text-ink-gray-9">{{ __('Controle de saldo de IA (pre-pago)') }}</div>
+            <p class="mt-1 text-p-sm text-ink-gray-6">
+              {{ __('Mostra uma barra de saldo na Visao Geral e para a IA quando acabar o credito, ate o cliente comprar mais direto no CRM. Desligado por padrao.') }}
+            </p>
+          </div>
+          <Toggle v-model="cfg.credito_ia_ativo" />
+        </div>
+      </section>
+
       <!-- Inteligência artificial -->
       <section class="rounded-lg border border-outline-gray-2 p-4">
         <div class="text-base-semibold text-ink-gray-9">{{ __('Inteligência artificial (Claude)') }}</div>
