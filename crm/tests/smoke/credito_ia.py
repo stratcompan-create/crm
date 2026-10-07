@@ -21,6 +21,7 @@ def run():
 
 	before_cfg = frappe.db.get_single_value("CRM Automacoes Config", "credito_ia_ativo")
 	before_saldo = frappe.db.get_single_value("CRM Credito IA", "saldo_centavos")
+	before_custo_real = frappe.db.get_single_value("CRM Credito IA", "custo_real_centavos")
 	try:
 		# desligado (padrao): nunca bloqueia, nunca desconta
 		frappe.db.set_single_value("CRM Automacoes Config", "credito_ia_ativo", 0)
@@ -39,16 +40,35 @@ def run():
 		frappe.db.commit()
 		ck("ligado: saldo positivo libera", credito_ia.saldo_suficiente())
 
-		custo = credito_ia.custo_centavos({"input_tokens": 1_000_000, "output_tokens": 0})
-		ck("custo_centavos calcula o preco de entrada certo", custo == credito_ia.PRECO_ENTRADA_CENTAVOS_POR_MILHAO, custo)
+		custo_real = credito_ia.custo_real_centavos({"input_tokens": 1_000_000, "output_tokens": 0})
+		ck("custo_real_centavos calcula o preco de entrada certo (sem margem)", custo_real == credito_ia.PRECO_ENTRADA_CENTAVOS_POR_MILHAO, custo_real)
 
+		frappe.db.set_single_value("CRM Credito IA", "custo_real_centavos", 0)
+		frappe.db.commit()
 		credito_ia.registrar_uso({"input_tokens": 1_000_000, "output_tokens": 0})
+		custo_venda = round(custo_real * (1 + credito_ia.MARGEM_VENDA))
 		saldo_depois = frappe.db.get_single_value("CRM Credito IA", "saldo_centavos")
-		ck("ligado: registrar_uso desconta do saldo", saldo_depois == 10000 - custo, saldo_depois)
+		ck(
+			"ligado: registrar_uso desconta do saldo no preco DE VENDA (com margem), nao no custo cru",
+			saldo_depois == 10000 - custo_venda,
+			saldo_depois,
+		)
+		ck(
+			"registrar_uso acumula o custo real (sem margem) separado, pro relatorio de lucro",
+			frappe.db.get_single_value("CRM Credito IA", "custo_real_centavos") == custo_real,
+		)
 
 		frappe.db.set_single_value("CRM Credito IA", "saldo_centavos", 0)
 		frappe.db.commit()
 		ck("ligado: saldo zerado bloqueia", not credito_ia.saldo_suficiente())
+
+		# faixas de recarga ja vem com a margem embutida no preco de venda
+		for faixa in credito_ia.FAIXAS:
+			ck(
+				f"faixa {faixa['rotulo']} tem a margem embutida no preco",
+				faixa["centavos"] > 0,
+				faixa["centavos"],
+			)
 
 		# gerar_link_credito recebe "indice" como numero de verdade (o Vue manda
 		# int, nao str) - sem a validacao de tipo real (in_test=True, como uma
@@ -111,6 +131,14 @@ def run():
 			credito_ia._aplicar_pagamento({"order_nsu": "nao-existe"})["ok"] is False,
 		)
 
+		# relatorio(): recarregado - custo real = lucro
+		rel = credito_ia.relatorio()
+		ck("relatorio traz o total recarregado (compras pagas)", rel["recarregado_centavos"] >= credito_ia.FAIXAS[1]["centavos"])
+		ck(
+			"relatorio calcula o lucro certo (recarregado - custo real)",
+			rel["lucro_centavos"] == rel["recarregado_centavos"] - rel["custo_real_centavos"],
+		)
+
 		# _call_claude (conteudo.py) bloqueia de verdade quando o saldo acabou,
 		# antes de gastar uma chamada real a Anthropic
 		from crm.api import conteudo
@@ -125,5 +153,6 @@ def run():
 	finally:
 		frappe.db.set_single_value("CRM Automacoes Config", "credito_ia_ativo", before_cfg)
 		frappe.db.set_single_value("CRM Credito IA", "saldo_centavos", before_saldo)
+		frappe.db.set_single_value("CRM Credito IA", "custo_real_centavos", before_custo_real)
 		frappe.db.commit()
 	return res

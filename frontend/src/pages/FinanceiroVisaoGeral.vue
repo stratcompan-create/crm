@@ -114,6 +114,30 @@
         <span class="text-ink-gray-7">{{ rentabilidade.data.sem_registro.map((s) => s.cliente).join(', ') }}</span>
       </div>
     </div>
+
+    <div v-if="creditoIA.data?.ativo" class="rounded-lg border border-outline-gray-2 p-5">
+      <div class="mb-1 text-p-base-medium text-ink-gray-8">{{ __('Crédito de IA') }}</div>
+      <div class="mb-4 text-p-sm text-ink-gray-5">
+        {{ __('O que entrou de recarga, o que foi gasto de verdade com a Anthropic, e o que sobrou de lucro.') }}
+      </div>
+      <div class="grid grid-cols-3 gap-4 text-center">
+        <div>
+          <div class="text-lg-semibold text-ink-gray-9">{{ formatCurrency((creditoIA.data?.recarregado_centavos || 0) / 100) }}</div>
+          <div class="text-p-sm text-ink-gray-5">{{ __('Recarregado') }}</div>
+        </div>
+        <div>
+          <div class="text-lg-semibold text-ink-gray-9">{{ formatCurrency((creditoIA.data?.custo_real_centavos || 0) / 100) }}</div>
+          <div class="text-p-sm text-ink-gray-5">{{ __('Custo real (Anthropic)') }}</div>
+        </div>
+        <div>
+          <div class="text-lg-semibold text-ink-green-6">{{ formatCurrency((creditoIA.data?.lucro_centavos || 0) / 100) }}</div>
+          <div class="text-p-sm text-ink-gray-5">{{ __('Seu lucro') }}</div>
+        </div>
+      </div>
+      <div class="mt-4 border-t border-outline-gray-1 pt-3 text-p-sm text-ink-gray-5">
+        {{ __('Saldo disponível do cliente agora: {0}', [formatCurrency((creditoIA.data?.saldo_centavos || 0) / 100)]) }}
+      </div>
+    </div>
   </div>
 </template>
 <script setup>
@@ -164,6 +188,7 @@ const rentabilidade = createResource({
   url: 'crm.api.horas.rentabilidade_clientes',
   auto: isAgency.value,
 })
+const creditoIA = createResource({ url: 'crm.api.credito_ia.relatorio', auto: true, onError() {} })
 
 function barWidth(servico) {
   const valores = breakdown.data?.servicos?.map((s) => s.pago + s.pendente) || [0]

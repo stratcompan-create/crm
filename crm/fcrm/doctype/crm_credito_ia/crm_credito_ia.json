@@ -3,9 +3,10 @@
 	"creation": "2026-10-07 00:00:00.000000",
 	"doctype": "DocType",
 	"engine": "InnoDB",
-	"field_order": ["saldo_centavos"],
+	"field_order": ["saldo_centavos", "custo_real_centavos"],
 	"fields": [
-		{"default": "0", "fieldname": "saldo_centavos", "fieldtype": "Int", "label": "Saldo (centavos)", "read_only": 1}
+		{"default": "0", "fieldname": "saldo_centavos", "fieldtype": "Int", "label": "Saldo (centavos)", "read_only": 1},
+		{"default": "0", "fieldname": "custo_real_centavos", "fieldtype": "Int", "label": "Custo real acumulado (centavos, sem margem)", "read_only": 1}
 	],
 	"index_web_pages_for_search": 1,
 	"issingle": 1,

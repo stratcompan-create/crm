@@ -3,9 +3,9 @@
 #
 # Saldo pré-pago de IA por site. Cada chamada à API do Claude (ficha automática,
 # gerador de conteúdo, assistente de suporte, sugestões, follow-up) desconta do
-# saldo o custo real daquela chamada (a Anthropic informa quantos tokens cada
-# resposta usou). Quando o saldo acaba, a IA para de responder até o cliente
-# comprar mais - ver gerar_link_credito() / webhook_credito() abaixo.
+# saldo o custo da chamada, já na margem de venda (ver MARGEM_VENDA) - não no
+# custo cru que a Anthropic cobra. Quando o saldo acaba, a IA para de responder
+# até o cliente comprar mais - ver gerar_link_credito() / webhook_credito().
 #
 # O pagamento usa a InfiniteTag da Stratcompany (não a de cada escritório, que é
 # só pra ele cobrar os próprios clientes) - por isso o handle vem da configuração
@@ -25,19 +25,32 @@ DOCTYPE_COMPRA = "CRM Credito IA Compra"
 
 MANAGER_ROLES = ("System Manager", "Sales Manager")
 
-# Preço por milhão de tokens do claude-sonnet-5 (igual ao resto do CRM usa),
-# convertido pra centavos de real. Ajuste aqui se o preço da Anthropic mudar
-# ou se quiser outra margem - não precisa mexer em mais nada.
+# Preço de CUSTO por milhão de tokens do claude-sonnet-5 (o que a Anthropic cobra
+# de verdade, igual ao resto do CRM usa), convertido pra centavos de real.
 PRECO_ENTRADA_CENTAVOS_POR_MILHAO = 1650  # ~US$3/milhão, dólar a ~5,50
 PRECO_SAIDA_CENTAVOS_POR_MILHAO = 8250  # ~US$15/milhão
 
+# Margem da Stratcompany em cima do custo - tanto no preço de venda das faixas
+# de recarga quanto no que é descontado do saldo a cada uso. É por isso que a
+# margem vira lucro de verdade: o saldo do cliente desconta no preço DE VENDA
+# (custo + margem), não no custo cru - a diferença fica guardada como lucro em
+# vez de virar uso extra de graça pro cliente.
+MARGEM_VENDA = 0.30
+
+DOLAR_EM_CENTAVOS = 550  # só usado pra calcular o preço de venda das faixas
+
+
+def _preco_venda_centavos(usd: float) -> int:
+	return round(usd * DOLAR_EM_CENTAVOS * (1 + MARGEM_VENDA))
+
+
 # Faixas de recarga oferecidas ao cliente. "US$" é só o rótulo (referência do
-# preço da Anthropic) - o valor cobrado de verdade é o de "centavos", em reais,
+# custo da Anthropic) - o valor em "centavos" é o preço de venda de verdade,
 # já com a margem da Stratcompany embutida.
 FAIXAS = [
-	{"rotulo": "US$ 5", "centavos": 2700},
-	{"rotulo": "US$ 20", "centavos": 11000},
-	{"rotulo": "US$ 30", "centavos": 16500},
+	{"rotulo": "US$ 5", "centavos": _preco_venda_centavos(5)},
+	{"rotulo": "US$ 20", "centavos": _preco_venda_centavos(20)},
+	{"rotulo": "US$ 30", "centavos": _preco_venda_centavos(30)},
 ]
 
 
@@ -67,13 +80,40 @@ def obter_saldo() -> dict:
 	}
 
 
-def custo_centavos(usage: dict) -> int:
-	"""Custo em centavos de uma chamada, a partir do `usage` que a Anthropic devolve
-	em toda resposta ({"input_tokens": N, "output_tokens": M})."""
+@frappe.whitelist()
+def relatorio() -> dict:
+	"""Pra mostrar no Financeiro: quanto entrou de recarga, quanto custou de IA
+	de verdade (preço cru da Anthropic, sem a margem) e quanto disso é lucro."""
+	frappe.only_for(MANAGER_ROLES)
+	recarregado = cint(
+		frappe.db.sql(
+			f"select coalesce(sum(valor_centavos), 0) from `tab{DOCTYPE_COMPRA}` where status = 'Pago'"
+		)[0][0]
+	)
+	doc = _saldo_doc()
+	custo_real = cint(doc.custo_real_centavos)
+	return {
+		"ativo": _ativo(),
+		"recarregado_centavos": recarregado,
+		"custo_real_centavos": custo_real,
+		"lucro_centavos": recarregado - custo_real,
+		"saldo_centavos": cint(doc.saldo_centavos),
+	}
+
+
+def custo_real_centavos(usage: dict) -> int:
+	"""Custo de verdade (o que a Anthropic cobra, sem margem) de uma chamada, a
+	partir do `usage` que ela devolve em toda resposta
+	({"input_tokens": N, "output_tokens": M})."""
 	entrada = cint((usage or {}).get("input_tokens"))
 	saida = cint((usage or {}).get("output_tokens"))
 	custo = (entrada * PRECO_ENTRADA_CENTAVOS_POR_MILHAO + saida * PRECO_SAIDA_CENTAVOS_POR_MILHAO) / 1_000_000
 	return max(1, round(custo)) if (entrada or saida) else 0
+
+
+def custo_centavos(usage: dict) -> int:
+	"""Mantido pelo nome antigo pra compatibilidade - ver custo_real_centavos()."""
+	return custo_real_centavos(usage)
 
 
 def _ativo() -> bool:
@@ -94,17 +134,22 @@ def saldo_suficiente() -> bool:
 
 
 def registrar_uso(usage: dict) -> None:
-	"""Desconta do saldo o custo de uma chamada. Só desconta se o controle estiver
-	ligado pra este site. Nunca lança exceção - cobrar errado uma vez não pode
-	derrubar a resposta que a pessoa já recebeu."""
+	"""Desconta do saldo o custo de uma chamada, já no preço de venda (com
+	margem) - e separadamente soma o custo real (sem margem) pro relatório de
+	lucro. Só roda se o controle estiver ligado pra este site. Nunca lança
+	exceção - cobrar errado uma vez não pode derrubar a resposta que a pessoa
+	já recebeu."""
 	if not _ativo():
 		return
 	try:
-		custo = custo_centavos(usage)
-		if not custo:
+		custo_real = custo_real_centavos(usage)
+		if not custo_real:
 			return
+		custo_venda = round(custo_real * (1 + MARGEM_VENDA))
+		doc = _saldo_doc()
+		frappe.db.set_single_value(DOCTYPE_SALDO, "saldo_centavos", cint(doc.saldo_centavos) - custo_venda)
 		frappe.db.set_single_value(
-			DOCTYPE_SALDO, "saldo_centavos", cint(_saldo_doc().saldo_centavos) - custo
+			DOCTYPE_SALDO, "custo_real_centavos", cint(doc.custo_real_centavos) + custo_real
 		)
 		frappe.db.commit()
 	except Exception:
