@@ -24,17 +24,24 @@
       <p class="mb-4 text-p-sm text-ink-gray-6">
         {{ __('Escolha o valor da recarga. O pagamento é feito direto no link, por Pix ou cartão.') }}
       </p>
-      <div class="flex flex-col gap-2">
+      <div class="flex flex-col gap-3">
         <button
           v-for="(faixa, i) in saldo.data?.faixas || []"
           :key="i"
           type="button"
-          class="flex items-center justify-between rounded-lg border border-outline-gray-2 px-4 py-3 text-left hover:border-outline-gray-4"
+          class="flex flex-col gap-2 rounded-lg border border-outline-gray-2 px-4 py-3 text-left hover:border-outline-gray-4"
           :disabled="comprando"
           @click="comprar(i)"
         >
-          <span class="text-p-base-medium text-ink-gray-8">{{ faixa.rotulo }}</span>
-          <span class="text-p-sm text-ink-gray-6">{{ formatarReais(faixa.centavos) }}</span>
+          <div class="flex items-center justify-between">
+            <span class="text-p-base-medium text-ink-gray-8">{{ faixa.rotulo }}</span>
+            <span class="text-p-sm text-ink-gray-6">{{ formatarReais(faixa.centavos) }}</span>
+          </div>
+          <div class="flex flex-col gap-0.5">
+            <span v-for="cap in faixa.capacidades || []" :key="cap.label" class="text-p-sm text-ink-gray-5">
+              {{ __('até {0} {1}', [cap.quantidade.toLocaleString('pt-BR'), cap.label]) }}
+            </span>
+          </div>
         </button>
       </div>
     </template>

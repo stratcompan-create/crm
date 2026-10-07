@@ -70,6 +70,20 @@ def run():
 				faixa["centavos"],
 			)
 
+		# cada faixa mostra o que da pra fazer, nao so o preco solto - e a faixa
+		# maior tem que render mais uso que a menor, senao o numero esta errado
+		for faixa in credito_ia.FAIXAS:
+			ck(
+				f"faixa {faixa['rotulo']} mostra o que da pra fazer com o credito",
+				len(faixa.get("capacidades") or []) == len(credito_ia.USO_REFERENCIA)
+				and all(c["quantidade"] > 0 for c in faixa["capacidades"]),
+				faixa.get("capacidades"),
+			)
+		ck(
+			"faixa maior rende mais uso que a menor (mesma funcionalidade)",
+			credito_ia.FAIXAS[2]["capacidades"][0]["quantidade"] > credito_ia.FAIXAS[0]["capacidades"][0]["quantidade"],
+		)
+
 		# gerar_link_credito recebe "indice" como numero de verdade (o Vue manda
 		# int, nao str) - sem a validacao de tipo real (in_test=True, como uma
 		# requisicao HTTP de verdade faz) esse bug passaria batido no console.

@@ -44,14 +44,46 @@ def _preco_venda_centavos(usd: float) -> int:
 	return round(usd * DOLAR_EM_CENTAVOS * (1 + MARGEM_VENDA))
 
 
+def _custo_venda_uso(entrada: int, saida: int) -> int:
+	"""Preço de venda (com margem) de UM uso típico de uma funcionalidade,
+	a partir de uma estimativa de tokens de entrada/saída dela."""
+	raw = (entrada * PRECO_ENTRADA_CENTAVOS_POR_MILHAO + saida * PRECO_SAIDA_CENTAVOS_POR_MILHAO) / 1_000_000
+	return max(1, round(raw * (1 + MARGEM_VENDA)))
+
+
+# Tokens típicos (entrada, saída) de cada funcionalidade que usa IA - são as
+# mesmas pra qualquer tipo de negócio (loja, escritório, o que for), só o
+# CONTEÚDO que a IA gera é que muda, não a quantidade de uso. Usado só pra
+# mostrar pro cliente, de forma concreta, o que cada faixa de recarga permite
+# fazer - "tokens" sozinho não diz nada pra ninguém.
+USO_REFERENCIA = [
+	{"label": "fichas de reunião geradas automaticamente", "entrada": 4000, "saida": 700},
+	{"label": "conteúdos de Instagram gerados", "entrada": 2500, "saida": 1200},
+	{"label": "trocas de mensagem com o assistente de suporte", "entrada": 1800, "saida": 350},
+]
+
+
+def _capacidades(centavos: int) -> list:
+	out = []
+	for info in USO_REFERENCIA:
+		custo = _custo_venda_uso(info["entrada"], info["saida"])
+		out.append({"label": info["label"], "quantidade": centavos // custo})
+	return out
+
+
 # Faixas de recarga oferecidas ao cliente. "US$" é só o rótulo (referência do
 # custo da Anthropic) - o valor em "centavos" é o preço de venda de verdade,
-# já com a margem da Stratcompany embutida.
+# já com a margem da Stratcompany embutida. "capacidades" é uma estimativa de
+# quanto cada faixa rende em uso real, pro cliente ver valor concreto, não só
+# um preço em reais solto.
 FAIXAS = [
 	{"rotulo": "US$ 5", "centavos": _preco_venda_centavos(5)},
 	{"rotulo": "US$ 20", "centavos": _preco_venda_centavos(20)},
 	{"rotulo": "US$ 30", "centavos": _preco_venda_centavos(30)},
 ]
+for _faixa in FAIXAS:
+	_faixa["capacidades"] = _capacidades(_faixa["centavos"])
+del _faixa
 
 
 def _saldo_doc():
