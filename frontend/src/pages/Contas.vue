@@ -32,14 +32,21 @@
       <ListHeaderItem v-for="column in columns" :key="column.key" :item="column" />
     </ListHeader>
     <ListRows v-slot="{ column, item, row }" class="mx-3 sm:mx-5" :rows="rows" doctype="CRM Client Account">
-      <ListRowItem :item="item" :align="column.align" class="overflow-hidden" @click.stop="editAccount(row.name)" />
       <Button
-        v-if="column.key === 'url' && row.url"
-        class="ml-2 shrink-0"
+        v-if="column.key === 'acoes'"
+        class="shrink-0"
         variant="ghost"
         size="sm"
+        :disabled="!row.url"
         :label="__('Abrir')"
         @click.stop="openAccount(row.url)"
+      />
+      <ListRowItem
+        v-else
+        :item="item"
+        :align="column.align"
+        class="overflow-hidden"
+        @click.stop="editAccount(row.name)"
       />
     </ListRows>
     <ListFooter
@@ -90,7 +97,15 @@ const rows = computed(() => {
   return parseRows(accounts.value.data.data, accounts.value.data.columns)
 })
 
-const columns = computed(() => accounts.value?.data?.columns || [])
+// coluna extra, so pra renderizar o botao "Abrir" - nao existe um campo
+// "acoes" no doctype, essa coluna nunca tem ListRowItem, so o botao (ver
+// o v-if/v-else no ListRows acima). Fica por ultimo na linha, depois de
+// "Ultima modificacao", em vez de empurrado pra baixo do endereco do CRM.
+const columns = computed(() => {
+  const cols = accounts.value?.data?.columns || []
+  if (!cols.length) return cols
+  return [...cols, { key: 'acoes', label: __('Ações'), type: 'Data', width: '8rem' }]
+})
 
 function parseRows(data, columns = []) {
   return data.map((acc) => {
