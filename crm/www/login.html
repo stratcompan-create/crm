@@ -54,9 +54,8 @@
 {{ include_style('login.bundle.css') }}
 <style>
 	:root {
-		--stratcompany-navy: #042d3c;
-		--stratcompany-navy-light: #0f4655;
-		--stratcompany-sage: #8aa1a9;
+		--stratcompany-navy: {{ crm_cor }};
+		--stratcompany-sage: {{ crm_destaque }};
 	}
 
 	html, body {
@@ -66,8 +65,8 @@
 
 	body {
 		background:
-			radial-gradient(ellipse 70% 55% at 50% 0%, rgba(15, 70, 85, 0.55) 0%, rgba(4, 45, 60, 0.18) 45%, transparent 75%),
-			radial-gradient(ellipse 60% 50% at 85% 100%, rgba(138, 161, 169, 0.10) 0%, transparent 70%),
+			radial-gradient(ellipse 70% 55% at 50% 0%, rgba({{ crm_cor_clara_rgb }}, 0.55) 0%, rgba({{ crm_cor_rgb }}, 0.18) 45%, transparent 75%),
+			radial-gradient(ellipse 60% 50% at 85% 100%, rgba({{ crm_destaque_rgb }}, 0.10) 0%, transparent 70%),
 			#04080a;
 		background-attachment: fixed;
 	}
@@ -271,7 +270,7 @@
 
 {% macro logo_section(title=null) %}
 <div class="page-card-head">
-	{% if crm_logo or logo %}<div class="logo-circle"><img src="{{ crm_logo or logo }}" alt=""></div>{% endif %}
+	{% if crm_logo %}<div class="logo-circle"><img src="{{ crm_logo }}" alt=""></div>{% endif %}
 	{% if title %}
 	<h4>{{ _(title)}}</h4>
 	{% else %}
