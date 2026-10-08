@@ -35,7 +35,7 @@ PRECO_SAIDA_CENTAVOS_POR_MILHAO = 8250  # ~US$15/milhão
 # margem vira lucro de verdade: o saldo do cliente desconta no preço DE VENDA
 # (custo + margem), não no custo cru - a diferença fica guardada como lucro em
 # vez de virar uso extra de graça pro cliente.
-MARGEM_VENDA = 0.30
+MARGEM_VENDA = 0.20
 
 DOLAR_EM_CENTAVOS = 550  # só usado pra calcular o preço de venda das faixas
 
@@ -71,17 +71,22 @@ def _capacidades(centavos: int) -> list:
 	return out
 
 
-# Faixas de recarga oferecidas ao cliente. "US$" é só o rótulo (referência do
-# custo da Anthropic) - o valor em "centavos" é o preço de venda de verdade,
-# já com a margem da Stratcompany embutida. "capacidades" é uma estimativa de
-# quanto cada faixa rende em uso real, pro cliente ver valor concreto, não só
-# um preço em reais solto.
+def _formatar_reais(centavos: int) -> str:
+	return f"R$ {centavos / 100:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+
+# Faixas de recarga oferecidas ao cliente. Os US$ abaixo são só a referência
+# INTERNA de custo da Anthropic usada pra calcular o preço de venda em reais
+# (já com a margem da Stratcompany embutida) - o cliente só vê o valor em R$,
+# nunca dólar. "capacidades" é uma estimativa de quanto cada faixa rende em
+# uso real, pro cliente ver valor concreto, não só um preço em reais solto.
 FAIXAS = [
-	{"rotulo": "US$ 5", "centavos": _preco_venda_centavos(5)},
-	{"rotulo": "US$ 20", "centavos": _preco_venda_centavos(20)},
-	{"rotulo": "US$ 30", "centavos": _preco_venda_centavos(30)},
+	{"centavos": _preco_venda_centavos(5)},
+	{"centavos": _preco_venda_centavos(20)},
+	{"centavos": _preco_venda_centavos(30)},
 ]
 for _faixa in FAIXAS:
+	_faixa["rotulo"] = _formatar_reais(_faixa["centavos"])
 	_faixa["capacidades"] = _capacidades(_faixa["centavos"])
 del _faixa
 

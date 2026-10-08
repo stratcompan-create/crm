@@ -35,7 +35,6 @@
         >
           <div class="flex items-center justify-between">
             <span class="text-p-base-medium text-ink-gray-8">{{ faixa.rotulo }}</span>
-            <span class="text-p-sm text-ink-gray-6">{{ formatarReais(faixa.centavos) }}</span>
           </div>
           <div class="flex flex-col gap-0.5">
             <span v-for="cap in faixa.capacidades || []" :key="cap.label" class="text-p-sm text-ink-gray-5">

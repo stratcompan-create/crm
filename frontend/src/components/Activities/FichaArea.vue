@@ -13,7 +13,7 @@
             <div class="h-full rounded-full bg-[#042d3c] transition-all" :style="{ width: (done / total) * 100 + '%' }" />
           </div>
         </div>
-        <Button variant="solid" iconLeft="lucide-file-text" :label="__('Colar transcrição da reunião')" @click="openTranscript" />
+        <Button variant="solid" iconLeft="lucide-file-text" :label="__('Preencher com texto ou prompt')" @click="openTranscript" />
       </div>
 
       <!-- O que o CRM já sabe -->
@@ -67,12 +67,12 @@
       </div>
     </div>
 
-    <!-- Transcrição -->
-    <Dialog v-model="showTranscript" :options="{ title: __('Transcrição da reunião'), size: '2xl' }">
+    <!-- Texto/prompt -->
+    <Dialog v-model="showTranscript" :options="{ title: __('Preencher a ficha com um texto'), size: '2xl' }">
       <template #body-content>
         <div class="flex flex-col gap-3">
           <p class="text-p-sm text-ink-gray-6">
-            {{ __('Cole aqui a transcrição. O CRM preenche só os pontos que foram realmente conversados; o que não foi tratado fica como "Falta alinhar". No negócio, a proposta (introdução, diagnóstico, escopo e cronograma) também é preenchida.') }}
+            {{ __('Cole aqui a transcrição da reunião, anotações ou um texto livre (um "prompt") com as características do que o cliente precisa. O CRM preenche só os pontos que estiverem no texto; o que não foi tratado fica como "Falta alinhar". No negócio, a proposta (introdução, diagnóstico, escopo e cronograma) também é preenchida.') }}
           </p>
           <div v-if="!ficha.data?.ia" class="rounded-md bg-surface-amber-1 px-3 py-2 text-p-sm text-ink-amber-3">
             {{
@@ -81,13 +81,13 @@
                 : __('A IA ainda não está ligada. Peça a um gestor para cadastrar a chave em Configurações → Automações.')
             }}
           </div>
-          <FormControl v-model="transcript" type="textarea" :rows="12" :placeholder="__('Cole a transcrição da reunião aqui')" />
+          <FormControl v-model="transcript" type="textarea" :rows="12" :placeholder="__('Cole a transcrição, anotações ou um texto/prompt com as características do projeto')" />
           <label class="flex items-center gap-2 text-p-sm text-ink-gray-7">
             <input v-model="overwrite" type="checkbox" />
             {{ __('Substituir o que já está preenchido na ficha') }}
           </label>
           <p class="text-xs text-ink-gray-5">
-            {{ __('O texto é enviado à Anthropic (Claude) apenas para montar a ficha. Avise o cliente que a reunião foi gravada e transcrita.') }}
+            {{ __('O texto é enviado à Anthropic (Claude) apenas para montar a ficha.') }}
           </p>
           <ErrorMessage v-if="error" :message="error" />
         </div>
