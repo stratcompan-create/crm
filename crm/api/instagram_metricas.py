@@ -349,11 +349,17 @@ def export_metrics_pdf(days: int = 30):
 	])
 
 	analise = _analise_instagram(days, perfil, atual, anterior, data.get("posts") or [])
+	# o rotulo fica numa variavel fora do f-string de proposito: Python 3.11
+	# (a versao rodando em producao) nao aceita contrabarra dentro da parte {}
+	# de um f-string, e _("...") contava como isso - so passou no dev (3.14)
+	# porque o dev aceita, derrubando o modulo inteiro em producao (SyntaxError
+	# ao importar). Nunca por contrabarra dentro de {} de f-string de novo.
+	rotulo_analise = _("Análise")
 	analise_html = (
 		f"<div style='margin:18px 0 0;padding:14px 16px;background:#f4f6f7;"
 		f"border-left:3px solid {accent};border-radius:6px'>"
 		f"<div style='font-size:11px;text-transform:uppercase;letter-spacing:.05em;"
-		f"color:{color};font-weight:bold;margin-bottom:6px'>{_('An\u00e1lise')}</div>"
+		f"color:{color};font-weight:bold;margin-bottom:6px'>{rotulo_analise}</div>"
 		f"<div style='font-size:13px;line-height:1.55;color:#333'>{frappe.utils.escape_html(analise)}</div>"
 		"</div>"
 	) if analise else ""

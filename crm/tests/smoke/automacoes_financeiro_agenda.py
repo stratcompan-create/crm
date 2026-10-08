@@ -64,10 +64,12 @@ def run():
         sv=saude.get_business_health(); ck("painel de saúde", len(sv["itens"])>=5, str([(i["key"],i["count"]) for i in sv["itens"]]))
         rep=au.build_weekly_report(); html=au._report_html(rep); ck("relatório semanal", "Resumo da semana" in html and rep["atrasado"]>=0)
         ck("relatório semanal traz a seção de funcionamento do sistema", "Funcionamento do sistema" in html)
-        ck("sem análise de IA configurada, o relatório não mostra a seção de análise", "Análise" not in html)
+        with mock.patch.object(analise_consultor, "gerar", return_value=""):
+            rep_sem=au.build_weekly_report(); html_sem=au._report_html(rep_sem)
+        ck("sem análise de IA, o relatório não mostra a seção de análise", "padding:14px 16px;background:" not in html_sem)
         with mock.patch.object(analise_consultor, "gerar", return_value="Semana boa, mas vale correr atrás das tarefas atrasadas."):
             rep_ia=au.build_weekly_report(); html_ia=au._report_html(rep_ia)
-        ck("com IA, o relatório traz a análise de consultor", "correr atrás das tarefas atrasadas" in html_ia)
+        ck("com IA, o relatório traz a análise de consultor", "correr atrás das tarefas atrasadas" in html_ia and "padding:14px 16px;background:" in html_ia)
         with mock.patch.object(saude_sistema, "run_checks", return_value=[{"key":"erros","label":"Erros do sistema","ok":True,"mensagem":"Nenhum erro."}]):
             rep_ok=au.build_weekly_report(); html_ok=au._report_html(rep_ok)
             ck("sistema sem problema: mostra status geral tranquilo", "Tudo funcionando normalmente" in html_ok)
