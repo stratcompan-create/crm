@@ -7,7 +7,7 @@ import frappe, json
 from unittest import mock
 from frappe.utils import add_days, nowdate, getdate
 from datetime import datetime, timedelta
-from crm.api import automacoes as au, agenda, saude, saude_sistema
+from crm.api import automacoes as au, agenda, saude, saude_sistema, analise_consultor
 
 
 def run():
@@ -64,6 +64,10 @@ def run():
         sv=saude.get_business_health(); ck("painel de saúde", len(sv["itens"])>=5, str([(i["key"],i["count"]) for i in sv["itens"]]))
         rep=au.build_weekly_report(); html=au._report_html(rep); ck("relatório semanal", "Resumo da semana" in html and rep["atrasado"]>=0)
         ck("relatório semanal traz a seção de funcionamento do sistema", "Funcionamento do sistema" in html)
+        ck("sem análise de IA configurada, o relatório não mostra a seção de análise", "Análise" not in html)
+        with mock.patch.object(analise_consultor, "gerar", return_value="Semana boa, mas vale correr atrás das tarefas atrasadas."):
+            rep_ia=au.build_weekly_report(); html_ia=au._report_html(rep_ia)
+        ck("com IA, o relatório traz a análise de consultor", "correr atrás das tarefas atrasadas" in html_ia)
         with mock.patch.object(saude_sistema, "run_checks", return_value=[{"key":"erros","label":"Erros do sistema","ok":True,"mensagem":"Nenhum erro."}]):
             rep_ok=au.build_weekly_report(); html_ok=au._report_html(rep_ok)
             ck("sistema sem problema: mostra status geral tranquilo", "Tudo funcionando normalmente" in html_ok)

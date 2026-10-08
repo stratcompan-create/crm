@@ -10,6 +10,7 @@ import frappe
 from pypdf import PdfReader
 
 from crm.api import instagram_metricas as im
+from crm.api import analise_consultor
 
 
 def _text(pdf: bytes) -> str:
@@ -95,6 +96,13 @@ def run():
             ck("relatório traz a variação percentual", "%" in texto)
             ck("relatório traz os seguidores", "1.500" in texto)
             ck("relatório traz o melhor post do período", "1.000" in texto)
+            ck("sem análise de IA configurada, o relatório não mostra a seção", "Análise" not in texto)
+
+            with mock.patch.object(analise_consultor, "gerar", return_value="Alcance caiu, vale testar horários diferentes de postagem."):
+                r_ia = im.export_metrics_pdf(days=7)
+                file_name_ia = frappe.get_all("File", filters={"file_name": r_ia["file_name"]}, pluck="name")[0]
+                texto_ia = _text(frappe.get_doc("File", file_name_ia).get_content())
+            ck("com IA, o relatório traz a análise de consultor", "horários diferentes de postagem" in texto_ia)
 
             # gerar de novo (mesmo período) substitui o arquivo anterior, não duplica
             im.export_metrics_pdf(days=7)

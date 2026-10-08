@@ -269,6 +269,24 @@ def _data_br(iso: str) -> str:
 	return "/".join(reversed(iso.split("-"))) if iso else ""
 
 
+def _analise_instagram(days, perfil, atual, anterior, posts) -> str:
+	from crm.api import analise_consultor
+
+	dados = {
+		"Per\u00edodo (dias)": days,
+		"Seguidores": perfil.get("seguidores"),
+		"Publica\u00e7\u00f5es totais": perfil.get("publicacoes"),
+		"Alcance no per\u00edodo": atual.get("reach"),
+		"Alcance no per\u00edodo anterior": anterior.get("reach"),
+		"Intera\u00e7\u00f5es no per\u00edodo": atual.get("total_interactions"),
+		"Intera\u00e7\u00f5es no per\u00edodo anterior": anterior.get("total_interactions"),
+		"Visitas ao perfil": atual.get("profile_views"),
+		"Cliques no link da bio": atual.get("website_clicks"),
+		"Quantidade de posts no per\u00edodo": len(posts),
+	}
+	return analise_consultor.gerar(dados)
+
+
 def _metric_row(label: str, current, previous) -> str:
 	current, previous = current or 0, previous or 0
 	if not previous:
@@ -330,6 +348,16 @@ def export_metrics_pdf(days: int = 30):
 		_metric_row(_("Cliques no link da bio"), atual.get("website_clicks"), anterior.get("website_clicks")),
 	])
 
+	analise = _analise_instagram(days, perfil, atual, anterior, data.get("posts") or [])
+	analise_html = (
+		f"<div style='margin:18px 0 0;padding:14px 16px;background:#f4f6f7;"
+		f"border-left:3px solid {accent};border-radius:6px'>"
+		f"<div style='font-size:11px;text-transform:uppercase;letter-spacing:.05em;"
+		f"color:{color};font-weight:bold;margin-bottom:6px'>{_('An\u00e1lise')}</div>"
+		f"<div style='font-size:13px;line-height:1.55;color:#333'>{frappe.utils.escape_html(analise)}</div>"
+		"</div>"
+	) if analise else ""
+
 	top_posts = sorted(data.get("posts", []), key=lambda p: p.get("alcance", 0), reverse=True)[:8]
 	posts_rows = "".join(
 		f"<tr><td>{frappe.utils.escape_html(p.get('tipo', ''))}</td>"
@@ -364,6 +392,8 @@ def export_metrics_pdf(days: int = 30):
 			<div class="kpi"><div class="l">{_("Publicações")}</div><div class="v">{_num(perfil.get('publicacoes'))}</div></div>
 			<div class="kpi"><div class="l">{_("Alcance no período")}</div><div class="v">{_num(atual.get('reach'))}</div></div>
 		</div>
+
+		{analise_html}
 
 		<h2>{_("Comparativo com o período anterior")}</h2>
 		<table class="t">

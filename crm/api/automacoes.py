@@ -675,6 +675,7 @@ def _report_html(r: dict) -> str:
 		"rule": pal["destaque"],
 	}
 	prev = r.get("anterior") or {}
+	analise = _analise_do_relatorio(r, prev)
 
 	def row(label, value, delta=""):
 		return (
@@ -695,6 +696,7 @@ def _report_html(r: dict) -> str:
 		f"<div style='background:{_head['bg']};color:{_head['ink']};padding:18px 20px;border-radius:8px;border-bottom:3px solid {_head['rule']}'>"
 		f"<div style='font-size:20px;font-weight:bold'>Resumo da semana</div>"
 		f"<div style='opacity:.8;font-size:13px;margin-top:2px'>{_brand()} · {r['periodo']}</div></div>"
+		+ _analise_html(analise, pal)
 		+ block("Funcionamento do sistema", _sistema_rows(r.get("sistema")))
 		+ block("Prospecção e vendas", [
 			row("Abordagens", r["abordados"], _delta(r["abordados"], prev.get("abordados"))),
@@ -714,6 +716,44 @@ def _report_html(r: dict) -> str:
 		])
 		+ "<p style='color:#999;font-size:12px;margin-top:22px'>Gerado automaticamente pelo CRM toda segunda-feira, às 8h.</p>"
 		"</div></body></html>"
+	)
+
+
+def _analise_do_relatorio(r: dict, prev: dict) -> str:
+	from crm.api import analise_consultor
+
+	sistema = r.get("sistema") or {}
+	dados = {
+		"Período": r.get("periodo"),
+		"Abordagens na semana": r.get("abordados"),
+		"Abordagens na semana anterior": prev.get("abordados"),
+		"Leads novos na semana": r.get("leads_novos"),
+		"Leads novos na semana anterior": prev.get("leads_novos"),
+		"Reuniões agendadas": r.get("agendadas"),
+		"Propostas enviadas": r.get("propostas"),
+		"Negócios ganhos": r.get("ganhos"),
+		"Recebido na semana (R$)": r.get("recebido"),
+		"Recebido na semana anterior (R$)": prev.get("recebido"),
+		"A receber nos próximos 7 dias (R$)": r.get("a_receber"),
+		"Em atraso (R$)": r.get("atrasado"),
+		"Follow-ups pendentes de enviar": r.get("followups"),
+		"Tarefas atrasadas": r.get("tarefas_atrasadas"),
+		"Reuniões nos próximos 7 dias": r.get("reunioes"),
+		"Sistema sem problemas técnicos na semana": sistema.get("ok"),
+	}
+	return analise_consultor.gerar(dados)
+
+
+def _analise_html(analise: str, pal: dict) -> str:
+	if not analise:
+		return ""
+	return (
+		f"<div style='margin:18px 0 0;padding:14px 16px;background:{pal['neutra']};"
+		f"border-left:3px solid {pal['destaque']};border-radius:6px'>"
+		f"<div style='font-size:11px;text-transform:uppercase;letter-spacing:.05em;"
+		f"color:{pal['cor']};font-weight:bold;margin-bottom:6px'>An\u00e1lise</div>"
+		f"<div style='font-size:13px;line-height:1.55;color:#333'>{frappe.utils.escape_html(analise)}</div>"
+		"</div>"
 	)
 
 

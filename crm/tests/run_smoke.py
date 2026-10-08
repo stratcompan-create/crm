@@ -37,6 +37,7 @@ MODULES = [
     "influenciadoras",
     "gcalendar",
     "credito_ia",
+    "analise_consultor",
 ]
 
 
