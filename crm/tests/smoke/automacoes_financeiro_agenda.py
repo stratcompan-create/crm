@@ -70,6 +70,9 @@ def run():
         with mock.patch.object(analise_consultor, "gerar", return_value="Semana boa, mas vale correr atrás das tarefas atrasadas."):
             rep_ia=au.build_weekly_report(); html_ia=au._report_html(rep_ia)
         ck("com IA, o relatório traz a análise de consultor", "correr atrás das tarefas atrasadas" in html_ia and "padding:14px 16px;background:" in html_ia)
+        with mock.patch.object(analise_consultor, "gerar", return_value=analise_consultor.SALDO_INSUFICIENTE):
+            rep_sem_saldo=au.build_weekly_report(); html_sem_saldo=au._report_html(rep_sem_saldo)
+        ck("saldo de IA zerado mostra aviso, não fica em branco", "Saldo de IA insuficiente" in html_sem_saldo)
         with mock.patch.object(saude_sistema, "run_checks", return_value=[{"key":"erros","label":"Erros do sistema","ok":True,"mensagem":"Nenhum erro."}]):
             rep_ok=au.build_weekly_report(); html_ok=au._report_html(rep_ok)
             ck("sistema sem problema: mostra status geral tranquilo", "Tudo funcionando normalmente" in html_ok)

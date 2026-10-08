@@ -104,6 +104,12 @@ def run():
                 texto_ia = _text(frappe.get_doc("File", file_name_ia).get_content())
             ck("com IA, o relatório traz a análise de consultor", "horários diferentes de postagem" in texto_ia)
 
+            with mock.patch.object(analise_consultor, "gerar", return_value=analise_consultor.SALDO_INSUFICIENTE):
+                r_sem_saldo = im.export_metrics_pdf(days=7)
+                file_name_sem_saldo = frappe.get_all("File", filters={"file_name": r_sem_saldo["file_name"]}, pluck="name")[0]
+                texto_sem_saldo = _text(frappe.get_doc("File", file_name_sem_saldo).get_content())
+            ck("saldo de IA zerado mostra aviso, não fica em branco", "Saldo de IA insuficiente" in texto_sem_saldo)
+
             # gerar de novo (mesmo período) substitui o arquivo anterior, não duplica
             im.export_metrics_pdf(days=7)
             ck(

@@ -745,14 +745,21 @@ def _analise_do_relatorio(r: dict, prev: dict) -> str:
 
 
 def _analise_html(analise: str, pal: dict) -> str:
-	if not analise:
+	from crm.api.analise_consultor import SALDO_INSUFICIENTE
+
+	if analise == SALDO_INSUFICIENTE:
+		texto_analise = "Saldo de IA insuficiente para gerar a an\u00e1lise deste relat\u00f3rio. Recarregue em Configura\u00e7\u00f5es."
+	else:
+		texto_analise = analise
+	if not texto_analise:
 		return ""
+	rotulo_analise = "An\u00e1lise"
 	return (
 		f"<div style='margin:18px 0 0;padding:14px 16px;background:{pal['neutra']};"
 		f"border-left:3px solid {pal['destaque']};border-radius:6px'>"
 		f"<div style='font-size:11px;text-transform:uppercase;letter-spacing:.05em;"
-		f"color:{pal['cor']};font-weight:bold;margin-bottom:6px'>An\u00e1lise</div>"
-		f"<div style='font-size:13px;line-height:1.55;color:#333'>{frappe.utils.escape_html(analise)}</div>"
+		f"color:{pal['cor']};font-weight:bold;margin-bottom:6px'>{rotulo_analise}</div>"
+		f"<div style='font-size:13px;line-height:1.55;color:#333'>{frappe.utils.escape_html(texto_analise)}</div>"
 		"</div>"
 	)
 

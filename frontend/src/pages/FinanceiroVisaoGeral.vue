@@ -4,11 +4,18 @@
       <div class="text-lg font-semibold text-ink-gray-9">{{ __('Visão Geral') }}</div>
     </template>
     <template #right-header>
-      <Dropdown :options="periodos">
-        <template #default="{ open }">
-          <Button :label="periodoAtual.label" iconRight="chevron-down" />
-        </template>
-      </Dropdown>
+      <div class="flex items-center gap-1 rounded-lg bg-surface-gray-2 p-1">
+        <button
+          v-for="p in periodosDias"
+          :key="p"
+          type="button"
+          class="rounded-md px-3 py-1 text-p-sm"
+          :class="dias === p ? 'bg-white font-medium text-ink-gray-9 shadow-sm' : 'text-ink-gray-6'"
+          @click="selecionarDias(p)"
+        >
+          {{ __('{0} dias', [p]) }}
+        </button>
+      </div>
     </template>
   </LayoutHeader>
 
@@ -33,7 +40,7 @@
     </div>
 
     <div class="rounded-lg border border-outline-gray-2 p-5">
-      <div class="mb-1 text-p-base-medium text-ink-gray-8">{{ __('Faturamento do mês') }}</div>
+      <div class="mb-1 text-p-base-medium text-ink-gray-8">{{ __('Faturamento no período') }}</div>
       <div class="mb-4 text-p-sm text-ink-gray-5">{{ __('Honorários pagos, por dia, no período selecionado.') }}</div>
       <div v-if="trend.data" class="h-72 w-full">
         <FixedAxisChart :config="trend.data" />
@@ -143,40 +150,35 @@
 <script setup>
 import LayoutHeader from '@/components/LayoutHeader.vue'
 import FixedAxisChart from '@/components/Dashboard/FixedAxisChart.vue'
-import { Button, Dropdown, NumberChart, createResource } from 'frappe-ui'
+import { Button, NumberChart, createResource } from 'frappe-ui'
 import { computed, ref } from 'vue'
 
-const periodos = [
-  { label: __('Este mês'), onClick: () => selecionarPeriodo(0) },
-  { label: __('Mês passado'), onClick: () => selecionarPeriodo(1) },
-]
-const mesesAtras = ref(0)
-const periodoAtual = computed(() => (mesesAtras.value === 0 ? periodos[0] : periodos[1]))
+const periodosDias = [7, 14, 30, 60, 90]
+const dias = ref(30)
 
-function _limites(offsetMeses) {
+function _limitesPorDias(d) {
   const hoje = new Date()
-  const base = new Date(hoje.getFullYear(), hoje.getMonth() - offsetMeses, 1)
-  const inicio = new Date(base.getFullYear(), base.getMonth(), 1)
-  const fim = new Date(base.getFullYear(), base.getMonth() + 1, 0)
-  const fmt = (d) => d.toISOString().slice(0, 10)
-  return { from_date: fmt(inicio), to_date: fmt(fim) }
+  const inicio = new Date(hoje)
+  inicio.setDate(inicio.getDate() - (d - 1))
+  const fmt = (data) => data.toISOString().slice(0, 10)
+  return { from_date: fmt(inicio), to_date: fmt(hoje) }
 }
 
 const summary = createResource({ url: 'crm.api.financeiro.get_report_summary', auto: true })
 
 const receita = createResource({
   url: 'crm.api.dashboard.get_receita_recebida',
-  params: _limites(0),
+  params: _limitesPorDias(30),
   auto: true,
 })
 const meta = createResource({
   url: 'crm.api.dashboard.get_meta_mensal',
-  params: _limites(0),
+  params: _limitesPorDias(30),
   auto: true,
 })
 const trend = createResource({
   url: 'crm.api.dashboard.get_receita_trend',
-  params: _limites(0),
+  params: _limitesPorDias(30),
   auto: true,
 })
 
@@ -197,9 +199,9 @@ function barWidth(servico) {
   return Math.max(4, pct) + '%'
 }
 
-function selecionarPeriodo(offset) {
-  mesesAtras.value = offset
-  const params = _limites(offset)
+function selecionarDias(d) {
+  dias.value = d
+  const params = _limitesPorDias(d)
   receita.update({ params })
   meta.update({ params })
   trend.update({ params })

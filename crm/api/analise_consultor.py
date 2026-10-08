@@ -20,16 +20,24 @@ ali. Se os números forem poucos ou neutros, diga isso com honestidade em
 vez de forçar uma conclusão."""
 
 
+SALDO_INSUFICIENTE = "__saldo_insuficiente__"
+
+
 def gerar(dados: dict) -> str:
-	"""Devolve a análise em texto corrido, ou "" se a IA não estiver configurada,
-	o controle de saldo bloquear, ou a chamada falhar por qualquer motivo -
-	nunca derruba a geração do relatório por causa disso."""
+	"""Devolve a análise em texto corrido, "" se a IA não estiver configurada
+	ou a chamada falhar por qualquer motivo, ou SALDO_INSUFICIENTE se o saldo
+	de IA acabou - nunca derruba a geração do relatório por causa disso."""
 	try:
 		from crm.api.ficha import _api_key
 
 		api_key = _api_key()
 		if not api_key:
 			return ""
+
+		from crm.api import credito_ia
+
+		if not credito_ia.saldo_suficiente():
+			return SALDO_INSUFICIENTE
 
 		from crm.api.conteudo import _call_claude
 

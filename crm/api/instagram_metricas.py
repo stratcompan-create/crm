@@ -355,14 +355,19 @@ def export_metrics_pdf(days: int = 30):
 	# porque o dev aceita, derrubando o modulo inteiro em producao (SyntaxError
 	# ao importar). Nunca por contrabarra dentro de {} de f-string de novo.
 	rotulo_analise = _("Análise")
+	from crm.api.analise_consultor import SALDO_INSUFICIENTE
+	if analise == SALDO_INSUFICIENTE:
+		texto_analise = _("Saldo de IA insuficiente para gerar a análise deste relatório. Recarregue em Configurações.")
+	else:
+		texto_analise = analise
 	analise_html = (
 		f"<div style='margin:18px 0 0;padding:14px 16px;background:#f4f6f7;"
 		f"border-left:3px solid {accent};border-radius:6px'>"
 		f"<div style='font-size:11px;text-transform:uppercase;letter-spacing:.05em;"
 		f"color:{color};font-weight:bold;margin-bottom:6px'>{rotulo_analise}</div>"
-		f"<div style='font-size:13px;line-height:1.55;color:#333'>{frappe.utils.escape_html(analise)}</div>"
+		f"<div style='font-size:13px;line-height:1.55;color:#333'>{frappe.utils.escape_html(texto_analise)}</div>"
 		"</div>"
-	) if analise else ""
+	) if texto_analise else ""
 
 	top_posts = sorted(data.get("posts", []), key=lambda p: p.get("alcance", 0), reverse=True)[:8]
 	posts_rows = "".join(
