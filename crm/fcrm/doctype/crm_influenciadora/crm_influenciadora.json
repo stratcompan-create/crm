@@ -17,13 +17,21 @@
  "naming_rule": "Random",
  "name": "CRM Influenciadora",
  "field_order": [
+  "foto",
   "nome",
   "instagram",
   "nicho",
   "seguidores_aprox",
+  "telefone",
+  "email",
   "observacoes"
  ],
  "fields": [
+  {
+   "fieldname": "foto",
+   "fieldtype": "Attach Image",
+   "label": "Foto"
+  },
   {
    "fieldname": "nome",
    "fieldtype": "Data",
@@ -48,6 +56,16 @@
    "fieldtype": "Int",
    "label": "Seguidores (aprox.)",
    "non_negative": 1
+  },
+  {
+   "fieldname": "telefone",
+   "fieldtype": "Data",
+   "label": "WhatsApp / Telefone"
+  },
+  {
+   "fieldname": "email",
+   "fieldtype": "Data",
+   "label": "E-mail"
   },
   {
    "fieldname": "observacoes",

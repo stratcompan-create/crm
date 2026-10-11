@@ -24,7 +24,7 @@ def _managers_only():
 def listar_influenciadoras() -> list:
 	influenciadoras = frappe.get_all(
 		"CRM Influenciadora",
-		fields=["name", "nome", "instagram", "nicho", "seguidores_aprox", "observacoes"],
+		fields=["name", "foto", "nome", "instagram", "nicho", "seguidores_aprox", "telefone", "email", "observacoes"],
 		order_by="nome asc",
 	)
 	if influenciadoras:
@@ -41,7 +41,16 @@ def listar_influenciadoras() -> list:
 
 
 @frappe.whitelist()
-def criar_influenciadora(nome: str, instagram: str | None = None, nicho: str | None = None, seguidores_aprox=None, observacoes: str | None = None) -> dict:
+def criar_influenciadora(
+	nome: str,
+	instagram: str | None = None,
+	nicho: str | None = None,
+	seguidores_aprox=None,
+	telefone: str | None = None,
+	email: str | None = None,
+	foto: str | None = None,
+	observacoes: str | None = None,
+) -> dict:
 	if not (nome or "").strip():
 		frappe.throw(_("Informe o nome da influenciadora."))
 	doc = frappe.get_doc(
@@ -51,6 +60,9 @@ def criar_influenciadora(nome: str, instagram: str | None = None, nicho: str | N
 			"instagram": (instagram or "").strip(),
 			"nicho": (nicho or "").strip(),
 			"seguidores_aprox": seguidores_aprox or 0,
+			"telefone": (telefone or "").strip(),
+			"email": (email or "").strip(),
+			"foto": foto or "",
 			"observacoes": observacoes or "",
 		}
 	)
@@ -59,9 +71,12 @@ def criar_influenciadora(nome: str, instagram: str | None = None, nicho: str | N
 
 
 @frappe.whitelist()
-def atualizar_influenciadora(name: str, nome=None, instagram=None, nicho=None, seguidores_aprox=None, observacoes=None) -> dict:
+def atualizar_influenciadora(name: str, nome=None, instagram=None, nicho=None, seguidores_aprox=None, telefone=None, email=None, foto=None, observacoes=None) -> dict:
 	doc = frappe.get_doc("CRM Influenciadora", name)
-	for campo, valor in (("nome", nome), ("instagram", instagram), ("nicho", nicho), ("seguidores_aprox", seguidores_aprox), ("observacoes", observacoes)):
+	for campo, valor in (
+		("nome", nome), ("instagram", instagram), ("nicho", nicho), ("seguidores_aprox", seguidores_aprox),
+		("telefone", telefone), ("email", email), ("foto", foto), ("observacoes", observacoes),
+	):
 		if valor is not None:
 			doc.set(campo, valor)
 	doc.save(ignore_permissions=True)
@@ -86,13 +101,27 @@ def listar_parcerias(influenciadora: str) -> list:
 	return frappe.get_all(
 		"CRM Parceria",
 		filters={"influenciadora": influenciadora},
-		fields=["name", "marca", "status", "valor", "data_gravacao", "prazo_entrega", "briefing", "observacoes"],
+		fields=[
+			"name", "marca", "status", "valor", "valor_pago", "data_pagamento",
+			"data_gravacao", "prazo_entrega", "briefing", "observacoes",
+		],
 		order_by="prazo_entrega asc, creation desc",
 	)
 
 
 @frappe.whitelist()
-def criar_parceria(influenciadora: str, marca: str, status: str | None = None, valor=None, data_gravacao=None, prazo_entrega=None, briefing: str | None = None, observacoes: str | None = None) -> dict:
+def criar_parceria(
+	influenciadora: str,
+	marca: str,
+	status: str | None = None,
+	valor=None,
+	valor_pago=None,
+	data_pagamento=None,
+	data_gravacao=None,
+	prazo_entrega=None,
+	briefing: str | None = None,
+	observacoes: str | None = None,
+) -> dict:
 	if not frappe.db.exists("CRM Influenciadora", influenciadora):
 		frappe.throw(_("Influenciadora não encontrada."))
 	if not (marca or "").strip():
@@ -104,6 +133,8 @@ def criar_parceria(influenciadora: str, marca: str, status: str | None = None, v
 			"marca": marca.strip(),
 			"status": status or "Negociando",
 			"valor": valor or 0,
+			"valor_pago": valor_pago or 0,
+			"data_pagamento": data_pagamento or None,
 			"data_gravacao": data_gravacao or None,
 			"prazo_entrega": prazo_entrega or None,
 			"briefing": briefing or "",
@@ -115,10 +146,11 @@ def criar_parceria(influenciadora: str, marca: str, status: str | None = None, v
 
 
 @frappe.whitelist()
-def atualizar_parceria(name: str, marca=None, status=None, valor=None, data_gravacao=None, prazo_entrega=None, briefing=None, observacoes=None) -> dict:
+def atualizar_parceria(name: str, marca=None, status=None, valor=None, valor_pago=None, data_pagamento=None, data_gravacao=None, prazo_entrega=None, briefing=None, observacoes=None) -> dict:
 	doc = frappe.get_doc("CRM Parceria", name)
 	for campo, valor_novo in (
 		("marca", marca), ("status", status), ("valor", valor),
+		("valor_pago", valor_pago), ("data_pagamento", data_pagamento),
 		("data_gravacao", data_gravacao), ("prazo_entrega", prazo_entrega),
 		("briefing", briefing), ("observacoes", observacoes),
 	):
@@ -133,3 +165,13 @@ def excluir_parceria(name: str) -> dict:
 	doc = frappe.get_doc("CRM Parceria", name)
 	doc.delete(ignore_permissions=True)
 	return {"ok": True}
+
+
+@frappe.whitelist()
+def listar_anexos_parceria(parceria: str) -> list:
+	return frappe.get_all(
+		"File",
+		filters={"attached_to_doctype": "CRM Parceria", "attached_to_name": parceria},
+		fields=["name", "file_name", "file_url", "file_type", "file_size", "is_private", "creation"],
+		order_by="creation desc",
+	)

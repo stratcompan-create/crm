@@ -25,7 +25,7 @@
         :class="isActive(i) ? 'bg-surface-gray-2' : 'hover:bg-surface-gray-1'"
         @click="select(i)"
       >
-        <Avatar :label="i.nome" :theme="themeFor(i.nome)" size="xl">
+        <Avatar :label="i.nome" :image="i.foto" :theme="themeFor(i.nome)" size="xl">
           <span class="text-xs font-semibold">{{ initials(i.nome) }}</span>
         </Avatar>
         <div class="flex flex-1 flex-col gap-1 overflow-hidden">
@@ -65,9 +65,18 @@
         <div class="border-b border-outline-gray-1 p-5">
           <div class="flex items-start justify-between gap-3">
             <div class="flex items-start gap-3">
-              <Avatar :label="active.nome" :theme="themeFor(active.nome)" size="2xl">
-                <span class="text-base font-semibold">{{ initials(active.nome) }}</span>
-              </Avatar>
+              <FileUploader :validateFile="validateIsImageFile" :uploadArgs="{ doctype: 'CRM Influenciadora', docname: active.name }" @success="(f) => changeFoto(f)">
+                <template #default="{ openFileSelector, uploading }">
+                  <div class="group relative h-13 w-13 shrink-0 cursor-pointer" @click="openFileSelector">
+                    <Avatar :label="active.nome" :image="active.foto" :theme="themeFor(active.nome)" size="2xl">
+                      <span class="text-base font-semibold">{{ initials(active.nome) }}</span>
+                    </Avatar>
+                    <div class="absolute inset-0 flex items-center justify-center rounded-full bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+                      <FeatherIcon :name="uploading ? 'loader' : 'camera'" class="h-4 w-4 text-white" />
+                    </div>
+                  </div>
+                </template>
+              </FileUploader>
               <div>
                 <div class="text-lg-semibold text-ink-gray-9">{{ active.nome }}</div>
                 <div class="mt-0.5 flex flex-wrap items-center gap-2 text-p-sm text-ink-gray-5">
@@ -78,6 +87,8 @@
                     rel="noopener noreferrer"
                     class="text-ink-blue-5 hover:underline"
                   >{{ formatHandle(active.instagram) }}</a>
+                  <a v-if="active.telefone" :href="whatsappUrl(active.telefone)" target="_blank" rel="noopener noreferrer" class="text-ink-green-6 hover:underline">{{ formatTelefone(active.telefone) }}</a>
+                  <a v-if="active.email" :href="'mailto:' + active.email" class="hover:underline">{{ active.email }}</a>
                   <Badge v-if="active.nicho" :label="active.nicho" variant="subtle" theme="gray" />
                   <span v-if="active.seguidores_aprox">{{ __('{0} seguidores', [formatCompacto(active.seguidores_aprox)]) }}</span>
                 </div>
@@ -90,7 +101,7 @@
             </div>
           </div>
 
-          <div class="mt-4 grid grid-cols-3 gap-3">
+          <div class="mt-4 grid grid-cols-4 gap-3">
             <div class="rounded-lg bg-surface-gray-2 px-4 py-2.5">
               <div class="text-lg-semibold text-ink-gray-9">{{ statsParcerias.total }}</div>
               <div class="text-p-sm text-ink-gray-5">{{ __('Parcerias') }}</div>
@@ -99,9 +110,13 @@
               <div class="text-lg-semibold text-ink-gray-9">{{ formatCurrency(statsParcerias.valorTotal) }}</div>
               <div class="text-p-sm text-ink-gray-5">{{ __('Negociado no total') }}</div>
             </div>
-            <div class="rounded-lg bg-surface-green-1 px-4 py-2.5">
-              <div class="text-lg-semibold text-ink-green-7">{{ formatCurrency(statsParcerias.valorConfirmado) }}</div>
+            <div class="rounded-lg bg-surface-blue-1 px-4 py-2.5">
+              <div class="text-lg-semibold text-ink-blue-7">{{ formatCurrency(statsParcerias.valorConfirmado) }}</div>
               <div class="text-p-sm text-ink-gray-5">{{ __('Fechado/entregue') }}</div>
+            </div>
+            <div class="rounded-lg bg-surface-green-1 px-4 py-2.5">
+              <div class="text-lg-semibold text-ink-green-7">{{ formatCurrency(statsParcerias.valorRecebido) }}</div>
+              <div class="text-p-sm text-ink-gray-5">{{ __('Recebido') }}</div>
             </div>
           </div>
         </div>
@@ -129,8 +144,9 @@
               </div>
               <Badge :label="statusLabel(p.status)" :theme="statusTheme(p.status)" variant="subtle" />
             </div>
-            <div class="mt-2 flex flex-wrap gap-3 text-p-sm text-ink-gray-5">
+            <div class="mt-2 flex flex-wrap items-center gap-3 text-p-sm text-ink-gray-5">
               <span v-if="p.valor" class="font-medium text-ink-gray-7">{{ formatCurrency(p.valor) }}</span>
+              <Badge v-if="p.valor" :label="pagamentoLabel(p)" :theme="pagamentoTheme(p)" variant="subtle" />
               <span v-if="p.prazo_entrega">{{ __('Entrega: {0}', [formatData(p.prazo_entrega)]) }}</span>
               <span v-if="p.data_gravacao">{{ __('Gravação: {0}', [formatData(p.data_gravacao)]) }}</span>
             </div>
@@ -158,10 +174,20 @@
   <Dialog v-model="showInfluenciadoraForm" :options="{ title: editingInfluenciadora ? __('Editar influenciadora') : __('Nova influenciadora'), size: 'sm' }">
     <template #body-content>
       <div class="flex flex-col gap-3">
+        <FileUploader :validateFile="validateIsImageFile" @success="(f) => (formInf.foto = f.file_url)">
+          <template #default="{ openFileSelector, uploading }">
+            <div class="flex items-center gap-3">
+              <Avatar :label="formInf.nome || '?'" :image="formInf.foto" theme="gray" size="2xl" />
+              <Button variant="outline" size="sm" :loading="uploading" :label="formInf.foto ? __('Trocar foto') : __('Adicionar foto')" @click="openFileSelector" />
+            </div>
+          </template>
+        </FileUploader>
         <FormControl type="text" :label="__('Nome')" v-model="formInf.nome" />
         <FormControl type="text" :label="__('Instagram (@)')" v-model="formInf.instagram" />
         <FormControl type="text" :label="__('Nicho')" v-model="formInf.nicho" />
         <FormControl type="number" :label="__('Seguidores (aprox.)')" v-model="formInf.seguidores_aprox" />
+        <FormControl type="text" :label="__('WhatsApp / Telefone')" v-model="formInf.telefone" />
+        <FormControl type="text" :label="__('E-mail')" v-model="formInf.email" />
         <FormControl type="textarea" :rows="2" :label="__('Observações')" v-model="formInf.observacoes" />
       </div>
     </template>
@@ -188,11 +214,33 @@
       <div class="flex flex-col gap-3">
         <FormControl type="text" :label="__('Marca / empresa parceira')" v-model="formParc.marca" />
         <FormControl type="select" :label="__('Status')" v-model="formParc.status" :options="statusOptions" />
-        <FormControl type="number" :label="__('Valor')" v-model="formParc.valor" />
+        <div class="grid grid-cols-2 gap-3">
+          <FormControl type="number" :label="__('Valor')" v-model="formParc.valor" />
+          <FormControl type="number" :label="__('Valor já pago')" v-model="formParc.valor_pago" />
+        </div>
+        <div v-if="faltaPagarForm > 0" class="text-xs text-ink-amber-6">{{ __('Falta pagar: {0}', [formatCurrency(faltaPagarForm)]) }}</div>
+        <FormControl type="date" :label="__('Data do (último) pagamento')" v-model="formParc.data_pagamento" />
         <FormControl type="date" :label="__('Data de gravação')" v-model="formParc.data_gravacao" />
         <FormControl type="date" :label="__('Prazo de entrega')" v-model="formParc.prazo_entrega" />
         <FormControl type="textarea" :rows="2" :label="__('Briefing / direcionamento')" v-model="formParc.briefing" />
         <FormControl type="textarea" :rows="2" :label="__('Observações')" v-model="formParc.observacoes" />
+
+        <div v-if="editingParceria" class="mt-1 flex flex-col gap-2 border-t border-outline-gray-2 pt-3">
+          <div class="flex items-center justify-between">
+            <span class="text-p-sm font-medium text-ink-gray-7">{{ __('Anexos') }}</span>
+            <FileUploader :uploadArgs="{ doctype: 'CRM Parceria', docname: editingParceria.name }" @success="onAnexoUpload">
+              <template #default="{ openFileSelector, uploading }">
+                <Button variant="outline" size="sm" iconLeft="plus" :loading="uploading" :label="__('Adicionar')" @click="openFileSelector" />
+              </template>
+            </FileUploader>
+          </div>
+          <div v-if="anexos.loading" class="text-p-sm text-ink-gray-5">{{ __('Carregando...') }}</div>
+          <div v-for="a in anexos.data || []" :key="a.name" class="flex items-center justify-between gap-2 rounded-md bg-surface-gray-1 px-2.5 py-1.5">
+            <a :href="a.file_url" target="_blank" rel="noopener noreferrer" class="truncate text-p-sm text-ink-blue-5 hover:underline">{{ a.file_name }}</a>
+            <Button variant="ghost" size="sm" icon="lucide-x" @click="removerAnexo(a.name)" />
+          </div>
+          <div v-if="!anexos.loading && !(anexos.data || []).length" class="text-p-sm text-ink-gray-4">{{ __('Nenhum anexo ainda.') }}</div>
+        </div>
       </div>
     </template>
     <template #actions>
@@ -205,7 +253,8 @@
 <script setup>
 import LayoutHeader from '@/components/LayoutHeader.vue'
 import EmptyState from '@/components/ListViews/EmptyState.vue'
-import { Avatar, Badge, Button, Dialog, FeatherIcon, FormControl, call, createResource, toast } from 'frappe-ui'
+import { Avatar, Badge, Button, Dialog, FeatherIcon, FileUploader, FormControl, call, createResource, toast } from 'frappe-ui'
+import { validateIsImageFile } from '@/utils'
 import { computed, reactive, ref } from 'vue'
 
 const influenciadoras = createResource({ url: 'crm.api.influenciadoras.listar_influenciadoras', auto: true })
@@ -238,8 +287,20 @@ const statsParcerias = computed(() => {
   const valorConfirmado = list
     .filter((p) => ['Fechada', 'Em produção', 'Entregue'].includes(p.status))
     .reduce((s, p) => s + (Number(p.valor) || 0), 0)
-  return { total: list.length, valorTotal, valorConfirmado }
+  const valorRecebido = list.reduce((s, p) => s + (Number(p.valor_pago) || 0), 0)
+  return { total: list.length, valorTotal, valorConfirmado, valorRecebido }
 })
+
+async function changeFoto(file) {
+  try {
+    await call('crm.api.influenciadoras.atualizar_influenciadora', { name: active.value.name, foto: file.file_url })
+    active.value.foto = file.file_url
+    influenciadoras.reload()
+    toast.success(__('Foto atualizada'))
+  } catch (e) {
+    toast.error(e.messages?.[0] || __('Não consegui atualizar a foto.'))
+  }
+}
 
 // ------------------------------------------------------------------ visual helpers
 
@@ -260,6 +321,27 @@ function formatHandle(v) {
 function instagramUrl(v) {
   const handle = String(v || '').trim().replace(/^@/, '')
   return `https://instagram.com/${encodeURIComponent(handle)}`
+}
+function formatTelefone(v) {
+  return String(v || '').trim()
+}
+function whatsappUrl(v) {
+  const digits = String(v || '').replace(/\D/g, '')
+  return `https://wa.me/${digits.startsWith('55') ? digits : '55' + digits}`
+}
+function pagamentoLabel(p) {
+  const valor = Number(p.valor) || 0
+  const pago = Number(p.valor_pago) || 0
+  if (pago <= 0) return __('Não pago')
+  if (pago >= valor) return __('Pago')
+  return __('Pago parcial')
+}
+function pagamentoTheme(p) {
+  const valor = Number(p.valor) || 0
+  const pago = Number(p.valor_pago) || 0
+  if (pago <= 0) return 'red'
+  if (pago >= valor) return 'green'
+  return 'amber'
 }
 function formatCompacto(n) {
   n = Number(n) || 0
@@ -312,19 +394,19 @@ function statusBorderClass(s) {
 
 const showInfluenciadoraForm = ref(false)
 const editingInfluenciadora = ref(null)
-const formInf = reactive({ nome: '', instagram: '', nicho: '', seguidores_aprox: '', observacoes: '' })
+const formInf = reactive({ nome: '', instagram: '', nicho: '', seguidores_aprox: '', telefone: '', email: '', foto: '', observacoes: '' })
 const savingInf = ref(false)
 
 function openCreate() {
   editingInfluenciadora.value = null
-  Object.assign(formInf, { nome: '', instagram: '', nicho: '', seguidores_aprox: '', observacoes: '' })
+  Object.assign(formInf, { nome: '', instagram: '', nicho: '', seguidores_aprox: '', telefone: '', email: '', foto: '', observacoes: '' })
   showInfluenciadoraForm.value = true
 }
 function openEdit(i) {
   editingInfluenciadora.value = i
   Object.assign(formInf, {
-    nome: i.nome, instagram: i.instagram, nicho: i.nicho,
-    seguidores_aprox: i.seguidores_aprox, observacoes: i.observacoes,
+    nome: i.nome, instagram: i.instagram, nicho: i.nicho, seguidores_aprox: i.seguidores_aprox,
+    telefone: i.telefone, email: i.email, foto: i.foto, observacoes: i.observacoes,
   })
   showInfluenciadoraForm.value = true
 }
@@ -383,23 +465,48 @@ async function deleteInfluenciadora() {
 
 const showParceriaForm = ref(false)
 const editingParceria = ref(null)
-const formParc = reactive({ marca: '', status: 'Negociando', valor: '', data_gravacao: '', prazo_entrega: '', briefing: '', observacoes: '' })
+const formParc = reactive({
+  marca: '', status: 'Negociando', valor: '', valor_pago: '', data_pagamento: '',
+  data_gravacao: '', prazo_entrega: '', briefing: '', observacoes: '',
+})
 const savingParc = ref(false)
 const deletingParc = ref(false)
+const faltaPagarForm = computed(() => Math.max(0, (Number(formParc.valor) || 0) - (Number(formParc.valor_pago) || 0)))
+
+const anexos = createResource({
+  url: 'crm.api.influenciadoras.listar_anexos_parceria',
+  makeParams: () => ({ parceria: editingParceria.value?.name }),
+})
 
 function openCreateParceria() {
   editingParceria.value = null
-  Object.assign(formParc, { marca: '', status: 'Negociando', valor: '', data_gravacao: '', prazo_entrega: '', briefing: '', observacoes: '' })
+  Object.assign(formParc, {
+    marca: '', status: 'Negociando', valor: '', valor_pago: '', data_pagamento: '',
+    data_gravacao: '', prazo_entrega: '', briefing: '', observacoes: '',
+  })
   showParceriaForm.value = true
 }
 function openEditParceria(p) {
   editingParceria.value = p
   Object.assign(formParc, {
-    marca: p.marca, status: p.status, valor: p.valor,
+    marca: p.marca, status: p.status, valor: p.valor, valor_pago: p.valor_pago, data_pagamento: p.data_pagamento,
     data_gravacao: p.data_gravacao, prazo_entrega: p.prazo_entrega,
     briefing: p.briefing, observacoes: p.observacoes,
   })
   showParceriaForm.value = true
+  anexos.fetch()
+}
+
+function onAnexoUpload() {
+  anexos.reload()
+}
+async function removerAnexo(fileName) {
+  try {
+    await call('frappe.client.delete', { doctype: 'File', name: fileName })
+    anexos.reload()
+  } catch (e) {
+    toast.error(e.messages?.[0] || __('Não consegui remover o anexo.'))
+  }
 }
 async function saveParceria() {
   if (!formParc.marca.trim()) {

@@ -21,6 +21,8 @@
   "marca",
   "status",
   "valor",
+  "valor_pago",
+  "data_pagamento",
   "data_gravacao",
   "prazo_entrega",
   "briefing",
@@ -57,6 +59,18 @@
    "fieldtype": "Currency",
    "label": "Valor",
    "options": "BRL"
+  },
+  {
+   "fieldname": "valor_pago",
+   "fieldtype": "Currency",
+   "label": "Valor já pago",
+   "options": "BRL",
+   "default": "0"
+  },
+  {
+   "fieldname": "data_pagamento",
+   "fieldtype": "Date",
+   "label": "Data do (último) pagamento"
   },
   {
    "fieldname": "data_gravacao",
