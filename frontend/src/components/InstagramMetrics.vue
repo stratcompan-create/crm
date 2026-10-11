@@ -18,6 +18,7 @@
         <span v-if="data?.atualizado_em">{{ __('Atualizado às {0}', [hora(data.atualizado_em)]) }}</span>
         <Button :label="__('Atualizar')" :loading="resource.loading" @click="load(true)" />
         <Button variant="outline" :label="__('Exportar relatório')" :loading="exportando" @click="exportarRelatorio" />
+        <SeloIA :texto="__('O relatório inclui uma análise de consultor gerada por IA quando há crédito disponível. Sem crédito, o relatório sai normal, só sem essa seção.')" />
       </div>
     </div>
 
@@ -135,6 +136,7 @@
 </template>
 
 <script setup>
+import SeloIA from '@/components/SeloIA.vue'
 import { Button, FormControl, call, createResource, toast } from 'frappe-ui'
 import { computed, onMounted, ref } from 'vue'
 

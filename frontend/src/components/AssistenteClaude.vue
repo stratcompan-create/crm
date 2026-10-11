@@ -14,6 +14,7 @@
         <div class="flex items-center gap-2">
           <LucideBot class="size-4" :style="{ color: corDestaque }" />
           <span class="text-base-medium text-ink-gray-9">{{ __('Claude') }}</span>
+          <SeloIA :texto="__('Conversar com o assistente usa IA e consome crédito (quando o controle de saldo está ligado).')" />
           <span class="truncate text-xs text-ink-gray-5">· {{ contexto.tela }}</span>
         </div>
         <div class="flex items-center gap-1">
@@ -97,6 +98,7 @@ import { Button, ErrorMessage, FormControl, call, toast } from 'frappe-ui'
 import { computed, nextTick, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { getSettings } from '@/stores/settings'
+import SeloIA from '@/components/SeloIA.vue'
 
 const route = useRoute()
 const { _settings: brandSettings } = getSettings()

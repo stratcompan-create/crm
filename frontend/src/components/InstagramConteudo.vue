@@ -6,7 +6,10 @@
         <div ref="scroller" class="flex flex-1 flex-col gap-2 overflow-y-auto px-4 py-4">
           <div v-if="!mensagens.length" class="flex flex-col items-center gap-2 px-6 py-16 text-center text-ink-gray-5">
             <SparkleIcon class="size-8" />
-            <div class="text-base-medium text-ink-gray-7">{{ __('Criar conteúdo') }}</div>
+            <div class="flex items-center gap-2">
+              <div class="text-base-medium text-ink-gray-7">{{ __('Criar conteúdo') }}</div>
+              <SeloIA :texto="__('Gerar conteúdo usa IA e consome crédito (quando o controle de saldo está ligado).')" />
+            </div>
             <div class="text-p-sm">
               {{ __('Descreva o que você quer criar. O texto já sai com a cor e o nome da marca aplicados.') }}
             </div>
@@ -199,7 +202,10 @@
       <template #body-content>
         <div class="flex flex-col gap-3">
           <FormControl type="textarea" :rows="8" v-model="legenda" :placeholder="__('Ainda sem legenda — gere com IA ou escreva a sua.')" />
-          <Button variant="outline" :label="__('Gerar legenda com IA')" :loading="gerandoLegenda" @click="gerarLegenda" />
+          <div class="flex items-center gap-2">
+            <Button variant="outline" :label="__('Gerar legenda com IA')" :loading="gerandoLegenda" @click="gerarLegenda" />
+            <SeloIA />
+          </div>
         </div>
       </template>
       <template #actions>
@@ -237,6 +243,7 @@ import SparkleIcon from '@/components/Icons/SparkleIcon.vue'
 import InstagramEditor from '@/components/InstagramEditor.vue'
 import InstagramModeloPreview from '@/components/InstagramModeloPreview.vue'
 import { getSettings } from '@/stores/settings'
+import SeloIA from '@/components/SeloIA.vue'
 import { Button, Dialog, ErrorMessage, FormControl, call, createResource, toast } from 'frappe-ui'
 import { computed, nextTick, onMounted, ref } from 'vue'
 import { baixarTodosSlides, renderizarSlidePng } from '@/utils/instagramExport'

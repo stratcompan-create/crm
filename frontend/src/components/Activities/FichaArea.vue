@@ -13,7 +13,10 @@
             <div class="h-full rounded-full bg-[#042d3c] transition-all" :style="{ width: (done / total) * 100 + '%' }" />
           </div>
         </div>
-        <Button variant="solid" iconLeft="lucide-file-text" :label="__('Preencher com texto ou prompt')" @click="openTranscript" />
+        <div class="flex items-center gap-2">
+          <SeloIA :texto="__('Preencher a partir de um texto usa IA e consome crédito (quando o controle de saldo está ligado).')" />
+          <Button variant="solid" iconLeft="lucide-file-text" :label="__('Preencher com texto ou prompt')" @click="openTranscript" />
+        </div>
       </div>
 
       <!-- O que o CRM já sabe -->
@@ -100,6 +103,7 @@
 </template>
 
 <script setup>
+import SeloIA from '@/components/SeloIA.vue'
 import { Button, Dialog, ErrorMessage, FormControl, call, createResource, toast } from 'frappe-ui'
 import { computed, reactive, ref, watch } from 'vue'
 

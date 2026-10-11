@@ -4,6 +4,7 @@
       <button type="button" class="flex items-center gap-2 text-left" @click="open = !open">
         <span :class="open ? 'lucide-chevron-down' : 'lucide-chevron-right'" class="size-4 text-ink-gray-5" aria-hidden="true" />
         <span class="text-p-sm font-medium text-ink-gray-8">{{ __('Sugestões de resposta') }}</span>
+        <SeloIA v-if="data?.ia" :texto="__('As sugestões sob medida usam IA e consomem crédito (quando o controle de saldo está ligado).')" />
         <span
           v-if="data.tema"
           class="rounded-full px-2 py-0.5 text-xs font-medium"
@@ -85,6 +86,7 @@
 </template>
 
 <script setup>
+import SeloIA from '@/components/SeloIA.vue'
 import { Button, ErrorMessage, call, createResource } from 'frappe-ui'
 import { computed, ref, watch } from 'vue'
 
