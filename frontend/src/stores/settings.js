@@ -50,16 +50,32 @@ function applyAccentToRoot() {
   root.setProperty('--stratcompany-explorer', accent)
 }
 
+// Clareia um hex misturando com branco (t=0 devolve a cor original, t=1 vira
+// branco) - usado pro tom do item ATIVO da barra lateral no escuro, que
+// precisa ser mais claro que o fundo da barra pra dar pra distinguir.
+function lighten(hex, t) {
+  const h = (hex || '').replace('#', '')
+  if (!/^[0-9a-fA-F]{6}$/.test(h)) return null
+  const mix = (c) => Math.round(c + (255 - c) * t)
+  const r = mix(parseInt(h.slice(0, 2), 16))
+  const g = mix(parseInt(h.slice(2, 4), 16))
+  const b = mix(parseInt(h.slice(4, 6), 16))
+  return `#${[r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('')}`
+}
+
 // Cor da barra lateral no modo escuro (Configuracoes > Marca, opcional por
-// site). Sem valor configurado, a propriedade nem é definida aqui - o
-// fallback do var(--stratcompany-sidebar-dark, #042d3c) em index.css já cobre
-// isso sozinho, sem precisar repetir o azul petróleo padrão aqui também.
+// site), e o tom do item ativo dela (calculado automaticamente, mais claro
+// que o fundo). Sem valor configurado, nenhuma das duas propriedades é
+// definida aqui - o fallback em index.css (var(..., #042d3c) e var(...,
+// #0f4655)) já cobre isso sozinho, sem repetir o azul petróleo padrão aqui.
 function applySidebarDarkToRoot() {
   const root = document.documentElement.style
   if (hexToRgb(brand.sidebar_dark)) {
     root.setProperty('--stratcompany-sidebar-dark', brand.sidebar_dark)
+    root.setProperty('--stratcompany-sidebar-dark-active', lighten(brand.sidebar_dark, 0.25))
   } else {
     root.removeProperty('--stratcompany-sidebar-dark')
+    root.removeProperty('--stratcompany-sidebar-dark-active')
   }
 }
 

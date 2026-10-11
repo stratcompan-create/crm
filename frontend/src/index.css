@@ -62,9 +62,11 @@
   color: #ffffff;
 }
 
-/* No escuro o item ativo precisa de um tom mais claro que o fundo da barra */
+/* No escuro o item ativo precisa de um tom mais claro que o fundo da barra -
+   var() calculada a partir de sidebar_dark_color em settings.js (ou o azul
+   petróleo padrão da Stratcompany, se o site não tiver cor própria). */
 [data-theme='dark'] .stratcompany-sidebar [data-slot='sidebar-item'][data-state='active'] {
-  --surface-elevation-3: #0f4655;
+  --surface-elevation-3: var(--stratcompany-sidebar-dark-active, #0f4655);
 }
 
 .stratcompany-sidebar [data-slot='sidebar-item'][data-state='active'] {
