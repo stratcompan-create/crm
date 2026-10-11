@@ -135,6 +135,19 @@
         </div>
       </section>
 
+      <!-- Contas -->
+      <section class="rounded-lg border border-outline-gray-2 p-4">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <div class="text-base-semibold text-ink-gray-9">{{ __('Aba "Contas"') }}</div>
+            <p class="mt-1 text-p-sm text-ink-gray-6">
+              {{ __('Mostra a lista de links de acesso ao CRM dos clientes da agência. Desligue para quem não usa isso.') }}
+            </p>
+          </div>
+          <Toggle v-model="cfg.contas_ativo" />
+        </div>
+      </section>
+
       <!-- Saldo de IA -->
       <section class="rounded-lg border border-outline-gray-2 p-4">
         <div class="flex items-start justify-between gap-3">
