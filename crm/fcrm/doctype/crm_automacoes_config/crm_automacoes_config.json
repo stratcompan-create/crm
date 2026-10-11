@@ -50,6 +50,7 @@
   "assistente_ativo",
   "credito_ia_ativo",
   "contas_ativo",
+  "instagram_ativo",
   "divisao_prolabore_pct",
   "divisao_impostos_pct",
   "divisao_crescimento_pct",
@@ -248,6 +249,12 @@
    "fieldname": "contas_ativo",
    "fieldtype": "Check",
    "label": "Aba \"Contas\" ligada",
+   "default": "1"
+  },
+  {
+   "fieldname": "instagram_ativo",
+   "fieldtype": "Check",
+   "label": "Aba \"Instagram\" ligada",
    "default": "1"
   },
   {

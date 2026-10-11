@@ -69,6 +69,7 @@ const allSections = [
 const sections = computed(() =>
   allSections.filter((s) => {
     if (s.key === 'meusite') return !!window.meu_site_ativo
+    if (s.key === 'instagram') return !!window.instagram_ativo
     if (s.key !== 'financeiro') return true
     try {
       return isManager()

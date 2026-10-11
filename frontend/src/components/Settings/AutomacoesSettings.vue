@@ -148,6 +148,19 @@
         </div>
       </section>
 
+      <!-- Instagram -->
+      <section class="rounded-lg border border-outline-gray-2 p-4">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <div class="text-base-semibold text-ink-gray-9">{{ __('Aba "Instagram"') }}</div>
+            <p class="mt-1 text-p-sm text-ink-gray-6">
+              {{ __('Mostra a aba de Instagram (mensagens, conteúdo, métricas). Desligue para quem ainda não conectou o Instagram.') }}
+            </p>
+          </div>
+          <Toggle v-model="cfg.instagram_ativo" />
+        </div>
+      </section>
+
       <!-- Saldo de IA -->
       <section class="rounded-lg border border-outline-gray-2 p-4">
         <div class="flex items-start justify-between gap-3">
