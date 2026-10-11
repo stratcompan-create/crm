@@ -8,7 +8,7 @@
           :key="p"
           type="button"
           class="rounded-md px-3 py-1 text-p-sm"
-          :class="days === p ? 'bg-white font-medium text-ink-gray-9 shadow-sm' : 'text-ink-gray-6'"
+          :class="days === p ? 'bg-surface-white font-medium text-ink-gray-9 shadow-sm' : 'text-ink-gray-6'"
           @click="setDays(p)"
         >
           {{ __('{0} dias', [p]) }}

@@ -1,15 +1,21 @@
 @import 'frappe-ui/style.css';
 
-/* Stratcompany brand accent — overrides only the solid/primary button
-   shades (surface-gray-8/9/10), used across the app for the main CTA
-   button (Button theme="gray" variant="solid"). Everything else in the
-   frappe-ui gray scale (body text, borders, subtle backgrounds) is left
-   untouched on purpose, so contrast/legibility elsewhere isn't affected. */
+/* Overrides só as sombras do botão sólido/primário (surface-gray-8/9/10),
+   usado em todo o app pro CTA principal (Button theme="gray" variant="solid")
+   - ex: o botão "Criar". O resto da escala cinza do frappe-ui (texto, bordas,
+   fundos sutis) fica intocado de propósito, pra não afetar contraste/
+   legibilidade em outro lugar.
+
+   As cores em si vêm das MESMAS variáveis já calculadas por site em
+   settings.js (sidebar_dark_color, default/claro) - não mais fixas no azul
+   petróleo da Stratcompany pra todo mundo. Sem cor configurada, o fallback
+   abaixo (o azul petróleo de sempre) continua valendo, então nenhum site
+   existente muda sem querer. */
 :root,
 [data-theme='dark'] {
-  --surface-gray-10: #042d3c; /* default */
-  --surface-gray-9: #0f4655; /* hover */
-  --surface-gray-8: #8aa1a9; /* active */
+  --surface-gray-10: var(--stratcompany-sidebar-dark, #042d3c); /* default */
+  --surface-gray-9: var(--stratcompany-sidebar-dark-active, #0f4655); /* hover */
+  --surface-gray-8: var(--stratcompany-accent, #8aa1a9); /* active */
 }
 
 /* Stratcompany brand accent — the sage color used for the active sidebar
