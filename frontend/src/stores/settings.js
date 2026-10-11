@@ -50,8 +50,22 @@ function applyAccentToRoot() {
   root.setProperty('--stratcompany-explorer', accent)
 }
 
+// Cor da barra lateral no modo escuro (Configuracoes > Marca, opcional por
+// site). Sem valor configurado, a propriedade nem é definida aqui - o
+// fallback do var(--stratcompany-sidebar-dark, #042d3c) em index.css já cobre
+// isso sozinho, sem precisar repetir o azul petróleo padrão aqui também.
+function applySidebarDarkToRoot() {
+  const root = document.documentElement.style
+  if (hexToRgb(brand.sidebar_dark)) {
+    root.setProperty('--stratcompany-sidebar-dark', brand.sidebar_dark)
+  } else {
+    root.removeProperty('--stratcompany-sidebar-dark')
+  }
+}
+
 applyBrandToHead()
 applyAccentToRoot()
+applySidebarDarkToRoot()
 
 const _settings = createDocumentResource({
   doctype: 'FCRM Settings',
@@ -96,8 +110,10 @@ export function getSettings() {
     brand.logo = settings.value?.brand_logo
     brand.favicon = settings.value?.favicon
     brand.accent = settings.value?.brand_accent
+    brand.sidebar_dark = settings.value?.sidebar_dark_color
     applyBrandToHead()
     applyAccentToRoot()
+    applySidebarDarkToRoot()
   }
 
   return {

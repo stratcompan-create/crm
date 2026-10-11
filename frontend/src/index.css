@@ -41,9 +41,12 @@
   --surface-sidebar: #ffffff;
 }
 
-/* Tema escuro: a barra lateral usa o azul petróleo da marca, com texto e ícones brancos. */
+/* Tema escuro: a barra lateral usa a cor configurada em FCRM Settings
+   (sidebar_dark_color, aplicada em --stratcompany-sidebar-dark por
+   frontend/src/stores/settings.js) ou, se o site não tiver configurado nada,
+   o azul petróleo padrão da Stratcompany - nunca mais fixo pra todo mundo. */
 [data-theme='dark'] .stratcompany-sidebar {
-  --surface-sidebar: #042d3c;
+  --surface-sidebar: var(--stratcompany-sidebar-dark, #042d3c);
   --ink-gray-9: #ffffff;
   --ink-gray-8: #f1f5f7;
   --ink-gray-7: #e0e8eb;
@@ -55,7 +58,7 @@
   --surface-gray-2: rgba(255, 255, 255, 0.08);
   --surface-gray-3: rgba(255, 255, 255, 0.12);
   --surface-elevation-2: rgba(255, 255, 255, 0.08);
-  background-color: #042d3c !important;
+  background-color: var(--stratcompany-sidebar-dark, #042d3c) !important;
   color: #ffffff;
 }
 

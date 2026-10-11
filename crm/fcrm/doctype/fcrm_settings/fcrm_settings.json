@@ -28,6 +28,7 @@
   "brand_color",
   "brand_accent",
   "brand_neutral",
+  "sidebar_dark_color",
   "documento_estilo",
   "fonte_titulo",
   "fonte_subtitulo",
@@ -254,6 +255,12 @@
    "fieldname": "brand_neutral",
    "fieldtype": "Data",
    "label": "Cor de fundo neutra"
+  },
+  {
+   "fieldname": "sidebar_dark_color",
+   "fieldtype": "Data",
+   "label": "Cor da barra lateral no modo escuro (opcional)",
+   "description": "Se vazio, usa o azul petróleo padrão da Stratcompany (#042d3c)."
   },
   {
    "fieldname": "documento_estilo",

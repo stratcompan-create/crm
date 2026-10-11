@@ -114,6 +114,8 @@ def get_brand() -> dict:
 		"favicon": settings.get("favicon") or "",
 		# cor de destaque (aba/item ativo) - ver frontend/src/stores/settings.js
 		"accent": settings.get("brand_accent") or "",
+		# cor da barra lateral no modo escuro (opcional, por site) - mesma logica do accent
+		"sidebar_dark": settings.get("sidebar_dark_color") or "",
 	}
 
 
