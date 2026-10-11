@@ -44,7 +44,7 @@
       </div>
       <div class="h-2.5 w-full overflow-hidden rounded-full bg-surface-gray-2">
         <div
-          class="h-full rounded-full bg-blue-6 transition-all duration-700 ease-out"
+          class="h-full rounded-full bg-[var(--stratcompany-accent)] transition-all duration-700 ease-out"
           :style="{ width: goalProgress + '%' }"
         />
       </div>
@@ -78,7 +78,7 @@
       <div class="h-2.5 w-full overflow-hidden rounded-full bg-surface-gray-2">
         <div
           class="h-full rounded-full transition-all duration-700 ease-out"
-          :class="overTeto ? 'bg-red-6' : 'bg-blue-6'"
+          :class="overTeto ? 'bg-red-6' : 'bg-[var(--stratcompany-accent)]'"
           :style="{ width: tetoProgress + '%' }"
         />
       </div>

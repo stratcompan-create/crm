@@ -69,7 +69,7 @@
               <span class="font-medium text-ink-gray-9">{{ formatCurrency(s.pago + s.pendente) }}</span>
             </div>
             <div class="h-2 w-full overflow-hidden rounded-full bg-surface-gray-2">
-              <div class="h-2 rounded-full bg-blue-500" :style="{ width: barWidth(s) }" />
+              <div class="h-2 rounded-full bg-[var(--stratcompany-accent)]" :style="{ width: barWidth(s) }" />
             </div>
           </div>
         </div>

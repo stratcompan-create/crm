@@ -110,8 +110,8 @@
               <div class="text-lg-semibold text-ink-gray-9">{{ formatCurrency(statsParcerias.valorTotal) }}</div>
               <div class="text-p-sm text-ink-gray-5">{{ __('Negociado no total') }}</div>
             </div>
-            <div class="rounded-lg bg-surface-blue-1 px-4 py-2.5">
-              <div class="text-lg-semibold text-ink-blue-7">{{ formatCurrency(statsParcerias.valorConfirmado) }}</div>
+            <div class="rounded-lg bg-surface-gray-2 px-4 py-2.5">
+              <div class="text-lg-semibold text-[var(--stratcompany-accent)]">{{ formatCurrency(statsParcerias.valorConfirmado) }}</div>
               <div class="text-p-sm text-ink-gray-5">{{ __('Fechado/entregue') }}</div>
             </div>
             <div class="rounded-lg bg-surface-green-1 px-4 py-2.5">
