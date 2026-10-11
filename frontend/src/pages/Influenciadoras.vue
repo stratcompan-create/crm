@@ -31,7 +31,14 @@
         <div class="flex flex-1 flex-col gap-1 overflow-hidden">
           <div class="truncate text-p-base-medium text-ink-gray-8">{{ i.nome }}</div>
           <div class="flex flex-wrap items-center gap-1.5">
-            <span v-if="i.instagram" class="text-p-sm text-ink-gray-5">{{ formatHandle(i.instagram) }}</span>
+            <a
+              v-if="i.instagram"
+              :href="instagramUrl(i.instagram)"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-p-sm text-ink-blue-5 hover:underline"
+              @click.stop
+            >{{ formatHandle(i.instagram) }}</a>
             <Badge v-if="i.nicho" :label="i.nicho" variant="subtle" theme="gray" />
           </div>
           <div class="flex items-center gap-2 text-xs text-ink-gray-4">
@@ -64,7 +71,13 @@
               <div>
                 <div class="text-lg-semibold text-ink-gray-9">{{ active.nome }}</div>
                 <div class="mt-0.5 flex flex-wrap items-center gap-2 text-p-sm text-ink-gray-5">
-                  <span v-if="active.instagram">{{ formatHandle(active.instagram) }}</span>
+                  <a
+                    v-if="active.instagram"
+                    :href="instagramUrl(active.instagram)"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="text-ink-blue-5 hover:underline"
+                  >{{ formatHandle(active.instagram) }}</a>
                   <Badge v-if="active.nicho" :label="active.nicho" variant="subtle" theme="gray" />
                   <span v-if="active.seguidores_aprox">{{ __('{0} seguidores', [formatCompacto(active.seguidores_aprox)]) }}</span>
                 </div>
@@ -243,6 +256,10 @@ function formatHandle(v) {
   v = String(v || '').trim()
   if (!v) return ''
   return v.startsWith('@') ? v : `@${v}`
+}
+function instagramUrl(v) {
+  const handle = String(v || '').trim().replace(/^@/, '')
+  return `https://instagram.com/${encodeURIComponent(handle)}`
 }
 function formatCompacto(n) {
   n = Number(n) || 0
