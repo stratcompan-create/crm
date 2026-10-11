@@ -160,13 +160,68 @@
           </div>
         </div>
       </template>
-      <EmptyState
-        v-else
-        name="Influenciadora"
-        :title="__('Selecione uma influenciadora')"
-        :description="__('Escolha na lista ao lado, ou cadastre uma nova.')"
-        icon="users"
-      />
+      <div v-else class="flex flex-1 flex-col overflow-y-auto p-6">
+        <div v-if="painel.loading" class="flex flex-1 items-center justify-center text-p-sm text-ink-gray-5">
+          {{ __('Carregando...') }}
+        </div>
+        <template v-else-if="painel.data && (painel.data.total_influenciadoras || 0) > 0">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div class="rounded-lg border border-outline-gray-2 p-5">
+              <div class="text-2xl font-semibold text-ink-gray-9">{{ painel.data.total_influenciadoras }}</div>
+              <div class="text-p-sm text-ink-gray-5">{{ __('Influenciadoras') }}</div>
+            </div>
+            <div class="rounded-lg border border-outline-gray-2 p-5">
+              <div class="text-2xl font-semibold text-ink-gray-9">{{ painel.data.total_parcerias_ativas }}</div>
+              <div class="text-p-sm text-ink-gray-5">{{ __('Parcerias ativas') }}</div>
+            </div>
+            <div class="rounded-lg border border-outline-gray-2 p-5">
+              <div class="text-2xl font-semibold text-[var(--stratcompany-accent)]">{{ formatCurrency(painel.data.receita_total) }}</div>
+              <div class="text-p-sm text-ink-gray-5">{{ __('Recebido no total') }}</div>
+            </div>
+          </div>
+
+          <div v-if="(painel.data.atrasadas || []).length || (painel.data.proximas || []).length" class="mt-4 rounded-lg border border-outline-gray-2 p-5">
+            <div class="mb-3 text-p-base-medium text-ink-gray-8">{{ __('Prazos de entrega') }}</div>
+            <div class="flex flex-col divide-y divide-outline-gray-1">
+              <div v-for="item in painel.data.atrasadas" :key="'a-' + item.name" class="flex items-center justify-between py-2 text-p-sm">
+                <span class="text-ink-gray-8">{{ item.influenciadora }} × {{ item.marca }}</span>
+                <span class="font-medium text-ink-red-6">{{ __('Atrasada há {0} dia(s)', [Math.abs(item.dias)]) }}</span>
+              </div>
+              <div v-for="item in painel.data.proximas" :key="'p-' + item.name" class="flex items-center justify-between py-2 text-p-sm">
+                <span class="text-ink-gray-8">{{ item.influenciadora }} × {{ item.marca }}</span>
+                <span class="font-medium text-ink-amber-5">{{ __('Vence em {0} dia(s)', [item.dias]) }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="(painel.data.ranking || []).length" class="mt-4 rounded-lg border border-outline-gray-2 p-5">
+            <div class="mb-3 text-p-base-medium text-ink-gray-8">{{ __('Quem mais rendeu') }}</div>
+            <div class="flex flex-col divide-y divide-outline-gray-1">
+              <div
+                v-for="item in painel.data.ranking"
+                :key="item.name"
+                class="flex cursor-pointer items-center justify-between py-2.5"
+                @click="selectByName(item.name)"
+              >
+                <div class="flex items-center gap-2.5">
+                  <Avatar :label="item.nome" :image="item.foto" :theme="themeFor(item.nome)" size="md">
+                    <span class="text-xs font-semibold">{{ initials(item.nome) }}</span>
+                  </Avatar>
+                  <span class="text-p-sm text-ink-gray-8">{{ item.nome }}</span>
+                </div>
+                <span class="text-p-sm font-medium text-ink-gray-9">{{ formatCurrency(item.total_recebido) }}</span>
+              </div>
+            </div>
+          </div>
+        </template>
+        <EmptyState
+          v-else
+          name="Influenciadora"
+          :title="__('Selecione uma influenciadora')"
+          :description="__('Escolha na lista ao lado, ou cadastre uma nova.')"
+          icon="users"
+        />
+      </div>
     </div>
   </div>
 
@@ -280,6 +335,12 @@ function select(i) {
   active.value = i
   parcerias.fetch()
 }
+function selectByName(name) {
+  const i = (influenciadoras.data || []).find((x) => x.name === name)
+  if (i) select(i)
+}
+
+const painel = createResource({ url: 'crm.api.influenciadoras.get_painel_influenciadoras', auto: true })
 
 const statsParcerias = computed(() => {
   const list = parcerias.data || []
@@ -424,6 +485,7 @@ async function saveInfluenciadora() {
     }
     showInfluenciadoraForm.value = false
     await influenciadoras.reload()
+    painel.reload()
     if (editingInfluenciadora.value) {
       const atualizada = (influenciadoras.data || []).find((x) => x.name === editingInfluenciadora.value.name)
       if (atualizada && active.value?.name === atualizada.name) active.value = atualizada
@@ -453,6 +515,7 @@ async function deleteInfluenciadora() {
       parcerias.data = []
     }
     await influenciadoras.reload()
+    painel.reload()
     toast.success(__('Influenciadora excluída'))
   } catch (e) {
     toast.error(e.messages?.[0] || __('Não consegui excluir.'))
@@ -523,6 +586,7 @@ async function saveParceria() {
     showParceriaForm.value = false
     await parcerias.reload()
     await influenciadoras.reload()
+    painel.reload()
     toast.success(__('Salvo'))
   } catch (e) {
     toast.error(e.messages?.[0] || __('Não consegui salvar.'))
@@ -537,6 +601,7 @@ async function deleteParceria() {
     showParceriaForm.value = false
     await parcerias.reload()
     await influenciadoras.reload()
+    painel.reload()
     toast.success(__('Parceria excluída'))
   } catch (e) {
     toast.error(e.messages?.[0] || __('Não consegui excluir.'))

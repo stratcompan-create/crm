@@ -254,6 +254,7 @@ scheduler_events = {
 	"daily": [
 		"crm.api.financeiro.mark_overdue",
 		"crm.api.automacoes.send_billing_reminders",
+		"crm.api.influenciadoras.avisar_prazos_entrega",
 		"crm.api.automacoes.run_posvenda",
 		"crm.api.automacoes.sync_lead_distribution",
 		"crm.api.event.trigger_daily_event_notifications",

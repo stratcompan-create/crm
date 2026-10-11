@@ -4,6 +4,7 @@ Roda no site atual (bench --site SITE execute crm.tests.run_smoke.run_all).
 """
 
 import frappe
+from frappe.utils import add_days, nowdate
 
 from crm.api import influenciadoras as inf
 
@@ -45,6 +46,34 @@ def run():
 		inf.atualizar_parceria(p1["name"], status="Fechada", valor=1200)
 		depois = frappe.db.get_value("CRM Parceria", p1["name"], ["status", "valor"], as_dict=True)
 		ck("atualizar_parceria muda status e valor", depois.status == "Fechada" and depois.valor == 1200)
+		inf.atualizar_parceria(p1["name"], valor_pago=1200, data_pagamento=nowdate())
+
+		painel = inf.get_painel_influenciadoras()
+		linha = next((r for r in painel["ranking"] if r["name"] == i1), None)
+		ck("get_painel_influenciadoras traz a influenciadora no ranking depois de receber", linha is not None, painel["ranking"])
+		ck("ranking soma o valor_pago certo (so a parceria paga conta)", linha and linha["total_recebido"] == 1200, linha)
+		ck("get_painel_influenciadoras conta parcerias ativas (so p2, p1 esta Fechada que nao fecha)", painel["total_parcerias_ativas"] >= 1)
+
+		# prazos: uma atrasada (2 dias atras), uma proxima (1 dia), uma longe (30 dias - nao deve aparecer)
+		p_atrasada = inf.criar_parceria(i1, "Marca Atrasada", prazo_entrega=add_days(nowdate(), -2))
+		p_proxima = inf.criar_parceria(i1, "Marca Proxima", prazo_entrega=add_days(nowdate(), 1))
+		p_longe = inf.criar_parceria(i1, "Marca Longe", prazo_entrega=add_days(nowdate(), 30))
+		vencer = inf._parcerias_a_vencer()
+		nomes_atrasadas = [v["name"] for v in vencer["atrasadas"]]
+		nomes_proximas = [v["name"] for v in vencer["proximas"]]
+		todos_nomes = nomes_atrasadas + nomes_proximas
+		ck("_parcerias_a_vencer classifica a atrasada certo", p_atrasada["name"] in nomes_atrasadas)
+		ck("_parcerias_a_vencer classifica a proxima certo", p_proxima["name"] in nomes_proximas)
+		ck("_parcerias_a_vencer nao traz a que esta longe (30 dias)", p_longe["name"] not in todos_nomes)
+
+		try:
+			inf.avisar_prazos_entrega()
+			ck("avisar_prazos_entrega roda sem quebrar (sem Email Account, sai cedo)", True)
+		except Exception as e:
+			ck("avisar_prazos_entrega roda sem quebrar (sem Email Account, sai cedo)", False, e)
+
+		for p in (p_atrasada, p_proxima, p_longe):
+			frappe.delete_doc("CRM Parceria", p["name"], force=True, ignore_permissions=True)
 
 		inf.atualizar_influenciadora(i1, nicho="Moda e Beleza")
 		ck("atualizar_influenciadora muda o nicho", frappe.db.get_value("CRM Influenciadora", i1, "nicho") == "Moda e Beleza")

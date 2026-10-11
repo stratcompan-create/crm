@@ -10,8 +10,12 @@
 
 import frappe
 from frappe import _
+from frappe.utils import add_days, flt, getdate, nowdate
 
 MANAGER_ROLES = ("System Manager", "Sales Manager")
+
+STATUS_ENCERRADOS = ("Entregue", "Cancelada")
+PRAZO_AVISO_DIAS = 3
 
 
 def _managers_only():
@@ -175,3 +179,111 @@ def listar_anexos_parceria(parceria: str) -> list:
 		fields=["name", "file_name", "file_url", "file_type", "file_size", "is_private", "creation"],
 		order_by="creation desc",
 	)
+
+
+# ------------------------------------------------------------------ painel geral + prazos de entrega
+
+def _parcerias_a_vencer(dias: int = PRAZO_AVISO_DIAS) -> dict:
+	"""Parcerias com prazo de entrega já vencido ou perto de vencer (até N dias),
+	que ainda não foram entregues nem canceladas."""
+	hoje = getdate(nowdate())
+	limite = add_days(hoje, dias)
+	rows = frappe.get_all(
+		"CRM Parceria",
+		filters={"status": ["not in", STATUS_ENCERRADOS], "prazo_entrega": ["is", "set"]},
+		fields=["name", "influenciadora", "marca", "status", "prazo_entrega", "valor"],
+	)
+	nomes = {
+		i.name: i.nome
+		for i in frappe.get_all("CRM Influenciadora", filters={"name": ["in", [r.influenciadora for r in rows]]}, fields=["name", "nome"])
+	}
+	atrasadas, proximas = [], []
+	for r in rows:
+		prazo = getdate(r.prazo_entrega)
+		item = {
+			"name": r.name,
+			"influenciadora": nomes.get(r.influenciadora, r.influenciadora),
+			"marca": r.marca,
+			"status": r.status,
+			"prazo_entrega": r.prazo_entrega,
+			"valor": r.valor,
+			"dias": (prazo - hoje).days,
+		}
+		if prazo < hoje:
+			atrasadas.append(item)
+		elif prazo <= limite:
+			proximas.append(item)
+	atrasadas.sort(key=lambda x: x["dias"])
+	proximas.sort(key=lambda x: x["dias"])
+	return {"atrasadas": atrasadas, "proximas": proximas}
+
+
+@frappe.whitelist()
+def get_painel_influenciadoras() -> dict:
+	"""Resumo geral pra tela inicial de Influenciadoras: quantas tem, quanto já
+	entrou, ranking de quem rendeu mais, e o que está pra vencer ou já venceu."""
+	parcerias = frappe.get_all("CRM Parceria", fields=["name", "influenciadora", "status", "valor", "valor_pago"])
+	influenciadoras = frappe.get_all("CRM Influenciadora", fields=["name", "nome", "foto"])
+	por_influenciadora = {}
+	for p in parcerias:
+		b = por_influenciadora.setdefault(
+			p.influenciadora, {"total_negociado": 0, "total_recebido": 0, "parcerias": 0}
+		)
+		b["total_negociado"] += flt(p.valor)
+		b["total_recebido"] += flt(p.valor_pago)
+		b["parcerias"] += 1
+
+	ranking = []
+	for i in influenciadoras:
+		b = por_influenciadora.get(i.name)
+		if not b or not b["total_recebido"]:
+			continue
+		ranking.append({"name": i.name, "nome": i.nome, "foto": i.foto, **b})
+	ranking.sort(key=lambda x: -x["total_recebido"])
+
+	vencer = _parcerias_a_vencer()
+	return {
+		"total_influenciadoras": len(influenciadoras),
+		"total_parcerias_ativas": len([p for p in parcerias if p.status not in STATUS_ENCERRADOS]),
+		"receita_total": sum(flt(p.valor_pago) for p in parcerias),
+		"ranking": ranking[:5],
+		"atrasadas": vencer["atrasadas"],
+		"proximas": vencer["proximas"],
+	}
+
+
+def avisar_prazos_entrega():
+	"""Job diário: se tiver parceria vencida ou perto de vencer, manda um resumo
+	por e-mail pros gestores (mesmos destinatários do relatório semanal). Um
+	e-mail só por dia com tudo junto, não um por parceria."""
+	vencer = _parcerias_a_vencer()
+	if not vencer["atrasadas"] and not vencer["proximas"]:
+		return
+
+	from crm.api.automacoes import _brand, _report_recipients, get_config
+
+	if not frappe.db.exists("Email Account", {"enable_outgoing": 1}):
+		return
+	recipients = _report_recipients(get_config())
+	if not recipients:
+		return
+
+	def linhas(items, cor):
+		return "".join(
+			f"<li style='margin-bottom:4px'><b>{frappe.utils.escape_html(i['influenciadora'])}</b> × "
+			f"{frappe.utils.escape_html(i['marca'])} — {'atrasada há' if i['dias'] < 0 else 'vence em'} "
+			f"{abs(i['dias'])} dia(s)</li>"
+			for i in items
+		)
+
+	partes = []
+	if vencer["atrasadas"]:
+		partes.append(f"<p style='color:#c0392b'><b>Atrasadas:</b></p><ul>{linhas(vencer['atrasadas'], 'red')}</ul>")
+	if vencer["proximas"]:
+		partes.append(f"<p><b>Vencendo em breve:</b></p><ul>{linhas(vencer['proximas'], 'amber')}</ul>")
+
+	brand = _brand() or "CRM"
+	total = len(vencer["atrasadas"]) + len(vencer["proximas"])
+	subject = f"{brand}: {total} parceria(s) de influenciadora com prazo próximo"
+	body = f"<div style='font-family:Arial,sans-serif;max-width:560px'>{''.join(partes)}</div>"
+	frappe.sendmail(recipients=recipients, subject=subject, message=body, delayed=False)
