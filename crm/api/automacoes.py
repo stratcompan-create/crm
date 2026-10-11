@@ -41,8 +41,11 @@ CONFIG_FIELDS = (
 	"posvenda_avaliacao_link posvenda_avaliacao_mensagem posvenda_indicacao_dias posvenda_indicacao_mensagem "
 	"relatorio_ativo relatorio_email relatorio_destinatarios agenda_ativa agenda_titulo agenda_duracao agenda_dias "
 	"agenda_inicio agenda_fim agenda_antecedencia agenda_dias_a_frente agenda_responsavel agenda_link "
-	"agenda_mensagem influenciadoras_ativo meu_site_ativo assistente_ativo credito_ia_ativo contas_ativo"
+	"agenda_mensagem influenciadoras_ativo meu_site_ativo assistente_ativo credito_ia_ativo contas_ativo "
+	"divisao_prolabore_pct divisao_impostos_pct divisao_crescimento_pct divisao_custos_pct"
 ).split()
+
+DIVISAO_CHAVES = ("divisao_prolabore_pct", "divisao_impostos_pct", "divisao_crescimento_pct", "divisao_custos_pct")
 
 DEFAULTS = {
 	"cobranca_ativa": 1,
@@ -76,6 +79,11 @@ DEFAULTS = {
 	# desligado por padrao - so liga pra quem entrou no modelo de saldo pre-pago
 	"credito_ia_ativo": 0,
 	"contas_ativo": 1,
+	# divisao do caixa de cada honorario pago - precisa somar 100 (ver save_settings)
+	"divisao_prolabore_pct": 60,
+	"divisao_impostos_pct": 15,
+	"divisao_crescimento_pct": 15,
+	"divisao_custos_pct": 10,
 }
 
 
@@ -109,6 +117,12 @@ def get_settings() -> dict:
 def save_settings(values):
 	_managers_only()
 	values = frappe.parse_json(values)
+	if set(DIVISAO_CHAVES) & set(values.keys()):
+		atual = get_config()
+		atual.update(values)
+		soma = sum(flt(atual.get(k)) for k in DIVISAO_CHAVES)
+		if round(soma) != 100:
+			frappe.throw(_("Os 4 percentuais da divisão do caixa precisam somar 100% (estão somando {0}%).").format(round(soma)))
 	for key, value in values.items():
 		if key not in CONFIG_FIELDS:
 			continue

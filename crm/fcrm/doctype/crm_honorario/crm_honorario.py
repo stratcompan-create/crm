@@ -3,7 +3,14 @@
 
 import frappe
 from frappe.model.document import Document
-from frappe.utils import add_months, nowdate
+from frappe.utils import add_months, flt, nowdate
+
+DIVISAO_CAMPOS = {
+	"divisao_prolabore": "divisao_prolabore_pct",
+	"divisao_impostos": "divisao_impostos_pct",
+	"divisao_crescimento": "divisao_crescimento_pct",
+	"divisao_custos": "divisao_custos_pct",
+}
 
 
 class CRMHonorario(Document):
@@ -30,6 +37,23 @@ class CRMHonorario(Document):
 	def before_save(self):
 		if self.status == "Pago" and not self.data_pagamento:
 			self.data_pagamento = nowdate()
+		self._calcular_divisao()
+
+	def _calcular_divisao(self):
+		"""Divide o valor que sobra (depois de tirar repasse e custo direto, que são
+		valores reais e conhecidos na hora) pelos percentuais configurados em
+		Configurações → Automações. Roda em todo save, não só quando paga, pra já
+		mostrar a divisão na hora que o pagamento é registrado/fechado."""
+		liquido = max(0, flt(self.valor) - flt(self.repasse) - flt(self.custo_direto))
+		self.valor_liquido = liquido
+		try:
+			from crm.api.automacoes import get_config
+
+			cfg = get_config()
+		except Exception:
+			cfg = {}
+		for campo, chave_pct in DIVISAO_CAMPOS.items():
+			self.set(campo, round(liquido * flt(cfg.get(chave_pct)) / 100, 2))
 
 	def on_update(self):
 		if self.tipo_honorario == "Consultivo Mensal" and self.status == "Pago" and self.has_value_changed("status"):
@@ -53,6 +77,8 @@ class CRMHonorario(Document):
 				"tipo_honorario": "Consultivo Mensal",
 				"servico": self.servico,
 				"valor": self.valor,
+				"repasse": self.repasse,
+				"custo_direto": self.custo_direto,
 				"forma_pagamento": self.forma_pagamento,
 				"status": "Pendente",
 				"data_vencimento": add_months(self.data_vencimento, 1),

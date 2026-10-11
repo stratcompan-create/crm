@@ -122,6 +122,35 @@
       </div>
     </div>
 
+    <div v-if="divisaoCaixa.data?.valor" class="rounded-lg border border-outline-gray-2 p-5">
+      <div class="mb-1 text-p-base-medium text-ink-gray-8">{{ __('Divisão do caixa no período') }}</div>
+      <div class="mb-4 text-p-sm text-ink-gray-5">
+        {{ __('De {0} recebido (já descontado repasse a terceiros e custo direto), para onde foi.', [formatCurrency(divisaoCaixa.data?.valor_liquido)]) }}
+      </div>
+      <div class="grid grid-cols-2 gap-4 text-center sm:grid-cols-4">
+        <div>
+          <div class="text-lg-semibold text-ink-gray-9">{{ formatCurrency(divisaoCaixa.data?.divisao_prolabore) }}</div>
+          <div class="text-p-sm text-ink-gray-5">{{ __('Pró-labore') }}</div>
+        </div>
+        <div>
+          <div class="text-lg-semibold text-ink-gray-9">{{ formatCurrency(divisaoCaixa.data?.divisao_impostos) }}</div>
+          <div class="text-p-sm text-ink-gray-5">{{ __('Impostos') }}</div>
+        </div>
+        <div>
+          <div class="text-lg-semibold text-ink-gray-9">{{ formatCurrency(divisaoCaixa.data?.divisao_crescimento) }}</div>
+          <div class="text-p-sm text-ink-gray-5">{{ __('Crescimento') }}</div>
+        </div>
+        <div>
+          <div class="text-lg-semibold text-ink-gray-9">{{ formatCurrency(divisaoCaixa.data?.divisao_custos) }}</div>
+          <div class="text-p-sm text-ink-gray-5">{{ __('Custos da empresa') }}</div>
+        </div>
+      </div>
+      <div v-if="divisaoCaixa.data?.repasse || divisaoCaixa.data?.custo_direto" class="mt-4 flex flex-wrap gap-x-6 gap-y-1 border-t border-outline-gray-1 pt-3 text-p-sm text-ink-gray-5">
+        <span v-if="divisaoCaixa.data?.repasse">{{ __('Repasse a terceiros: {0}', [formatCurrency(divisaoCaixa.data.repasse)]) }}</span>
+        <span v-if="divisaoCaixa.data?.custo_direto">{{ __('Custo direto do serviço: {0}', [formatCurrency(divisaoCaixa.data.custo_direto)]) }}</span>
+      </div>
+    </div>
+
     <div v-if="creditoIA.data?.ativo" class="rounded-lg border border-outline-gray-2 p-5">
       <div class="mb-1 text-p-base-medium text-ink-gray-8">{{ __('Crédito de IA') }}</div>
       <div class="mb-4 text-p-sm text-ink-gray-5">
@@ -184,6 +213,11 @@ const trend = createResource({
 
 const breakdown = createResource({ url: 'crm.api.financeiro.get_revenue_breakdown', auto: true })
 const mrr = createResource({ url: 'crm.api.financeiro.get_mrr', auto: true })
+const divisaoCaixa = createResource({
+  url: 'crm.api.financeiro.get_divisao_periodo',
+  params: _limitesPorDias(30),
+  auto: true,
+})
 
 const isAgency = computed(() => (window.crm_profile || 'agencia') === 'agencia')
 const rentabilidade = createResource({
@@ -205,9 +239,11 @@ function selecionarDias(d) {
   receita.update({ params })
   meta.update({ params })
   trend.update({ params })
+  divisaoCaixa.update({ params })
   receita.reload()
   meta.reload()
   trend.reload()
+  divisaoCaixa.reload()
 }
 
 function formatCurrency(value) {

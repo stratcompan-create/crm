@@ -161,6 +161,23 @@
         </div>
       </section>
 
+      <!-- Divisão do caixa -->
+      <section class="rounded-lg border border-outline-gray-2 p-4">
+        <div class="text-base-semibold text-ink-gray-9">{{ __('Divisão do caixa') }}</div>
+        <p class="mt-1 text-p-sm text-ink-gray-6">
+          {{ __('Quando um honorário é pago, o sistema já calcula sozinho quanto vai pra cada balde (depois de tirar repasse a terceiros e custo direto do serviço, que são lançados em cada honorário). Os 4 percentuais abaixo precisam somar 100%.') }}
+        </p>
+        <div class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <Field :label="__('Pró-labore (%)')"><FormControl v-model="cfg.divisao_prolabore_pct" type="number" /></Field>
+          <Field :label="__('Impostos (%)')"><FormControl v-model="cfg.divisao_impostos_pct" type="number" /></Field>
+          <Field :label="__('Crescimento (%)')"><FormControl v-model="cfg.divisao_crescimento_pct" type="number" /></Field>
+          <Field :label="__('Custos da empresa (%)')"><FormControl v-model="cfg.divisao_custos_pct" type="number" /></Field>
+        </div>
+        <div class="mt-2 text-p-sm" :class="somaDivisao === 100 ? 'text-ink-gray-5' : 'text-ink-red-4'">
+          {{ __('Soma atual: {0}%', [somaDivisao]) }}{{ somaDivisao !== 100 ? ' — ' + __('precisa ser 100%') : '' }}
+        </div>
+      </section>
+
       <!-- Inteligência artificial -->
       <section class="rounded-lg border border-outline-gray-2 p-4">
         <div class="text-base-semibold text-ink-gray-9">{{ __('Inteligência artificial (Claude)') }}</div>
@@ -214,7 +231,7 @@
 
 <script setup>
 import { Button, FormControl, call, toast } from 'frappe-ui'
-import { h, defineComponent, onMounted, ref } from 'vue'
+import { computed, h, defineComponent, onMounted, ref } from 'vue'
 
 const Field = defineComponent({
   props: { label: String },
@@ -251,6 +268,15 @@ const reports = ref([])
 const fmt = (v) => (v ? v.split('-').reverse().slice(0, 2).join('/') : '')
 const saving = ref(false)
 const sending = ref(false)
+const somaDivisao = computed(() => {
+  if (!cfg.value) return 0
+  return (
+    (Number(cfg.value.divisao_prolabore_pct) || 0) +
+    (Number(cfg.value.divisao_impostos_pct) || 0) +
+    (Number(cfg.value.divisao_crescimento_pct) || 0) +
+    (Number(cfg.value.divisao_custos_pct) || 0)
+  )
+})
 
 onMounted(async () => {
   cfg.value = await call('crm.api.automacoes.get_settings')

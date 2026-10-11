@@ -203,6 +203,22 @@ def get_cashflow(months: int = 6):
 
 
 @frappe.whitelist()
+def get_divisao_periodo(from_date: str | None = None, to_date: str | None = None) -> dict:
+	"""Divisão do caixa (pró-labore/impostos/crescimento/custos), somada entre os
+	honorários PAGOS no período - já calculada honorário a honorário em before_save,
+	então aqui é só somar as colunas prontas."""
+	_managers_only()
+	filters = {"status": "Pago"}
+	if from_date and to_date:
+		filters["data_pagamento"] = ["between", [from_date, to_date]]
+
+	campos = ("valor", "repasse", "custo_direto", "valor_liquido", "divisao_prolabore", "divisao_impostos", "divisao_crescimento", "divisao_custos")
+	rows = frappe.get_all("CRM Honorario", filters=filters, fields=[f"sum({c}) as {c}" for c in campos])
+	r = rows[0] if rows else {}
+	return {c: flt(r.get(c)) for c in campos}
+
+
+@frappe.whitelist()
 def get_revenue_breakdown():
 	"""Receita por cliente e por serviço (pago + a receber)."""
 	_managers_only()

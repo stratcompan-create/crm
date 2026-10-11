@@ -23,6 +23,17 @@
   "data_pagamento",
   "section_break_cobranca",
   "link_pagamento",
+  "section_break_divisao",
+  "repasse",
+  "custo_direto",
+  "column_break_divisao",
+  "valor_liquido",
+  "section_break_divisao_detalhe",
+  "divisao_prolabore",
+  "divisao_impostos",
+  "column_break_divisao_detalhe",
+  "divisao_crescimento",
+  "divisao_custos",
   "section_break_2",
   "observacoes",
   "ultimo_lembrete",
@@ -142,6 +153,75 @@
    "label": "Link de pagamento",
    "read_only": 1,
    "no_copy": 1
+  },
+  {
+   "fieldname": "section_break_divisao",
+   "fieldtype": "Section Break",
+   "label": "Divisão do caixa"
+  },
+  {
+   "fieldname": "repasse",
+   "fieldtype": "Currency",
+   "label": "Repasse a terceiros",
+   "options": "BRL",
+   "default": "0",
+   "description": "Valor real desse pagamento que não é seu (ex: verba de tráfego pago repassada à Meta/Google)."
+  },
+  {
+   "fieldname": "custo_direto",
+   "fieldtype": "Currency",
+   "label": "Custo direto do serviço",
+   "options": "BRL",
+   "default": "0",
+   "description": "Custo real e conhecido desse serviço específico (ex: edição de vídeo, transporte, alimentação)."
+  },
+  {
+   "fieldname": "column_break_divisao",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "valor_liquido",
+   "fieldtype": "Currency",
+   "label": "Valor líquido (após repasse e custo direto)",
+   "options": "BRL",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_divisao_detalhe",
+   "fieldtype": "Section Break",
+   "label": "Para onde vai o valor líquido"
+  },
+  {
+   "fieldname": "divisao_prolabore",
+   "fieldtype": "Currency",
+   "label": "Pró-labore",
+   "options": "BRL",
+   "read_only": 1
+  },
+  {
+   "fieldname": "divisao_impostos",
+   "fieldtype": "Currency",
+   "label": "Impostos",
+   "options": "BRL",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_divisao_detalhe",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "divisao_crescimento",
+   "fieldtype": "Currency",
+   "label": "Crescimento/investimento",
+   "options": "BRL",
+   "read_only": 1
+  },
+  {
+   "fieldname": "divisao_custos",
+   "fieldtype": "Currency",
+   "label": "Custos da empresa",
+   "options": "BRL",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,

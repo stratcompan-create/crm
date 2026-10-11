@@ -38,6 +38,7 @@ MODULES = [
     "gcalendar",
     "credito_ia",
     "analise_consultor",
+    "divisao_caixa",
 ]
 
 

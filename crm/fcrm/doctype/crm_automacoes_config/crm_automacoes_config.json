@@ -49,7 +49,11 @@
   "meu_site_ativo",
   "assistente_ativo",
   "credito_ia_ativo",
-  "contas_ativo"
+  "contas_ativo",
+  "divisao_prolabore_pct",
+  "divisao_impostos_pct",
+  "divisao_crescimento_pct",
+  "divisao_custos_pct"
  ],
  "fields": [
   {
@@ -245,6 +249,31 @@
    "fieldtype": "Check",
    "label": "Aba \"Contas\" ligada",
    "default": "1"
+  },
+  {
+   "fieldname": "divisao_prolabore_pct",
+   "fieldtype": "Int",
+   "label": "Divisão do caixa: Pró-labore (%)",
+   "default": "60",
+   "description": "Os 4 percentuais de divisão do caixa precisam somar 100%."
+  },
+  {
+   "fieldname": "divisao_impostos_pct",
+   "fieldtype": "Int",
+   "label": "Divisão do caixa: Impostos (%)",
+   "default": "15"
+  },
+  {
+   "fieldname": "divisao_crescimento_pct",
+   "fieldtype": "Int",
+   "label": "Divisão do caixa: Crescimento/investimento (%)",
+   "default": "15"
+  },
+  {
+   "fieldname": "divisao_custos_pct",
+   "fieldtype": "Int",
+   "label": "Divisão do caixa: Custos da empresa (%)",
+   "default": "10"
   }
  ],
  "permissions": [
