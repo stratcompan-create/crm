@@ -100,7 +100,7 @@
               <SidebarLabel class="select-none">{{ __('Arquivos') }}</SidebarLabel>
               <div class="flex items-center gap-0.5">
                 <a
-                  v-if="isAgency"
+                  v-if="isAgency && isStratcompanyOwnSite"
                   :href="vscodeUri"
                   class="rounded p-1 hover:bg-surface-gray-2"
                   :title="__('Abrir no VS Code')"
@@ -435,6 +435,13 @@ const isVisaoGeralSection = computed(() => route.name === 'Dashboard')
 // scheme — only meaningful on this machine/dev setup, not something a
 // resold client CRM would carry over.
 const vscodeUri = 'vscode://file/C:/Users/THIAGO/Desktop/MazyOS'
+
+// Abrir no VS Code é uma conveniência interna da agência (aponta pra pasta
+// local do Thiago) — nunca deve aparecer pra nenhum cliente, mesmo os com
+// perfil "agência". Trava pelo domínio do CRM da própria Stratcompany.
+const isStratcompanyOwnSite = computed(
+  () => window.location.hostname === 'crm.stratcompany.com',
+)
 
 const explorerRootNodes = ref([])
 const loadingExplorerRoot = ref(false)
