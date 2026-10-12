@@ -54,7 +54,8 @@
   "divisao_prolabore_pct",
   "divisao_impostos_pct",
   "divisao_crescimento_pct",
-  "divisao_custos_pct"
+  "divisao_custos_pct",
+  "email_adiado"
  ],
  "fields": [
   {
@@ -281,6 +282,13 @@
    "fieldtype": "Int",
    "label": "Divisão do caixa: Custos da empresa (%)",
    "default": "10"
+  },
+  {
+   "fieldname": "email_adiado",
+   "fieldtype": "Check",
+   "label": "Configuração do e-mail de envio adiada (reconhecida pelo gestor)",
+   "default": "0",
+   "description": "Tira o alerta vermelho de e-mail da Visão Geral enquanto o envio não é configurado. O envio automático (resumo semanal, avisos de prazo, etc.) continua desligado até configurar de verdade."
   }
  ],
  "permissions": [

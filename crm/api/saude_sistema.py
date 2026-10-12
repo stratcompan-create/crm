@@ -48,6 +48,10 @@ def _check_scheduler() -> tuple[bool, str]:
 
 def _check_email() -> tuple[bool, str]:
 	if not frappe.db.exists("Email Account", {"enable_outgoing": 1}):
+		from crm.api.automacoes import get_config
+
+		if cint(get_config().email_adiado):
+			return True, "Envio de e-mail ainda não configurado (adiado pelo gestor por enquanto)."
 		return False, "Nenhuma conta de e-mail de envio configurada."
 	failed = frappe.db.count("Email Queue", {"status": "Error", "creation": [">=", add_days(nowdate(), -1)]})
 	stuck = frappe.db.count(

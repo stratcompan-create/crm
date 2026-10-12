@@ -42,7 +42,7 @@ CONFIG_FIELDS = (
 	"relatorio_ativo relatorio_email relatorio_destinatarios agenda_ativa agenda_titulo agenda_duracao agenda_dias "
 	"agenda_inicio agenda_fim agenda_antecedencia agenda_dias_a_frente agenda_responsavel agenda_link "
 	"agenda_mensagem influenciadoras_ativo meu_site_ativo assistente_ativo credito_ia_ativo contas_ativo instagram_ativo "
-	"divisao_prolabore_pct divisao_impostos_pct divisao_crescimento_pct divisao_custos_pct"
+	"divisao_prolabore_pct divisao_impostos_pct divisao_crescimento_pct divisao_custos_pct email_adiado"
 ).split()
 
 DIVISAO_CHAVES = ("divisao_prolabore_pct", "divisao_impostos_pct", "divisao_crescimento_pct", "divisao_custos_pct")
@@ -85,6 +85,10 @@ DEFAULTS = {
 	"divisao_impostos_pct": 15,
 	"divisao_crescimento_pct": 15,
 	"divisao_custos_pct": 10,
+	# marca que o gestor sabe que o e-mail de envio nao esta configurado e
+	# decidiu adiar - tira o alerta vermelho da saude do sistema sem fingir
+	# que esta tudo certo (fica "opcional/adiado", nao "ok")
+	"email_adiado": 0,
 }
 
 
