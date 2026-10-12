@@ -6,6 +6,8 @@ Roda no site atual (bench --site SITE execute crm.tests.run_smoke.run_all).
 import frappe
 from frappe.utils import add_days, nowdate
 
+from crm.api import automacoes as au
+from crm.api import financeiro
 from crm.api import influenciadoras as inf
 
 
@@ -48,10 +50,34 @@ def run():
 		ck("atualizar_parceria muda status e valor", depois.status == "Fechada" and depois.valor == 1200)
 		inf.atualizar_parceria(p1["name"], valor_pago=1200, data_pagamento=nowdate())
 
+		# comissao por %: 1200 pago, 10% -> 120, dividido pelos percentuais do Financeiro (60/15/15/10 por padrao)
+		inf.atualizar_parceria(p1["name"], comissao_modelo="Comissão (%)", comissao_pct=10)
+		p1_doc = frappe.get_doc("CRM Parceria", p1["name"])
+		ck("comissao por % calcula sobre o valor PAGO, nao o negociado", p1_doc.comissao_calculada == 120, p1_doc.comissao_calculada)
+		pct_cfg = au.get_config()
+		esperado_prolabore = round(120 * frappe.utils.flt(pct_cfg.get("divisao_prolabore_pct")) / 100, 2)
+		ck("parceria tambem recebe a divisao de caixa (pro-labore)", p1_doc.divisao_prolabore == esperado_prolabore, (p1_doc.divisao_prolabore, esperado_prolabore))
+
+		# comissao por valor fixo: independe do %, so olha se ja foi pago algo
+		inf.atualizar_parceria(p2["name"], valor_pago=500, data_pagamento=nowdate(), comissao_modelo="Valor fixo", comissao_valor_fixo=300)
+		p2_doc = frappe.get_doc("CRM Parceria", p2["name"])
+		ck("comissao por valor fixo usa o valor fixo (nao calcula %)", p2_doc.comissao_calculada == 300, p2_doc.comissao_calculada)
+
+		painel_antes = inf.get_painel_influenciadoras()
+		ck("get_painel_influenciadoras soma as comissoes das duas parcerias", painel_antes["comissao_total"] >= 420, painel_antes["comissao_total"])
+
+		fd, td = nowdate(), nowdate()
+		divisao = financeiro.get_divisao_periodo(fd, td)
+		ck(
+			"get_divisao_periodo do Financeiro inclui a comissao das parcerias de influenciadoras",
+			divisao["comissoes_influenciadoras"] >= 420,
+			divisao,
+		)
+
 		painel = inf.get_painel_influenciadoras()
 		linha = next((r for r in painel["ranking"] if r["name"] == i1), None)
 		ck("get_painel_influenciadoras traz a influenciadora no ranking depois de receber", linha is not None, painel["ranking"])
-		ck("ranking soma o valor_pago certo (so a parceria paga conta)", linha and linha["total_recebido"] == 1200, linha)
+		ck("ranking soma o valor_pago certo (so a parceria paga conta)", linha and linha["total_recebido"] == 1700, linha)
 		ck("get_painel_influenciadoras conta parcerias ativas (so p2, p1 esta Fechada que nao fecha)", painel["total_parcerias_ativas"] >= 1)
 
 		# prazos: uma atrasada (2 dias atras), uma proxima (1 dia), uma longe (30 dias - nao deve aparecer)

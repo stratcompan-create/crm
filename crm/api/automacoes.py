@@ -102,6 +102,14 @@ def get_config() -> frappe._dict:
 		if value in (None, "") and key in DEFAULTS:
 			value = DEFAULTS[key]
 		out[key] = value
+	# segurança: a divisão do caixa só faz sentido se os 4 percentuais somarem 100
+	# (já validado em save_settings) - mas um campo novo que nunca passou pela tela
+	# de Configurações pode ter ficado com 0 em vez de vazio (não cai no fallback
+	# acima), e dividir dinheiro real por uma config quebrada (tudo 0%) é pior do
+	# que ignorá-la e usar o padrão.
+	if sum(cint(out.get(k)) for k in DIVISAO_CHAVES) != 100:
+		for k in DIVISAO_CHAVES:
+			out[k] = DEFAULTS[k]
 	return out
 
 

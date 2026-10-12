@@ -165,7 +165,7 @@
           {{ __('Carregando...') }}
         </div>
         <template v-else-if="painel.data && (painel.data.total_influenciadoras || 0) > 0">
-          <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <div class="rounded-lg border border-outline-gray-2 p-5">
               <div class="text-2xl font-semibold text-ink-gray-9">{{ painel.data.total_influenciadoras }}</div>
               <div class="text-p-sm text-ink-gray-5">{{ __('Influenciadoras') }}</div>
@@ -175,8 +175,12 @@
               <div class="text-p-sm text-ink-gray-5">{{ __('Parcerias ativas') }}</div>
             </div>
             <div class="rounded-lg border border-outline-gray-2 p-5">
-              <div class="text-2xl font-semibold text-[var(--stratcompany-accent)]">{{ formatCurrency(painel.data.receita_total) }}</div>
+              <div class="text-2xl font-semibold text-ink-gray-9">{{ formatCurrency(painel.data.receita_total) }}</div>
               <div class="text-p-sm text-ink-gray-5">{{ __('Recebido no total') }}</div>
+            </div>
+            <div class="rounded-lg border border-outline-gray-2 p-5">
+              <div class="text-2xl font-semibold text-[var(--stratcompany-accent)]">{{ formatCurrency(painel.data.comissao_total) }}</div>
+              <div class="text-p-sm text-ink-gray-5">{{ __('Sua comissão') }}</div>
             </div>
           </div>
 
@@ -277,6 +281,29 @@
         <FormControl type="date" :label="__('Data do (último) pagamento')" v-model="formParc.data_pagamento" />
         <FormControl type="date" :label="__('Data de gravação')" v-model="formParc.data_gravacao" />
         <FormControl type="date" :label="__('Prazo de entrega')" v-model="formParc.prazo_entrega" />
+
+        <div class="rounded-lg border border-outline-gray-2 p-3">
+          <div class="mb-2 text-p-sm font-medium text-ink-gray-7">{{ __('Como você ganha nessa parceria') }}</div>
+          <FormControl type="select" :label="__('Modelo')" v-model="formParc.comissao_modelo" :options="comissaoModeloOptions" />
+          <FormControl
+            v-if="formParc.comissao_modelo === 'Comissão (%)'"
+            class="mt-2"
+            type="number"
+            :label="__('Comissão (%)')"
+            v-model="formParc.comissao_pct"
+          />
+          <FormControl
+            v-if="formParc.comissao_modelo === 'Valor fixo'"
+            class="mt-2"
+            type="number"
+            :label="__('Valor fixo de gestão')"
+            v-model="formParc.comissao_valor_fixo"
+          />
+          <div v-if="comissaoPrevista > 0" class="mt-2 text-p-sm text-ink-gray-6">
+            {{ __('Sua comissão sobre o que já foi pago: {0}', [formatCurrency(comissaoPrevista)]) }}
+          </div>
+        </div>
+
         <FormControl type="textarea" :rows="2" :label="__('Briefing / direcionamento')" v-model="formParc.briefing" />
         <FormControl type="textarea" :rows="2" :label="__('Observações')" v-model="formParc.observacoes" />
 
@@ -530,11 +557,24 @@ const showParceriaForm = ref(false)
 const editingParceria = ref(null)
 const formParc = reactive({
   marca: '', status: 'Negociando', valor: '', valor_pago: '', data_pagamento: '',
-  data_gravacao: '', prazo_entrega: '', briefing: '', observacoes: '',
+  data_gravacao: '', prazo_entrega: '', comissao_modelo: '', comissao_pct: '', comissao_valor_fixo: '',
+  briefing: '', observacoes: '',
 })
 const savingParc = ref(false)
 const deletingParc = ref(false)
 const faltaPagarForm = computed(() => Math.max(0, (Number(formParc.valor) || 0) - (Number(formParc.valor_pago) || 0)))
+const comissaoModeloOptions = [
+  { label: __('Nenhuma (só gestão de carteira)'), value: '' },
+  { label: __('Comissão (%)'), value: 'Comissão (%)' },
+  { label: __('Valor fixo'), value: 'Valor fixo' },
+]
+const comissaoPrevista = computed(() => {
+  const pago = Number(formParc.valor_pago) || 0
+  if (!pago) return 0
+  if (formParc.comissao_modelo === 'Comissão (%)') return (pago * (Number(formParc.comissao_pct) || 0)) / 100
+  if (formParc.comissao_modelo === 'Valor fixo') return Number(formParc.comissao_valor_fixo) || 0
+  return 0
+})
 
 const anexos = createResource({
   url: 'crm.api.influenciadoras.listar_anexos_parceria',
@@ -545,7 +585,8 @@ function openCreateParceria() {
   editingParceria.value = null
   Object.assign(formParc, {
     marca: '', status: 'Negociando', valor: '', valor_pago: '', data_pagamento: '',
-    data_gravacao: '', prazo_entrega: '', briefing: '', observacoes: '',
+    data_gravacao: '', prazo_entrega: '', comissao_modelo: '', comissao_pct: '', comissao_valor_fixo: '',
+    briefing: '', observacoes: '',
   })
   showParceriaForm.value = true
 }
@@ -554,6 +595,7 @@ function openEditParceria(p) {
   Object.assign(formParc, {
     marca: p.marca, status: p.status, valor: p.valor, valor_pago: p.valor_pago, data_pagamento: p.data_pagamento,
     data_gravacao: p.data_gravacao, prazo_entrega: p.prazo_entrega,
+    comissao_modelo: p.comissao_modelo || '', comissao_pct: p.comissao_pct, comissao_valor_fixo: p.comissao_valor_fixo,
     briefing: p.briefing, observacoes: p.observacoes,
   })
   showParceriaForm.value = true

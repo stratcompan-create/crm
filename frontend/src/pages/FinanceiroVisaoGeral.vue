@@ -145,9 +145,10 @@
           <div class="text-p-sm text-ink-gray-5">{{ __('Custos da empresa') }}</div>
         </div>
       </div>
-      <div v-if="divisaoCaixa.data?.repasse || divisaoCaixa.data?.custo_direto" class="mt-4 flex flex-wrap gap-x-6 gap-y-1 border-t border-outline-gray-1 pt-3 text-p-sm text-ink-gray-5">
+      <div v-if="divisaoCaixa.data?.repasse || divisaoCaixa.data?.custo_direto || divisaoCaixa.data?.comissoes_influenciadoras" class="mt-4 flex flex-wrap gap-x-6 gap-y-1 border-t border-outline-gray-1 pt-3 text-p-sm text-ink-gray-5">
         <span v-if="divisaoCaixa.data?.repasse">{{ __('Repasse a terceiros: {0}', [formatCurrency(divisaoCaixa.data.repasse)]) }}</span>
         <span v-if="divisaoCaixa.data?.custo_direto">{{ __('Custo direto do serviço: {0}', [formatCurrency(divisaoCaixa.data.custo_direto)]) }}</span>
+        <span v-if="divisaoCaixa.data?.comissoes_influenciadoras">{{ __('Inclui comissão de parcerias de influenciadoras: {0}', [formatCurrency(divisaoCaixa.data.comissoes_influenciadoras)]) }}</span>
       </div>
     </div>
 

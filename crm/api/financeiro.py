@@ -204,18 +204,38 @@ def get_cashflow(months: int = 6):
 
 @frappe.whitelist()
 def get_divisao_periodo(from_date: str | None = None, to_date: str | None = None) -> dict:
-	"""Divisão do caixa (pró-labore/impostos/crescimento/custos), somada entre os
-	honorários PAGOS no período - já calculada honorário a honorário em before_save,
-	então aqui é só somar as colunas prontas."""
+	"""Divisão do caixa (pró-labore/impostos/crescimento/custos), somando DUAS fontes
+	de receita da agência no período - já calculadas antes, em before_save, então
+	aqui é só somar as colunas prontas:
+	- CRM Honorario: o que os clientes da agência pagam (ex: implementação de CRM)
+	- CRM Parceria: a comissão/valor fixo da agência sobre parcerias de
+	  influenciadoras com marcas (quando configurado por parceria)."""
 	_managers_only()
-	filters = {"status": "Pago"}
+	filters_honorario = {"status": "Pago"}
 	if from_date and to_date:
-		filters["data_pagamento"] = ["between", [from_date, to_date]]
+		filters_honorario["data_pagamento"] = ["between", [from_date, to_date]]
+	campos_honorario = ("valor", "repasse", "custo_direto", "valor_liquido", "divisao_prolabore", "divisao_impostos", "divisao_crescimento", "divisao_custos")
+	rows_honorario = frappe.get_all("CRM Honorario", filters=filters_honorario, fields=[f"sum({c}) as {c}" for c in campos_honorario])
+	h = rows_honorario[0] if rows_honorario else {}
 
-	campos = ("valor", "repasse", "custo_direto", "valor_liquido", "divisao_prolabore", "divisao_impostos", "divisao_crescimento", "divisao_custos")
-	rows = frappe.get_all("CRM Honorario", filters=filters, fields=[f"sum({c}) as {c}" for c in campos])
-	r = rows[0] if rows else {}
-	return {c: flt(r.get(c)) for c in campos}
+	filters_parceria = {"valor_pago": [">", 0]}
+	if from_date and to_date:
+		filters_parceria["data_pagamento"] = ["between", [from_date, to_date]]
+	campos_parceria = ("comissao_calculada", "divisao_prolabore", "divisao_impostos", "divisao_crescimento", "divisao_custos")
+	rows_parceria = frappe.get_all("CRM Parceria", filters=filters_parceria, fields=[f"sum({c}) as {c}" for c in campos_parceria])
+	p = rows_parceria[0] if rows_parceria else {}
+
+	return {
+		"valor": flt(h.get("valor")),
+		"repasse": flt(h.get("repasse")),
+		"custo_direto": flt(h.get("custo_direto")),
+		"comissoes_influenciadoras": flt(p.get("comissao_calculada")),
+		"valor_liquido": flt(h.get("valor_liquido")) + flt(p.get("comissao_calculada")),
+		"divisao_prolabore": flt(h.get("divisao_prolabore")) + flt(p.get("divisao_prolabore")),
+		"divisao_impostos": flt(h.get("divisao_impostos")) + flt(p.get("divisao_impostos")),
+		"divisao_crescimento": flt(h.get("divisao_crescimento")) + flt(p.get("divisao_crescimento")),
+		"divisao_custos": flt(h.get("divisao_custos")) + flt(p.get("divisao_custos")),
+	}
 
 
 @frappe.whitelist()

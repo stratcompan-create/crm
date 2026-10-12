@@ -108,6 +108,7 @@ def listar_parcerias(influenciadora: str) -> list:
 		fields=[
 			"name", "marca", "status", "valor", "valor_pago", "data_pagamento",
 			"data_gravacao", "prazo_entrega", "briefing", "observacoes",
+			"comissao_modelo", "comissao_pct", "comissao_valor_fixo", "comissao_calculada",
 		],
 		order_by="prazo_entrega asc, creation desc",
 	)
@@ -123,6 +124,9 @@ def criar_parceria(
 	data_pagamento=None,
 	data_gravacao=None,
 	prazo_entrega=None,
+	comissao_modelo: str | None = None,
+	comissao_pct=None,
+	comissao_valor_fixo=None,
 	briefing: str | None = None,
 	observacoes: str | None = None,
 ) -> dict:
@@ -141,6 +145,9 @@ def criar_parceria(
 			"data_pagamento": data_pagamento or None,
 			"data_gravacao": data_gravacao or None,
 			"prazo_entrega": prazo_entrega or None,
+			"comissao_modelo": comissao_modelo or "",
+			"comissao_pct": comissao_pct or 0,
+			"comissao_valor_fixo": comissao_valor_fixo or 0,
 			"briefing": briefing or "",
 			"observacoes": observacoes or "",
 		}
@@ -150,12 +157,17 @@ def criar_parceria(
 
 
 @frappe.whitelist()
-def atualizar_parceria(name: str, marca=None, status=None, valor=None, valor_pago=None, data_pagamento=None, data_gravacao=None, prazo_entrega=None, briefing=None, observacoes=None) -> dict:
+def atualizar_parceria(
+	name: str, marca=None, status=None, valor=None, valor_pago=None, data_pagamento=None,
+	data_gravacao=None, prazo_entrega=None, comissao_modelo=None, comissao_pct=None,
+	comissao_valor_fixo=None, briefing=None, observacoes=None,
+) -> dict:
 	doc = frappe.get_doc("CRM Parceria", name)
 	for campo, valor_novo in (
 		("marca", marca), ("status", status), ("valor", valor),
 		("valor_pago", valor_pago), ("data_pagamento", data_pagamento),
 		("data_gravacao", data_gravacao), ("prazo_entrega", prazo_entrega),
+		("comissao_modelo", comissao_modelo), ("comissao_pct", comissao_pct), ("comissao_valor_fixo", comissao_valor_fixo),
 		("briefing", briefing), ("observacoes", observacoes),
 	):
 		if valor_novo is not None:
@@ -222,7 +234,7 @@ def _parcerias_a_vencer(dias: int = PRAZO_AVISO_DIAS) -> dict:
 def get_painel_influenciadoras() -> dict:
 	"""Resumo geral pra tela inicial de Influenciadoras: quantas tem, quanto já
 	entrou, ranking de quem rendeu mais, e o que está pra vencer ou já venceu."""
-	parcerias = frappe.get_all("CRM Parceria", fields=["name", "influenciadora", "status", "valor", "valor_pago"])
+	parcerias = frappe.get_all("CRM Parceria", fields=["name", "influenciadora", "status", "valor", "valor_pago", "comissao_calculada"])
 	influenciadoras = frappe.get_all("CRM Influenciadora", fields=["name", "nome", "foto"])
 	por_influenciadora = {}
 	for p in parcerias:
@@ -246,6 +258,7 @@ def get_painel_influenciadoras() -> dict:
 		"total_influenciadoras": len(influenciadoras),
 		"total_parcerias_ativas": len([p for p in parcerias if p.status not in STATUS_ENCERRADOS]),
 		"receita_total": sum(flt(p.valor_pago) for p in parcerias),
+		"comissao_total": sum(flt(p.comissao_calculada) for p in parcerias),
 		"ranking": ranking[:5],
 		"atrasadas": vencer["atrasadas"],
 		"proximas": vencer["proximas"],
