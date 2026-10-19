@@ -99,6 +99,13 @@
   "natureza",
   "valor_recorrente",
   "percentual_exito",
+  "numero_processo",
+  "tribunal",
+  "encerrado",
+  "encerrado_em",
+  "motivo_encerramento",
+  "documentos_devolvidos",
+  "observacoes_encerramento",
   "ficha",
   "ficha_transcricao",
   "cidade_estado",
@@ -652,6 +659,50 @@
    "description": "Percentual combinado sobre o que for recebido no caso (alvará, acordo, RPV...)."
   },
   {
+   "fieldname": "numero_processo",
+   "fieldtype": "Data",
+   "label": "Nº do processo",
+   "description": "Número CNJ (ex.: 0001234-56.2026.8.17.0001)."
+  },
+  {
+   "fieldname": "tribunal",
+   "fieldtype": "Data",
+   "label": "Tribunal / vara"
+  },
+  {
+   "default": "0",
+   "fieldname": "encerrado",
+   "fieldtype": "Check",
+   "label": "Caso encerrado",
+   "read_only": 1
+  },
+  {
+   "fieldname": "encerrado_em",
+   "fieldtype": "Date",
+   "label": "Encerrado em",
+   "read_only": 1
+  },
+  {
+   "fieldname": "motivo_encerramento",
+   "fieldtype": "Select",
+   "label": "Como terminou",
+   "read_only": 1,
+   "options": "\nÊxito\nAcordo\nImprocedente\nDesistência do cliente\nSubstabelecido\nOutro"
+  },
+  {
+   "default": "0",
+   "fieldname": "documentos_devolvidos",
+   "fieldtype": "Check",
+   "label": "Documentos originais devolvidos",
+   "read_only": 1
+  },
+  {
+   "fieldname": "observacoes_encerramento",
+   "fieldtype": "Small Text",
+   "label": "Observações do encerramento",
+   "read_only": 1
+  },
+  {
    "fieldname": "ficha",
    "fieldtype": "Long Text",
    "label": "Ficha da reunião",
@@ -694,7 +745,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-19 12:00:00.000000",
+ "modified": "2026-10-19 13:00:00.000000",
  "modified_by": "Administrator",
  "module": "FCRM",
  "name": "CRM Deal",

@@ -398,6 +398,9 @@
     <div v-else-if="title == 'Ficha'" class="h-full flex flex-col px-3 sm:px-10">
       <FichaArea :doctype="doctype" :docname="docname" />
     </div>
+    <div v-else-if="title == 'Processo'" class="h-full flex flex-col px-3 sm:px-10">
+      <ProcessoArea :doctype="doctype" :docname="docname" />
+    </div>
     <div v-else-if="title == 'PrestacaoContas'" class="h-full flex flex-col px-3 sm:px-10">
       <PrestacaoContasArea :doctype="doctype" :docname="docname" />
     </div>
@@ -471,6 +474,7 @@ import DocumentosArea from '@/components/Activities/DocumentosArea.vue'
 import FichaArea from '@/components/Activities/FichaArea.vue'
 import HorasArea from '@/components/Activities/HorasArea.vue'
 import PrestacaoContasArea from '@/components/Activities/PrestacaoContasArea.vue'
+import ProcessoArea from '@/components/Activities/ProcessoArea.vue'
 import BudgetArea from '@/components/Activities/BudgetArea.vue'
 import UserAvatar from '@/components/UserAvatar.vue'
 import ActivityIcon from '@/components/Icons/ActivityIcon.vue'

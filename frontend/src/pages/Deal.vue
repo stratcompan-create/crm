@@ -368,6 +368,7 @@ import DocumentosIcon from '~icons/lucide/folder-open'
 import FichaIcon from '~icons/lucide/clipboard-list'
 import HorasIcon from '~icons/lucide/clock'
 import PrestacaoIcon from '~icons/lucide/scale'
+import ProcessoIcon from '~icons/lucide/gavel'
 import vTabsScroll from '@/directives/tabsScroll'
 import Activities from '@/components/Activities/Activities.vue'
 import OrganizationModal from '@/components/Modals/OrganizationModal.vue'
@@ -607,6 +608,12 @@ const tabs = computed(() => {
       name: 'Ficha',
       label: __('Ficha da reunião'),
       icon: FichaIcon,
+    },
+    {
+      name: 'Processo',
+      label: __('Processo'),
+      icon: ProcessoIcon,
+      condition: () => !isAgency.value,
     },
     {
       name: 'PrestacaoContas',

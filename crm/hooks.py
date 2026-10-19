@@ -202,7 +202,7 @@ doc_events = {
 		"on_update": ["crm.api.estilo.sync_website_favicon"],
 	},
 	"CRM Deal": {
-		"after_insert": ["crm.api.clientes.on_deal_insert"],
+		"after_insert": ["crm.api.clientes.on_deal_insert", "crm.api.processo.checar_cliente_novo"],
 		"on_update": [
 			"crm.fcrm.doctype.erpnext_crm_settings.erpnext_crm_settings.create_customer_in_erpnext"
 		],
