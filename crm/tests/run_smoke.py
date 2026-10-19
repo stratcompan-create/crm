@@ -49,6 +49,7 @@ MODULES = [
     "audio",
     "pwa",
     "assinatura_docs",
+    "consulta_paga",
 ]
 
 

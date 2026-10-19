@@ -83,6 +83,24 @@ def gerar_link_pagamento(honorario: str) -> dict:
 	return {"link": link}
 
 
+def link_avulso(order_nsu: str, valor: float, descricao: str) -> str:
+	"""Link de pagamento para algo que não é um honorário (ex.: consulta agendada online).
+	Sem a InfiniteTag configurada devolve "" (o agendamento segue sem link)."""
+	handle = (frappe.get_single("FCRM Settings").get("infinitepay_handle") or "").strip().lstrip("$")
+	if not handle or flt(valor) <= 0:
+		return ""
+	payload = {
+		"handle": handle,
+		"order_nsu": order_nsu,
+		"webhook_url": get_url(f"/api/method/crm.api.pagamento.webhook_infinitepay?secret={_webhook_secret()}"),
+		"items": [{"quantity": 1, "price": round(flt(valor) * 100), "description": (descricao or "Consulta")[:120]}],
+	}
+	req = urllib.request.Request(API_URL, data=json.dumps(payload).encode(), headers={"content-type": "application/json"}, method="POST")
+	with urllib.request.urlopen(req, timeout=20) as resp:
+		data = json.loads(resp.read())
+	return data.get("url") or data.get("payment_url") or data.get("checkout_url") or data.get("link") or ""
+
+
 @frappe.whitelist(allow_guest=True)
 def webhook_infinitepay():
 	"""Chamado pelo InfinitePay quando um link é pago."""
@@ -100,12 +118,24 @@ def _aplicar_pagamento(payload: dict) -> dict:
 	"""Correlaciona pelo order_nsu (que é o próprio nome do Honorário) e marca como
 	Pago. Separado de webhook_infinitepay() para poder ser testado sem uma requisição HTTP real."""
 	order_nsu = payload.get("order_nsu")
-	if not order_nsu or not frappe.db.exists("CRM Honorario", order_nsu):
-		return {"ok": False}
-
 	amount = flt(payload.get("amount"))
 	paid_amount = flt(payload.get("paid_amount"))
 	if amount and paid_amount < amount:
+		return {"ok": False}
+	# consulta agendada online (order_nsu = "REU-<reunião>")
+	if order_nsu and str(order_nsu).startswith("REU-"):
+		reuniao = str(order_nsu)[4:]
+		if not frappe.db.exists("CRM Reuniao", reuniao):
+			return {"ok": False}
+		if not frappe.db.get_value("CRM Reuniao", reuniao, "pago"):
+			frappe.db.set_value("CRM Reuniao", reuniao, {"pago": 1, "confirmada": 1})
+			lead = frappe.db.get_value("CRM Reuniao", reuniao, "lead")
+			if lead:
+				frappe.get_doc({"doctype": "Comment", "comment_type": "Comment", "reference_doctype": "CRM Lead", "reference_name": lead,
+								"content": "Consulta paga pelo link de pagamento."}).insert(ignore_permissions=True)
+			frappe.db.commit()
+		return {"ok": True}
+	if not order_nsu or not frappe.db.exists("CRM Honorario", order_nsu):
 		return {"ok": False}
 
 	doc = frappe.get_doc("CRM Honorario", order_nsu)

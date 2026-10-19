@@ -5,7 +5,7 @@
  "engine": "InnoDB",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-21 00:00:00.000000",
+ "modified": "2026-10-19 17:00:00.000000",
  "modified_by": "Administrator",
  "module": "FCRM",
  "owner": "Administrator",
@@ -26,7 +26,12 @@
   "status",
   "responsavel",
   "observacoes",
-  "lembrete_enviado"
+  "lembrete_enviado",
+  "token",
+  "confirmada",
+  "valor",
+  "pago",
+  "link_pagamento"
  ],
  "fields": [
   {
@@ -87,6 +92,40 @@
    "fieldtype": "Check",
    "label": "Lembrete enviado",
    "default": "0",
+   "read_only": 1
+  },
+  {
+   "fieldname": "token",
+   "fieldtype": "Data",
+   "label": "Código dos links do e-mail",
+   "read_only": 1,
+   "unique": 1,
+   "hidden": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "confirmada",
+   "fieldtype": "Check",
+   "label": "Presença confirmada",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "valor",
+   "fieldtype": "Currency",
+   "label": "Valor da consulta",
+   "options": "BRL"
+  },
+  {
+   "default": "0",
+   "fieldname": "pago",
+   "fieldtype": "Check",
+   "label": "Consulta paga",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "link_pagamento",
+   "fieldtype": "Small Text",
+   "label": "Link de pagamento",
    "read_only": 1
   }
  ],

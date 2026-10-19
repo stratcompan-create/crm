@@ -91,6 +91,7 @@
           <Field :label="__('Dias da semana (1 = segunda, 7 = domingo)')"><FormControl v-model="cfg.agenda_dias" type="text" placeholder="1,2,3,4,5" /></Field>
           <Field :label="__('Antecedência mínima (horas)')"><FormControl v-model="cfg.agenda_antecedencia" type="number" /></Field>
           <Field :label="__('Mostrar quantos dias à frente')"><FormControl v-model="cfg.agenda_dias_a_frente" type="number" /></Field>
+            <Field :label="__('Valor da consulta (0 = gratuita; com valor, o cliente recebe o link de pagamento)')"><FormControl v-model="cfg.agenda_valor_consulta" type="number" /></Field>
           <Field :label="__('Link da reunião (Meet, Zoom...)')"><FormControl v-model="cfg.agenda_link" type="text" placeholder="https://" /></Field>
         </div>
         <Field class="mt-3" :label="__('Aviso na página (opcional)')"><FormControl v-model="cfg.agenda_mensagem" type="textarea" :rows="2" /></Field>

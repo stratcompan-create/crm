@@ -64,9 +64,10 @@
       <button class="go" id="go">Confirmar agendamento</button>
     </div>
     <div class="card ok hide" id="done">
-      <h2>Agendamento confirmado!</h2>
+      <h2 id="doneTitulo">Agendamento confirmado!</h2>
       <p id="quando"></p>
-      <p class="sub">Enviamos a confirmação para o seu e-mail, com o botão para adicionar à sua agenda.</p>
+      <p class="sub" id="doneSub">Enviamos a confirmação para o seu e-mail, com o botão para adicionar à sua agenda.</p>
+      <p id="pagarBox" class="hide" style="margin-top:1rem"><a id="pagar" class="go" style="display:inline-block;text-decoration:none;text-align:center" target="_blank" rel="noopener">Pagar a consulta</a></p>
     </div>
   </div>
 </div>
@@ -107,13 +108,28 @@
       t.appendChild(b);
     });
   }
+  function brl(v) { return (Number(v) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
+  function mostrarPagamento(link) { if (link) { $('pagar').href = link; $('pagarBox').classList.remove('hide'); } }
+  // botões do e-mail: ?confirmar=<código> ou ?cancelar=<código>
+  var qs = new URLSearchParams(location.search), resp = qs.get('confirmar') || qs.get('cancelar');
+  if (resp) {
+    api('responder_presenca', { t: resp, acao: qs.get('cancelar') ? 'cancelar' : 'confirmar' }).then(function (r) {
+      $('app').classList.remove('hide'); $('step1').classList.add('hide');
+      $('doneTitulo').textContent = r.status === 'cancelada' ? 'Horário desmarcado' : 'Presença confirmada!';
+      $('quando').textContent = r.inicio;
+      $('doneSub').textContent = r.status === 'cancelada' ? 'Se quiser, escolha um novo horário pelo mesmo link de agendamento.' : 'Obrigado! Te esperamos no horário marcado.';
+      mostrarPagamento(r.pagamento);
+      $('done').classList.remove('hide');
+    }).catch(function (e) { $('off').textContent = e.message; $('off').classList.remove('hide'); });
+    return;
+  }
   api('get_public_info').then(function (info) {
     if (!info.ativa) { $('off').classList.remove('hide'); return; }
     $('marca').textContent = info.marca || '';
     if (info.logo) { $('logo').src = info.logo; $('logo').classList.remove('hide'); }
     document.title = info.titulo + (info.marca ? ' — ' + info.marca : '');
     $('titulo').textContent = info.titulo;
-    $('sub').textContent = 'Reunião de ' + info.duracao + ' minutos. Escolha um horário que fique bom para você.';
+    $('sub').textContent = 'Reunião de ' + info.duracao + ' minutos' + (info.valor ? ' · ' + brl(info.valor) : '') + '. Escolha um horário que fique bom para você.';
     if (info.mensagem) { $('aviso').textContent = info.mensagem; $('aviso').classList.remove('hide'); }
     state.dias = info.dias;
     $('app').classList.remove('hide');
@@ -131,6 +147,7 @@
       .then(function (r) {
         $('step1').classList.add('hide'); $('step2').classList.add('hide');
         $('quando').textContent = r.inicio; $('done').classList.remove('hide');
+        if (r.pagamento) { $('doneSub').textContent = 'Para garantir o horário, faça o pagamento da consulta (' + brl(r.valor) + '). A confirmação também vai para o seu e-mail.'; mostrarPagamento(r.pagamento); }
       })
       .catch(function (e) { $('err').textContent = e.message; $('err').classList.remove('hide'); $('go').disabled = false; });
   };

@@ -10,7 +10,9 @@ from datetime import datetime, timedelta
 
 import frappe
 from frappe import _
-from frappe.utils import cint, get_datetime, now_datetime, nowdate
+import secrets
+
+from frappe.utils import cint, flt, get_datetime, get_url, now_datetime, nowdate
 
 from crm.api.automacoes import _brand, _first_manager, get_config
 
@@ -82,6 +84,7 @@ def get_public_info() -> dict:
 		"duracao": cint(cfg.agenda_duracao) or 30,
 		"mensagem": cfg.agenda_mensagem or "",
 		"dias": days,
+		"valor": flt(cfg.get("agenda_valor_consulta")),
 	}
 
 
@@ -129,9 +132,12 @@ def book(nome: str, email: str, telefone: str, data: str, horario: str, mensagem
 			"status": "Agendada",
 			"responsavel": responsavel,
 			"observacoes": (mensagem or "").strip()[:500],
+			"token": secrets.token_urlsafe(20),
+			"valor": flt(cfg.get("agenda_valor_consulta")),
 		}
 	)
 	meeting.insert(ignore_permissions=True)
+	pagamento = _link_da_consulta(meeting, cfg)
 	title = f"{cfg.agenda_titulo or 'Reunião'}: {nome}"
 	frappe.get_doc(
 		{
@@ -162,7 +168,54 @@ def book(nome: str, email: str, telefone: str, data: str, horario: str, mensagem
 		frappe.db.set_value("CRM Lead", lead, "status", "Contacted")
 	_confirm_by_email(meeting, cfg, start, end)
 	frappe.db.commit()
-	return {"ok": True, "inicio": start.strftime("%d/%m/%Y às %H:%M")}
+	return {"ok": True, "inicio": start.strftime("%d/%m/%Y às %H:%M"), "pagamento": pagamento, "valor": flt(meeting.get("valor"))}
+
+
+def _link_da_consulta(meeting, cfg) -> str:
+	"""Consulta paga: gera o link de pagamento (InfinitePay). Sem a InfiniteTag configurada, segue sem link."""
+	valor = flt(meeting.get("valor"))
+	if valor <= 0:
+		return ""
+	try:
+		from crm.api.pagamento import link_avulso
+
+		link = link_avulso(f"REU-{meeting.name}", valor, f"{cfg.agenda_titulo or 'Consulta'} - {meeting.nome}")
+		if link:
+			frappe.db.set_value("CRM Reuniao", meeting.name, "link_pagamento", link, update_modified=False)
+			meeting.link_pagamento = link
+		return link or ""
+	except Exception:
+		frappe.log_error("Agenda: não foi possível gerar o link de pagamento da consulta", frappe.get_traceback())
+		return ""
+
+
+@frappe.whitelist(allow_guest=True)
+def responder_presenca(t: str = "", acao: str = "confirmar") -> dict:
+	"""Botões do e-mail: confirmar presença ou desmarcar (o horário volta a ficar livre)."""
+	if not t or len(t) > 80:
+		frappe.throw(_("Link inválido."))
+	name = frappe.db.get_value("CRM Reuniao", {"token": t})
+	if not name:
+		frappe.throw(_("Link inválido."))
+	m = frappe.get_doc("CRM Reuniao", name)
+	quando = get_datetime(m.inicio).strftime("%d/%m/%Y às %H:%M")
+	if m.status == "Cancelada":
+		return {"status": "cancelada", "inicio": quando}
+	if get_datetime(m.inicio) < now_datetime():
+		frappe.throw(_("Esse horário já passou."))
+	if acao == "cancelar":
+		frappe.db.set_value("CRM Reuniao", name, {"status": "Cancelada", "confirmada": 0})
+		texto = _("Desmarcou pelo link do e-mail o horário de {0}.").format(quando)
+		status = "cancelada"
+	else:
+		frappe.db.set_value("CRM Reuniao", name, "confirmada", 1)
+		texto = _("Confirmou presença pelo link do e-mail ({0}).").format(quando)
+		status = "confirmada"
+	if m.lead:
+		frappe.get_doc({"doctype": "Comment", "comment_type": "Comment", "reference_doctype": "CRM Lead", "reference_name": m.lead,
+						"content": texto}).insert(ignore_permissions=True)
+	frappe.db.commit()
+	return {"status": status, "inicio": quando, "pagamento": (m.get("link_pagamento") or "") if not cint(m.get("pago")) else ""}
 
 
 def _add_to_calendar(meeting, lead, title, start, end, owner):
@@ -231,6 +284,12 @@ def _confirm_by_email(meeting, cfg, start, end, reminder: bool = False):
 	when = start.strftime("%d/%m/%Y às %H:%M")
 	first = (meeting.nome or "").split(" ")[0]
 	link = f"<p>Link da reunião: <a href='{cfg.agenda_link}'>{cfg.agenda_link}</a></p>" if cfg.agenda_link else ""
+	if meeting.get("token"):
+		botao = "display:inline-block;padding:10px 18px;border-radius:999px;text-decoration:none;font-weight:bold;margin:4px 6px 4px 0"
+		link += (f"<p><a style='{botao};background:#042d3c;color:#fff' href='{get_url('/agendar?confirmar=' + meeting.token)}'>Confirmar presença</a>"
+				 f"<a style='{botao};background:#eee;color:#333' href='{get_url('/agendar?cancelar=' + meeting.token)}'>Desmarcar</a></p>")
+	if meeting.get("link_pagamento") and not cint(meeting.get("pago")):
+		link += f"<p>Pagamento da consulta: <a href='{meeting.link_pagamento}'>pagar agora</a></p>"
 	intro = "Lembrete: nossa reunião é amanhã." if reminder else "Sua reunião está confirmada."
 	html = (
 		f"<div style='font-family:Arial,sans-serif;max-width:520px'>"
