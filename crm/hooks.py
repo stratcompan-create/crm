@@ -403,3 +403,12 @@ standard_dropdown_items = [
 		"is_standard": 1,
 	},
 ]
+
+
+# Consentimento LGPD: guarda quando a pessoa autorizou o uso dos dados (atendimento e caso).
+for _dt in ("CRM Lead", "CRM Deal"):
+	_ev = doc_events.setdefault(_dt, {})
+	_atual = _ev.get("validate") or []
+	_atual = [_atual] if isinstance(_atual, str) else list(_atual)
+	_ev["validate"] = _atual + ["crm.api.seguranca.carimbar_consentimento"]
+del _dt, _ev, _atual

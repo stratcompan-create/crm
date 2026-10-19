@@ -65,8 +65,37 @@ def get_lead_permission_query_conditions(user=None):
 	return cond.get_sql(with_namespace=True, quote_char="`", secondary_quote_char="'") if cond else ""
 
 
-def get_deal_permission_query_conditions(user=None):
+def _sigilo(user: str | None):
+	"""Caso sigiloso: só o responsável, quem foi atribuído e o administrador enxergam."""
+	user = user or frappe.session.user
+	if user == "Administrator" or "System Manager" in frappe.get_roles(user):
+		return None
+	if not frappe.get_meta("CRM Deal").has_field("sigiloso"):
+		return None
+	DT = frappe.qb.DocType("CRM Deal")
+	Todo = frappe.qb.DocType("ToDo").as_("_todo_sig")
+	return (
+		(DT.sigiloso == 0)
+		| DT.sigiloso.isnull()
+		| (DT.deal_owner == user)
+		| DT.name.isin(
+			frappe.qb.from_(Todo)
+			.select(Todo.reference_name)
+			.where((Todo.reference_type == "CRM Deal") & (Todo.status != "Cancelled") & (Todo.allocated_to == user))
+		)
+	)
+
+
+def _deal_conditions(user=None):
 	cond = _permission_query_conditions(user, "CRM Deal")
+	sig = _sigilo(user)
+	if sig is None:
+		return cond
+	return (cond & sig) if cond else sig
+
+
+def get_deal_permission_query_conditions(user=None):
+	cond = _deal_conditions(user)
 	return cond.get_sql(with_namespace=True, quote_char="`", secondary_quote_char="'") if cond else ""
 
 
@@ -85,10 +114,11 @@ def _has_permission(doc, ptype, user, doctype: str) -> bool | None:
 		return True
 
 	in_tree = hierarchy_enabled() and _in_hierarchy(user)
-	if "Sales Manager" in roles and not in_tree:
+	conditions = _deal_conditions(user) if doctype == "CRM Deal" else _permission_query_conditions(user, doctype)
+	if not conditions:
 		return True
-
-	conditions = _permission_query_conditions(user, doctype)
+	if "Sales Manager" in roles and not in_tree and doctype != "CRM Deal":
+		return True
 	DT = frappe.qb.DocType(doctype)
 	return bool(
 		frappe.qb.from_(DT).select(DT.name).where(DT.name == doc.name).where(conditions).limit(1).run()

@@ -110,6 +110,14 @@
         </div>
         <FormControl v-model="enc.obs" type="textarea" :rows="2" :placeholder="__('Observações do encerramento (opcional)')" />
       </section>
+
+      <!-- registro de acesso (LGPD), só para gestor -->
+      <section v-if="acessos.data?.length" class="flex flex-col gap-1">
+        <div class="text-p-sm font-medium text-ink-gray-7">{{ __('Quem abriu este caso (últimos 90 dias)') }}</div>
+        <div class="text-xs text-ink-gray-6">
+          <span v-for="a in acessos.data" :key="a.usuario" class="mr-3">{{ a.nome }} · {{ __('{0}x', [a.vezes]) }} · {{ __('último em {0}', [dataBr(a.ultimo)]) }}</span>
+        </div>
+      </section>
     </template>
   </div>
 </template>
@@ -128,7 +136,18 @@ const dados = createResource({
   auto: true,
   onSuccess: (d) => Object.assign(proc, { numero: d.numero_processo, tribunal: d.tribunal }),
 })
-watch(() => props.docname, () => dados.reload())
+watch(() => props.docname, () => {
+  dados.reload()
+  acessos.reload()
+})
+
+// quem não é gestor recebe erro de permissão: aí o bloco simplesmente não aparece
+const acessos = createResource({
+  url: 'crm.api.seguranca.quem_acessou',
+  makeParams: () => ({ deal: props.docname }),
+  auto: true,
+  onError: () => {},
+})
 
 function erroDe(e, padrao) {
   toast.error(e?.messages?.[0] || padrao)

@@ -71,6 +71,7 @@ import ERPNextSettings from '@/components/Settings/ERPNextSettings.vue'
 import InstagramSettings from '@/components/Settings/InstagramSettings.vue'
 import ModelosDocumentosSettings from '@/components/Settings/ModelosDocumentosSettings.vue'
 import ImportarPlanilhaSettings from '@/components/Settings/ImportarPlanilhaSettings.vue'
+import SegurancaSettings from '@/components/Settings/SegurancaSettings.vue'
 import AutomacoesSettings from '@/components/Settings/AutomacoesSettings.vue'
 import GoogleDriveSettings from '@/components/Settings/GoogleDriveSettings.vue'
 import GoogleCalendarSettings from '@/components/Settings/GoogleCalendarSettings.vue'
@@ -266,6 +267,12 @@ const tabs = computed(() => {
           label: __('Importar planilha'),
           icon: 'upload',
           component: markRaw(ImportarPlanilhaSettings),
+          condition: () => isManager(),
+        },
+        {
+          label: __('Segurança e dados'),
+          icon: 'shield',
+          component: markRaw(SegurancaSettings),
           condition: () => isManager(),
         },
         {

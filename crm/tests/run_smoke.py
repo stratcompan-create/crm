@@ -44,6 +44,7 @@ MODULES = [
     "prestacao_contas",
     "processo",
     "portal",
+    "seguranca",
 ]
 
 

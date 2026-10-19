@@ -88,7 +88,9 @@
   "ficha",
   "ficha_transcricao",
   "cidade_estado",
-  "indicado_por"
+  "indicado_por",
+  "consentimento_lgpd",
+  "consentimento_em"
  ],
  "fields": [
   {
@@ -562,13 +564,25 @@
    "fieldtype": "Data",
    "label": "Indicado por",
    "description": "Quem indicou este cliente (cliente, parceiro, contador...)."
+  },
+  {
+   "default": "0",
+   "fieldname": "consentimento_lgpd",
+   "fieldtype": "Check",
+   "label": "Autorizou o uso dos dados (LGPD)"
+  },
+  {
+   "fieldname": "consentimento_em",
+   "fieldtype": "Datetime",
+   "label": "Autorização registrada em",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "image_field": "image",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-19 14:00:00.000000",
+ "modified": "2026-10-19 15:00:00.000000",
  "modified_by": "Administrator",
  "module": "FCRM",
  "name": "CRM Lead",
@@ -621,5 +635,6 @@
  "states": [],
  "title_field": "lead_name",
  "track_changes": 1,
- "track_seen": 1
+ "track_seen": 1,
+ "track_views": 1
 }

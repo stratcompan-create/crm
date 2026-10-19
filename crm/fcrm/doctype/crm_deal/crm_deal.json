@@ -108,6 +108,9 @@
   "observacoes_encerramento",
   "indicado_por",
   "portal_token",
+  "sigiloso",
+  "consentimento_lgpd",
+  "consentimento_em",
   "ficha",
   "ficha_transcricao",
   "cidade_estado",
@@ -719,6 +722,25 @@
    "unique": 1
   },
   {
+   "default": "0",
+   "fieldname": "sigiloso",
+   "fieldtype": "Check",
+   "label": "Caso sigiloso",
+   "description": "Só o responsável, quem foi atribuído ao caso e o administrador enxergam."
+  },
+  {
+   "default": "0",
+   "fieldname": "consentimento_lgpd",
+   "fieldtype": "Check",
+   "label": "Autorizou o uso dos dados (LGPD)"
+  },
+  {
+   "fieldname": "consentimento_em",
+   "fieldtype": "Datetime",
+   "label": "Autorização registrada em",
+   "read_only": 1
+  },
+  {
    "fieldname": "ficha",
    "fieldtype": "Long Text",
    "label": "Ficha da reunião",
@@ -761,7 +783,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-19 14:00:00.000000",
+ "modified": "2026-10-19 15:00:00.000000",
  "modified_by": "Administrator",
  "module": "FCRM",
  "name": "CRM Deal",
@@ -812,5 +834,6 @@
  "states": [],
  "title_field": "organization",
  "track_changes": 1,
- "track_seen": 1
+ "track_seen": 1,
+ "track_views": 1
 }

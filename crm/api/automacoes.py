@@ -912,7 +912,8 @@ def ensure_service_layouts():
 		"CRM Deal": ["servico", "natureza", "valor_recorrente", "lancamento_antigo", "indicado_por"],
 	}
 	if (frappe.db.get_default("crm_profile") or "agencia") in PERFIS_JURIDICOS:
-		extra["CRM Deal"].append("percentual_exito")
+		extra["CRM Deal"] += ["percentual_exito", "sigiloso", "consentimento_lgpd"]
+		extra["CRM Lead"].append("consentimento_lgpd")
 	for dt, fields in extra.items():
 		for kind in ("Quick Entry", "Side Panel"):
 			name = f"{dt}-{kind}"

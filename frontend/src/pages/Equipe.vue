@@ -15,6 +15,7 @@
   </LayoutHeader>
 
   <div class="flex-1 overflow-y-auto p-5">
+    <CargaEquipeCard v-if="isManager()" />
     <div v-if="loading" class="py-10 text-center text-p-sm text-ink-gray-5">
       {{ __('Carregando...') }}
     </div>
@@ -66,6 +67,7 @@
 </template>
 <script setup>
 import LayoutHeader from '@/components/LayoutHeader.vue'
+import CargaEquipeCard from '@/components/CargaEquipeCard.vue'
 import { usersStore } from '@/stores/users'
 import { Avatar, Badge, Button, call } from 'frappe-ui'
 import { showSettings, activeSettingsPage } from '@/composables/settings'
