@@ -392,6 +392,9 @@ def apply_profile(profile: str):
 		# horas e despesas com as categorias de um escritório (as da agência falam de vídeo, site...)
 		setter("CRM Horas", "frente", "options", "\n".join(HORAS_JURIDICO), "Text")
 		setter("CRM Despesa", "categoria", "options", "\n".join(DESPESAS_JURIDICO), "Text")
+		from crm.api.inteligencia import semear_areas
+
+		semear_areas()
 
 	frappe.clear_cache()
 

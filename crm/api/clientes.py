@@ -160,16 +160,24 @@ def get_documents(deal: str) -> dict:
 		"pasta": folder,
 		"arquivos": files,
 		"pedidos": pedidos,
-		"sugestao": _default_items(),
+		"sugestao": _default_items(deal),
 		"nome": client.nome,
 		"tem_email": bool(client.email),
 		"telefone": re.sub(r"\D", "", phone or ""),
 	}
 
 
-def _default_items() -> list[str]:
+def _default_items(deal: str | None = None) -> list[str]:
 	profile = frappe.db.get_default("crm_profile") or "agencia"
-	return DEFAULT_ITEMS.get(profile, DEFAULT_ITEMS["agencia"])
+	itens = list(DEFAULT_ITEMS.get(profile, DEFAULT_ITEMS["agencia"]))
+	if deal:
+		from crm.api.inteligencia import modelo_da_area
+
+		m = modelo_da_area(frappe.db.get_value("CRM Deal", deal, "servico"))
+		for i in (m or {}).get("documentos", []):
+			if i not in itens:
+				itens.append(i)
+	return itens
 
 
 def _link(token: str) -> str:

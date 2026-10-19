@@ -45,6 +45,7 @@ MODULES = [
     "processo",
     "portal",
     "seguranca",
+    "inteligencia",
 ]
 
 

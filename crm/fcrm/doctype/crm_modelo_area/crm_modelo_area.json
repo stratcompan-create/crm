@@ -1,0 +1,99 @@
+{
+	"actions": [],
+	"allow_import": 1,
+	"autoname": "field:area",
+	"creation": "2026-10-19 00:00:00.000000",
+	"doctype": "DocType",
+	"engine": "InnoDB",
+	"field_order": [
+		"area",
+		"documentos",
+		"perguntas",
+		"tipo_honorario",
+		"percentual_exito",
+		"observacoes"
+	],
+	"fields": [
+		{
+			"fieldname": "area",
+			"fieldtype": "Data",
+			"label": "Área",
+			"reqd": 1,
+			"unique": 1,
+			"in_list_view": 1
+		},
+		{
+			"fieldname": "documentos",
+			"fieldtype": "Small Text",
+			"label": "Documentos que o cliente precisa trazer (um por linha)"
+		},
+		{
+			"fieldname": "perguntas",
+			"fieldtype": "Small Text",
+			"label": "Perguntas da primeira consulta (uma por linha)"
+		},
+		{
+			"default": "Fixo",
+			"fieldname": "tipo_honorario",
+			"fieldtype": "Select",
+			"label": "Honorário mais usado",
+			"options": "Fixo\nÊxito\nConsultivo Mensal\nPor Ato",
+			"in_list_view": 1
+		},
+		{
+			"fieldname": "percentual_exito",
+			"fieldtype": "Percent",
+			"label": "Êxito padrão (%)",
+			"in_list_view": 1
+		},
+		{
+			"fieldname": "observacoes",
+			"fieldtype": "Small Text",
+			"label": "Observações"
+		}
+	],
+	"index_web_pages_for_search": 1,
+	"links": [],
+	"modified": "2026-10-19 00:00:00.000000",
+	"modified_by": "Administrator",
+	"module": "FCRM",
+	"name": "CRM Modelo Area",
+	"naming_rule": "By fieldname",
+	"owner": "Administrator",
+	"permissions": [
+		{
+			"create": 1,
+			"delete": 1,
+			"email": 1,
+			"export": 1,
+			"print": 1,
+			"read": 1,
+			"report": 1,
+			"role": "System Manager",
+			"share": 1,
+			"write": 1
+		},
+		{
+			"create": 1,
+			"delete": 1,
+			"email": 1,
+			"export": 1,
+			"print": 1,
+			"read": 1,
+			"report": 1,
+			"role": "Sales Manager",
+			"share": 1,
+			"write": 1
+		},
+		{
+			"read": 1,
+			"report": 1,
+			"role": "Sales User"
+		}
+	],
+	"row_format": "Dynamic",
+	"sort_field": "modified",
+	"sort_order": "DESC",
+	"states": [],
+	"track_changes": 1
+}

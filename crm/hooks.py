@@ -412,3 +412,12 @@ for _dt in ("CRM Lead", "CRM Deal"):
 	_atual = [_atual] if isinstance(_atual, str) else list(_atual)
 	_ev["validate"] = _atual + ["crm.api.seguranca.carimbar_consentimento"]
 del _dt, _ev, _atual
+
+
+# Modelo de área: caso novo (ou que mudou de área) recebe o êxito padrão da área.
+_ev = doc_events.setdefault("CRM Deal", {})
+_atual = _ev.get("validate") or []
+_atual = [_atual] if isinstance(_atual, str) else list(_atual)
+_ev["validate"] = _atual + ["crm.api.inteligencia.aplicar_padrao_area"]
+del _ev, _atual
+after_migrate = (after_migrate if isinstance(after_migrate, list) else [after_migrate]) + ["crm.api.inteligencia.semear_se_juridico"]

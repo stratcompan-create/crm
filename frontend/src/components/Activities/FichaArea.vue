@@ -30,6 +30,14 @@
         </div>
       </div>
 
+      <!-- Perguntas sugeridas pela área do caso (Configurações → Modelos de área) -->
+      <div v-if="perguntas.data?.length" class="mb-4 rounded-lg bg-surface-gray-2 px-4 py-3">
+        <div class="mb-1 text-p-sm font-medium text-ink-gray-7">{{ __('Perguntas para a consulta desta área') }}</div>
+        <ul class="list-disc pl-5 text-p-sm text-ink-gray-7">
+          <li v-for="p in perguntas.data" :key="p">{{ p }}</li>
+        </ul>
+      </div>
+
       <!-- Campos -->
       <div class="grid grid-cols-1 gap-3 md:grid-cols-2">
         <div
@@ -117,7 +125,16 @@ const ficha = createResource({
     Object.assign(form, data.campos)
   },
 })
-watch(() => props.docname, () => ficha.reload())
+const perguntas = createResource({
+  url: 'crm.api.inteligencia.perguntas_do_caso',
+  makeParams: () => ({ doctype: props.doctype, name: props.docname }),
+  auto: true,
+  onError: () => {},
+})
+watch(() => props.docname, () => {
+  ficha.reload()
+  perguntas.reload()
+})
 
 const form = reactive({})
 const total = computed(() => ficha.data?.rotulos?.length || 7)

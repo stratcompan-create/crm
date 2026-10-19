@@ -72,6 +72,9 @@ import InstagramSettings from '@/components/Settings/InstagramSettings.vue'
 import ModelosDocumentosSettings from '@/components/Settings/ModelosDocumentosSettings.vue'
 import ImportarPlanilhaSettings from '@/components/Settings/ImportarPlanilhaSettings.vue'
 import SegurancaSettings from '@/components/Settings/SegurancaSettings.vue'
+import ModelosAreaSettings from '@/components/Settings/ModelosAreaSettings.vue'
+import TabelaHonorariosSettings from '@/components/Settings/TabelaHonorariosSettings.vue'
+import ComunicadosSettings from '@/components/Settings/ComunicadosSettings.vue'
 import AutomacoesSettings from '@/components/Settings/AutomacoesSettings.vue'
 import GoogleDriveSettings from '@/components/Settings/GoogleDriveSettings.vue'
 import GoogleCalendarSettings from '@/components/Settings/GoogleCalendarSettings.vue'
@@ -267,6 +270,24 @@ const tabs = computed(() => {
           label: __('Importar planilha'),
           icon: 'upload',
           component: markRaw(ImportarPlanilhaSettings),
+          condition: () => isManager(),
+        },
+        {
+          label: __('Modelos de área'),
+          icon: 'layers',
+          component: markRaw(ModelosAreaSettings),
+          condition: () => isManager() && ['escritorio', 'escritorio_empresarial'].includes(window.crm_profile),
+        },
+        {
+          label: __('Tabela de honorários'),
+          icon: 'list',
+          component: markRaw(TabelaHonorariosSettings),
+          condition: () => isManager() && ['escritorio', 'escritorio_empresarial'].includes(window.crm_profile),
+        },
+        {
+          label: __('Comunicados aos clientes'),
+          icon: 'send',
+          component: markRaw(ComunicadosSettings),
           condition: () => isManager(),
         },
         {

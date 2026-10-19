@@ -38,6 +38,8 @@
 
     <IndicacoesCard />
 
+    <RentabilidadeCard v-if="juridico" />
+
     <div v-if="!summary.loading && !summary.data?.total_geral" class="text-p-base text-ink-gray-5">
       {{ __('Ainda não há Honorários cadastrados para gerar relatório.') }}
     </div>
@@ -145,6 +147,7 @@
 import LayoutHeader from '@/components/LayoutHeader.vue'
 import CarneLeaoCard from '@/components/CarneLeaoCard.vue'
 import IndicacoesCard from '@/components/IndicacoesCard.vue'
+import RentabilidadeCard from '@/components/RentabilidadeCard.vue'
 const juridico = ['escritorio', 'escritorio_empresarial'].includes(window.crm_profile)
 import { createResource } from 'frappe-ui'
 import { computed } from 'vue'
