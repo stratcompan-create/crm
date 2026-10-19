@@ -613,13 +613,13 @@ const tabs = computed(() => {
       name: 'Processo',
       label: __('Processo'),
       icon: ProcessoIcon,
-      condition: () => !isAgency.value,
+      condition: () => !isAgency.value && window.processo_ativo !== 0,
     },
     {
       name: 'PrestacaoContas',
       label: __('Prestação de contas'),
       icon: PrestacaoIcon,
-      condition: () => !isAgency.value,
+      condition: () => !isAgency.value && window.prestacao_ativo !== 0,
     },
     {
       name: 'Horas',

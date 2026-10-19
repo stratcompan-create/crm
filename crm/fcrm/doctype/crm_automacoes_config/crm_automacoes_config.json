@@ -5,7 +5,7 @@
  "engine": "InnoDB",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-19 17:00:00.000000",
+ "modified": "2026-10-19 18:00:00.000000",
  "modified_by": "Administrator",
  "module": "FCRM",
  "owner": "Administrator",
@@ -57,7 +57,9 @@
   "divisao_custos_pct",
   "email_adiado",
   "chave_transcricao",
-  "agenda_valor_consulta"
+  "agenda_valor_consulta",
+  "processo_ativo",
+  "prestacao_ativo"
  ],
  "fields": [
   {
@@ -302,6 +304,18 @@
    "fieldtype": "Currency",
    "label": "Valor da consulta agendada online (0 = gratuita)",
    "options": "BRL"
+  },
+  {
+   "default": "1",
+   "fieldname": "processo_ativo",
+   "fieldtype": "Check",
+   "label": "Aba Processo no caso"
+  },
+  {
+   "default": "1",
+   "fieldname": "prestacao_ativo",
+   "fieldtype": "Check",
+   "label": "Aba Prestação de contas no caso"
   }
  ],
  "permissions": [

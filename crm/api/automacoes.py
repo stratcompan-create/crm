@@ -41,7 +41,7 @@ CONFIG_FIELDS = (
 	"posvenda_avaliacao_link posvenda_avaliacao_mensagem posvenda_indicacao_dias posvenda_indicacao_mensagem "
 	"relatorio_ativo relatorio_email relatorio_destinatarios agenda_ativa agenda_titulo agenda_duracao agenda_dias "
 	"agenda_inicio agenda_fim agenda_antecedencia agenda_dias_a_frente agenda_responsavel agenda_link "
-	"agenda_mensagem agenda_valor_consulta influenciadoras_ativo meu_site_ativo assistente_ativo credito_ia_ativo contas_ativo instagram_ativo "
+	"agenda_mensagem agenda_valor_consulta influenciadoras_ativo meu_site_ativo assistente_ativo credito_ia_ativo contas_ativo instagram_ativo processo_ativo prestacao_ativo "
 	"divisao_prolabore_pct divisao_impostos_pct divisao_crescimento_pct divisao_custos_pct email_adiado"
 ).split()
 
@@ -80,6 +80,9 @@ DEFAULTS = {
 	"credito_ia_ativo": 0,
 	"contas_ativo": 1,
 	"instagram_ativo": 1,
+	# módulos do perfil escritório (cada escritório liga só o que usa)
+	"processo_ativo": 1,
+	"prestacao_ativo": 1,
 	# divisao do caixa de cada honorario pago - precisa somar 100 (ver save_settings)
 	"divisao_prolabore_pct": 60,
 	"divisao_impostos_pct": 15,

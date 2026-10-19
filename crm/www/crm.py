@@ -94,6 +94,8 @@ def get_boot():
 			"assistente_ativo": cint(_config_flag("assistente_ativo", 1)),
 			"contas_ativo": cint(_config_flag("contas_ativo", 1)),
 			"instagram_ativo": cint(_config_flag("instagram_ativo", 1)),
+			"processo_ativo": cint(_config_flag("processo_ativo", 1)),
+			"prestacao_ativo": cint(_config_flag("prestacao_ativo", 1)),
 			"timezone": {
 				"system": get_system_timezone(),
 				"user": frappe.db.get_value("User", frappe.session.user, "time_zone")

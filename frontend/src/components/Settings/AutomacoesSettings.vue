@@ -136,6 +136,20 @@
         </div>
       </section>
 
+      <!-- Módulos do escritório -->
+      <section v-if="['escritorio', 'escritorio_empresarial'].includes(perfil)" class="rounded-lg border border-outline-gray-2 p-4">
+        <div class="text-base-semibold text-ink-gray-9">{{ __('Módulos do escritório') }}</div>
+        <p class="mt-1 text-p-sm text-ink-gray-6">{{ __('Ligue só o que o escritório usa. Desligar esconde a aba; nada é apagado.') }}</p>
+        <div class="mt-3 flex items-center justify-between gap-3">
+          <span class="text-p-sm text-ink-gray-8">{{ __('Aba Processo (nº do processo, partes, conflito, andamentos, portal, encerramento)') }}</span>
+          <Toggle v-model="cfg.processo_ativo" />
+        </div>
+        <div class="mt-2 flex items-center justify-between gap-3">
+          <span class="text-p-sm text-ink-gray-8">{{ __('Aba Prestação de contas (alvará, repasse, custas, parceiros)') }}</span>
+          <Toggle v-model="cfg.prestacao_ativo" />
+        </div>
+      </section>
+
       <!-- Contas -->
       <section class="rounded-lg border border-outline-gray-2 p-4">
         <div class="flex items-start justify-between gap-3">
@@ -244,6 +258,7 @@
 </template>
 
 <script setup>
+const perfil = window.crm_profile || 'agencia'
 import { Button, FormControl, call, toast } from 'frappe-ui'
 import { computed, h, defineComponent, onMounted, ref } from 'vue'
 
