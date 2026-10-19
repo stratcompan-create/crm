@@ -6,6 +6,7 @@
       <router-view :key="$route.fullPath" />
     </Layout>
     <AssistenteClaude v-if="session.isLoggedIn && assistenteAtivo" />
+    <AjudaBotao v-if="session.isLoggedIn" />
     <Dialogs />
     <DoctypeModals />
     <EventNotificationPopup />
@@ -15,6 +16,7 @@
 <script setup>
 import NotPermitted from '@/pages/NotPermitted.vue'
 import AssistenteClaude from '@/components/AssistenteClaude.vue'
+import AjudaBotao from '@/components/AjudaBotao.vue'
 import EventNotificationPopup from '@/components/EventNotificationPopup.vue'
 import DoctypeModals from '@/components/Modals/DoctypeModals.vue'
 import { Dialogs } from '@/utils/dialogs'

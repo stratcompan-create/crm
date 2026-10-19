@@ -50,6 +50,7 @@ MODULES = [
     "pwa",
     "assinatura_docs",
     "consulta_paga",
+    "ajuda",
 ]
 
 
