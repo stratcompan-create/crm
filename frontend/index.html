@@ -13,10 +13,11 @@
     <meta name="google" content="notranslate" />
     <title>CRM</title>
     <meta name="mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-title" content="CRM" />
+    <meta name="apple-mobile-web-app-title" content="{{ brand_name or 'CRM' }}" />
     <meta name="apple-mobile-web-app-status-bar-style" content="white" />
 
     <!-- PWA -->
+    <link rel="manifest" href="/api/method/crm.api.pwa.manifest" />
     <link
       rel="icon"
       type="image/png"

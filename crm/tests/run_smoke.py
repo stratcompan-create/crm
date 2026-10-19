@@ -47,6 +47,7 @@ MODULES = [
     "seguranca",
     "inteligencia",
     "audio",
+    "pwa",
 ]
 
 

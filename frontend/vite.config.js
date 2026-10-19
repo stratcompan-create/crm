@@ -143,40 +143,8 @@ export default defineConfig(async ({ mode }) => {
         devOptions: {
           enabled: true,
         },
-        manifest: {
-          display: 'standalone',
-          name: 'CRM',
-          short_name: 'CRM',
-          start_url: '/crm',
-          description:
-            'CRM para gestão de leads, negócios e atendimento ao cliente.',
-          icons: [
-            {
-              src: '/assets/crm/manifest/manifest-icon-192.maskable.png',
-              sizes: '192x192',
-              type: 'image/png',
-              purpose: 'any',
-            },
-            {
-              src: '/assets/crm/manifest/manifest-icon-192.maskable.png',
-              sizes: '192x192',
-              type: 'image/png',
-              purpose: 'maskable',
-            },
-            {
-              src: '/assets/crm/manifest/manifest-icon-512.maskable.png',
-              sizes: '512x512',
-              type: 'image/png',
-              purpose: 'any',
-            },
-            {
-              src: '/assets/crm/manifest/manifest-icon-512.maskable.png',
-              sizes: '512x512',
-              type: 'image/png',
-              purpose: 'maskable',
-            },
-          ],
-        },
+        // manifesto por site (nome, ícone e cor do escritório): crm.api.pwa.manifest, ligado no index.html
+        manifest: false,
       }),
     ],
     resolve: {

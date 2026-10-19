@@ -29,6 +29,7 @@ def get_context():
 	context = frappe._dict()
 	context.boot = get_boot()
 	context.favicon = frappe.db.get_single_value("FCRM Settings", "favicon") or ""
+	context.brand_name = frappe.db.get_single_value("FCRM Settings", "brand_name") or "CRM"
 	if frappe.session.user != "Guest":
 		capture("active_site", "crm")
 	return context

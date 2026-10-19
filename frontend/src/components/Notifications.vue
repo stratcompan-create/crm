@@ -18,6 +18,13 @@
         </div>
         <div class="flex gap-1 mr-3">
           <Button
+            v-if="podePedirAvisos && !avisosPermitidos"
+            variant="subtle"
+            size="sm"
+            :label="__('Ativar avisos')"
+            @click="pedirAvisos"
+          />
+          <Button
             v-if="activeTab == 'all' && notifications.data?.length"
             :tooltip="__('Mark all as read')"
             :icon="MarkAsDoneIcon"
@@ -109,6 +116,20 @@ import { TabButtons } from 'frappe-ui'
 import { ref, onMounted, onBeforeUnmount } from 'vue'
 
 const { $socket } = globalStore()
+
+// avisos do sistema (aparecem no celular/computador mesmo com o CRM em outra aba ou minimizado)
+const avisosPermitidos = ref(typeof Notification !== 'undefined' && Notification.permission === 'granted')
+const podePedirAvisos = typeof Notification !== 'undefined' && Notification.permission === 'default'
+async function pedirAvisos() {
+  if (typeof Notification === 'undefined') return
+  avisosPermitidos.value = (await Notification.requestPermission()) === 'granted'
+}
+function avisarNoSistema() {
+  if (!avisosPermitidos.value || !document.hidden) return
+  try {
+    new Notification(document.title || 'CRM', { body: __('Você tem uma nova notificação'), icon: document.querySelector('link[rel=icon]')?.href })
+  } catch (e) {}
+}
 const { mark_as_read, toggle, mark_doc_as_read } = notificationsStore()
 const { handleEventNotification } = useEventNotificationAlert()
 const { capture } = useTelemetry()
@@ -147,7 +168,10 @@ onBeforeUnmount(() => {
 })
 
 onMounted(() => {
-  $socket.on('crm_notification', () => notifications.reload())
+  $socket.on('crm_notification', () => {
+    notifications.reload()
+    avisarNoSistema()
+  })
   $socket.on('event_notification', (data) => handleEventNotification(data))
 })
 
