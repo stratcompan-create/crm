@@ -17,7 +17,8 @@ def run():
     try:
         # ---- agendamento -> calendário + status + prospecção
         au.save_settings(json.dumps({"agenda_ativa":1,"agenda_responsavel":"Administrator"}))
-        info=agenda.get_public_info(); d0=info["dias"][0]; frappe.local.request_ip="127.0.0.9"
+        info=agenda.get_public_info(); d0=next(d for d in info["dias"] if len(d["horarios"])>=2)  # hoje pode não ter 2 horários (depende da hora)
+        frappe.local.request_ip="127.0.0.9"
         r=agenda.book("Zz Cliente Ponta","zz.ponta@example.com","(87) 98888-7777",d0["data"],d0["horarios"][1],"quero site")
         lead=frappe.db.get_value("CRM Lead",{"email":"zz.ponta@example.com"}); made.append(("CRM Lead",lead))
         reu=frappe.get_all("CRM Reuniao",filters={"lead":lead},pluck="name"); made+= [("CRM Reuniao",x) for x in reu]
