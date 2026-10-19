@@ -640,13 +640,19 @@ def _criar_honorario(v: dict, ctx) -> bool:
 	return True
 
 
+# palavra na planilha -> categorias candidatas (usa a primeira que existir no perfil do site)
 CATEGORIAS = {
-	"custa": "Custas e Taxas", "taxa": "Custas e Taxas", "cartorio": "Custas e Taxas", "pericia": "Custas e Taxas",
-	"certid": "Custas e Taxas", "imposto": "Impostos e Taxas", "das": "Impostos e Taxas", "aluguel": "Contas Fixas",
-	"luz": "Contas Fixas", "energia": "Contas Fixas", "agua": "Contas Fixas", "internet": "Contas Fixas",
-	"telefone": "Contas Fixas", "fixa": "Contas Fixas", "software": "Ferramentas e Software", "sistema": "Ferramentas e Software",
-	"assinatura": "Ferramentas e Software", "anuncio": "Tráfego Pago", "trafego": "Tráfego Pago", "equipamento": "Equipamentos",
-	"computador": "Equipamentos", "freelancer": "Freelancers", "correspondente": "Freelancers",
+	"custa": ["Custas e Taxas"], "taxa": ["Custas e Taxas"],
+	"pericia": ["Perícias e Diligências", "Custas e Taxas"], "diligencia": ["Perícias e Diligências", "Custas e Taxas"],
+	"cartorio": ["Cartório e Certidões", "Custas e Taxas"], "certid": ["Cartório e Certidões", "Custas e Taxas"],
+	"correspondente": ["Correspondentes", "Freelancers"], "deslocamento": ["Deslocamento"], "combustivel": ["Deslocamento"],
+	"uber": ["Deslocamento"], "viagem": ["Deslocamento"], "imposto": ["Impostos e Taxas"], "das": ["Impostos e Taxas"],
+	"aluguel": ["Contas Fixas"], "luz": ["Contas Fixas"], "energia": ["Contas Fixas"], "agua": ["Contas Fixas"],
+	"internet": ["Contas Fixas"], "telefone": ["Contas Fixas"], "fixa": ["Contas Fixas"],
+	"software": ["Ferramentas e Software"], "sistema": ["Ferramentas e Software"], "assinatura": ["Ferramentas e Software"],
+	"anuncio": ["Anúncios e Marketing", "Tráfego Pago"], "trafego": ["Anúncios e Marketing", "Tráfego Pago"],
+	"marketing": ["Anúncios e Marketing", "Tráfego Pago"], "equipamento": ["Equipamentos"], "computador": ["Equipamentos"],
+	"freelancer": ["Freelancers", "Correspondentes"],
 }
 
 
@@ -657,9 +663,11 @@ def _categoria(texto: str, descricao: str) -> str:
 	if exata:
 		return exata
 	alvo = f"{n} {_norm(descricao)}"
-	for chave, cat in CATEGORIAS.items():
-		if chave in alvo and cat in opcoes:
-			return cat
+	for chave, candidatas in CATEGORIAS.items():
+		if chave in alvo:
+			achada = next((c for c in candidatas if c in opcoes), None)
+			if achada:
+				return achada
 	return "Outros" if "Outros" in opcoes else (opcoes[-1] if opcoes else None)
 
 

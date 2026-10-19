@@ -40,6 +40,7 @@ MODULES = [
     "analise_consultor",
     "divisao_caixa",
     "importacao",
+    "perfil_escritorio",
 ]
 
 

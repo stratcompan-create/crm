@@ -10,7 +10,9 @@ Também pode ser chamado direto: crm.provision.provision_client(brand_name=...).
 Tudo é idempotente: rodar de novo apenas reaplica os padrões.
 """
 
+import functools
 import os
+from pathlib import Path
 
 import frappe
 
@@ -222,8 +224,93 @@ def get_profile() -> str:
 	return frappe.db.get_default("crm_profile") or "agencia"
 
 
-def profile_messages(profile: str | None = None) -> dict:
-	return PROFILE_TEXTS.get(profile or get_profile(), {})
+# Vocabulário do escritório: "Negócio" vira "Caso" e "Lead" vira "Atendimento" em toda a tela
+# (as duas palavras são masculinas, então "o negócio" -> "o caso" continua certo).
+ESCRITORIO_TERMOS = [
+	(r"\bNegócios\b", "Casos"),
+	(r"\bnegócios\b", "casos"),
+	(r"\bNegócio\b", "Caso"),
+	(r"\bnegócio\b", "caso"),
+	(r"\bNEGÓCIOS\b", "CASOS"),
+	(r"\bLeads\b", "Atendimentos"),
+	(r"\bleads\b", "atendimentos"),
+	(r"\bLead\b", "Atendimento"),
+	(r"\blead\b", "atendimento"),
+	(r"\bReuniões\b", "Consultas"),
+	(r"\breuniões\b", "consultas"),
+	(r"\bReunião\b", "Consulta"),
+	(r"\breunião\b", "consulta"),
+]
+PERFIS_JURIDICOS = ("escritorio", "escritorio_empresarial")
+
+HORAS_JURIDICO = [
+	"Atendimento ao cliente",
+	"Peças e petições",
+	"Audiência",
+	"Diligência",
+	"Pesquisa e estudo do caso",
+	"Alinhamento interno",
+	"Outro",
+]
+DESPESAS_JURIDICO = [
+	"Custas e Taxas",
+	"Perícias e Diligências",
+	"Cartório e Certidões",
+	"Correspondentes",
+	"Deslocamento",
+	"Contas Fixas",
+	"Ferramentas e Software",
+	"Impostos e Taxas",
+	"Anúncios e Marketing",
+	"Outros",
+]
+
+
+def _trocar_termos(texto: str) -> str:
+	import re
+
+	for padrao, troca in ESCRITORIO_TERMOS:
+		texto = re.sub(padrao, troca, texto)
+	return texto
+
+
+@functools.lru_cache(maxsize=1)
+def _textos_da_tela() -> tuple[str, ...]:
+	"""Textos em português escritos direto nas telas (__('...')) que citam negócio ou lead."""
+	import re
+
+	src = Path(frappe.get_app_path("crm")).parent / "frontend" / "src"
+	if not src.exists():
+		return ()
+	achados = set()
+	padrao = re.compile(r"""__\(\s*(['"`])((?:(?!\1).)*?(?:[Nn]egócio|[Ll]eads?\b|NEGÓCIO|[Rr]euni[ãõ])(?:(?!\1).)*?)\1""")
+	for arq in list(src.rglob("*.vue")) + list(src.rglob("*.js")):
+		try:
+			conteudo = arq.read_text(encoding="utf-8")
+		except Exception:
+			continue
+		for m in padrao.finditer(conteudo):
+			if "${" not in m.group(2):
+				achados.add(m.group(2))
+	return tuple(sorted(achados))
+
+
+def profile_messages(profile: str | None = None, base: dict | None = None) -> dict:
+	perfil = profile or get_profile()
+	msgs = dict(PROFILE_TEXTS.get(perfil, {}))
+	if perfil in PERFIS_JURIDICOS:
+		base = base or {}
+		for chave, valor in base.items():
+			if isinstance(valor, str):
+				novo = _trocar_termos(valor)
+				if novo != valor:
+					msgs[chave] = novo
+		for texto in _textos_da_tela():
+			if texto not in msgs:
+				novo = _trocar_termos(base.get(texto) or texto)
+				if novo != texto:
+					msgs[texto] = novo
+	return msgs
 
 
 PROFILE_DOCTYPES = ("CRM Lead", "CRM Deal")
@@ -302,6 +389,9 @@ def apply_profile(profile: str):
 	if profile in ("escritorio", "escritorio_empresarial"):
 		# "Serviço" da receita passa a ser a área do direito
 		setter("CRM Honorario", "servico", "options", "\n" + "\n".join(LEGAL_AREAS), "Text")
+		# horas e despesas com as categorias de um escritório (as da agência falam de vídeo, site...)
+		setter("CRM Horas", "frente", "options", "\n".join(HORAS_JURIDICO), "Text")
+		setter("CRM Despesa", "categoria", "options", "\n".join(DESPESAS_JURIDICO), "Text")
 
 	frappe.clear_cache()
 

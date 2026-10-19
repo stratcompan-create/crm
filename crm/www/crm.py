@@ -104,7 +104,8 @@ def get_boot():
 
 
 def get_boot_messages() -> dict:
-	return {**get_messages_for_boot(), **profile_messages()}
+	base = get_messages_for_boot()
+	return {**base, **profile_messages(base=base)}
 
 
 def get_brand() -> dict:

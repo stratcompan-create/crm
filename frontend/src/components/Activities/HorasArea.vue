@@ -54,11 +54,22 @@
 
 <script setup>
 import { Button, FormControl, call, createResource, toast } from 'frappe-ui'
-import { reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 
 const props = defineProps({ doctype: String, docname: String })
 
-const frentes = ['Vídeo', 'CRM', 'Site', 'Tráfego', 'Reunião', 'Outro'].map((f) => ({ label: f, value: f }))
+// as frentes vêm do perfil do site (o escritório tem as suas); a lista abaixo é só o padrão
+const opcoesDoSite = createResource({
+  url: 'crm.api.opcoes.opcoes',
+  params: { doctype: 'CRM Horas', campo: 'frente' },
+  auto: true,
+})
+const frentes = computed(() =>
+  (opcoesDoSite.data?.length ? opcoesDoSite.data : ['Vídeo', 'CRM', 'Site', 'Tráfego', 'Reunião', 'Outro']).map((f) => ({
+    label: __(f),
+    value: f,
+  })),
+)
 
 const horas = createResource({
   url: 'crm.api.horas.listar_horas',

@@ -5,7 +5,7 @@
       <div v-else class="flex flex-col gap-4">
         <div class="flex flex-col gap-1.5">
           <label class="text-p-sm font-medium text-ink-gray-7">{{ __('O que foi pago') }}</label>
-          <FormControl v-model="form.descricao" type="text" :placeholder="__('Ex.: Adobe Creative Cloud')" />
+          <FormControl v-model="form.descricao" type="text" :placeholder="__('Ex.: aluguel, software, custas do processo')" />
         </div>
 
         <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -69,14 +69,23 @@
 </template>
 
 <script setup>
-import { Button, Dialog, ErrorMessage, FormControl, call, toast } from 'frappe-ui'
-import { reactive, ref, watch } from 'vue'
+import { Button, Dialog, ErrorMessage, FormControl, call, createResource, toast } from 'frappe-ui'
+import { computed, reactive, ref, watch } from 'vue'
 
 const props = defineProps({ name: { type: String, default: '' } })
 const emit = defineEmits(['saved'])
 const show = defineModel({ type: Boolean })
 
-const categorias = [
+// as categorias vêm do perfil do site (escritório tem as suas); a lista abaixo é só o padrão
+const opcoesDoSite = createResource({
+  url: 'crm.api.opcoes.opcoes',
+  params: { doctype: 'CRM Despesa', campo: 'categoria' },
+  auto: true,
+})
+const categorias = computed(() =>
+  opcoesDoSite.data?.length ? opcoesDoSite.data.map((c) => ({ label: __(c), value: c })) : categoriasPadrao,
+)
+const categoriasPadrao = [
   { label: __('Ferramentas e Software'), value: 'Ferramentas e Software' },
   { label: __('Edição e Filmagem'), value: 'Edição e Filmagem' },
   { label: __('Freelancers'), value: 'Freelancers' },

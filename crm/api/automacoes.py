@@ -374,12 +374,26 @@ def on_deal_won(deal_doc, valor: float) -> None:
 		frappe.log_error("Negócio ganho: conta do cliente", frappe.get_traceback())
 	if cint(cfg.onboarding_ativo):
 		owner = deal_doc.deal_owner or _first_manager()
-		for title, days in (
-			(_("Início: dar boas-vindas ao cliente"), 1),
-			(_("Início: combinar a reunião de kickoff"), 2),
-			(_("Início: reunir acessos e materiais do cliente"), 5),
-		):
+		for title, days in _onboarding_tasks():
 			_create_task(deal_doc.name, f"{title} — {_client(deal_doc.name).completo}", "", owner, days)
+
+
+def _onboarding_tasks() -> tuple:
+	"""Tarefas criadas quando o negócio vira ganho. No escritório são os passos de um caso novo."""
+	from crm.provision import PERFIS_JURIDICOS, get_profile
+
+	if get_profile() in PERFIS_JURIDICOS:
+		return (
+			(_("Início: enviar contrato de honorários e procuração para assinatura"), 1),
+			(_("Início: pedir ao cliente os documentos do caso"), 1),
+			(_("Início: conferir conflito de interesses e cadastrar as partes"), 2),
+			(_("Início: registrar o número do processo ou o protocolo"), 7),
+		)
+	return (
+		(_("Início: dar boas-vindas ao cliente"), 1),
+		(_("Início: combinar a reunião de kickoff"), 2),
+		(_("Início: reunir acessos e materiais do cliente"), 5),
+	)
 
 
 def create_monthly(deal_doc, valor: float):
