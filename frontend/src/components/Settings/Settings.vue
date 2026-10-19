@@ -70,6 +70,7 @@ import WhatsAppSettings from '@/components/Settings/WhatsAppSettings.vue'
 import ERPNextSettings from '@/components/Settings/ERPNextSettings.vue'
 import InstagramSettings from '@/components/Settings/InstagramSettings.vue'
 import ModelosDocumentosSettings from '@/components/Settings/ModelosDocumentosSettings.vue'
+import ImportarPlanilhaSettings from '@/components/Settings/ImportarPlanilhaSettings.vue'
 import AutomacoesSettings from '@/components/Settings/AutomacoesSettings.vue'
 import GoogleDriveSettings from '@/components/Settings/GoogleDriveSettings.vue'
 import GoogleCalendarSettings from '@/components/Settings/GoogleCalendarSettings.vue'
@@ -259,6 +260,12 @@ const tabs = computed(() => {
           label: __('Modelos de documentos'),
           icon: 'file-text',
           component: markRaw(ModelosDocumentosSettings),
+          condition: () => isManager(),
+        },
+        {
+          label: __('Importar planilha'),
+          icon: 'upload',
+          component: markRaw(ImportarPlanilhaSettings),
           condition: () => isManager(),
         },
         {

@@ -39,6 +39,7 @@ MODULES = [
     "credito_ia",
     "analise_consultor",
     "divisao_caixa",
+    "importacao",
 ]
 
 

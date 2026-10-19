@@ -153,6 +153,8 @@ class CRMDeal(Document):
 	def create_receita_when_won(self):
 		"""Negócio ganho gera automaticamente a receita (cobrança pendente) no Financeiro."""
 		# também vale quando o valor entra depois de marcar como ganho (orçamento feito depois)
+		if self.flags.get("sem_cobranca_automatica"):
+			return  # caso que veio de planilha: o histórico de cobrança entra pela importação de honorários
 		if not (self.has_value_changed("status") or self.has_value_changed("deal_value")):
 			return
 		if frappe.db.get_value("CRM Deal Status", self.status, "type") != "Won":
