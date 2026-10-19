@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="color-scheme" content="dark">
+<title>Assinatura de documento</title>
+<link rel="icon" href="{{ favicon }}">
+<style>
+  :root { --sage: #8aa1a9; --glow: rgba(15, 70, 85, 0.55); --glow-soft: rgba(4, 45, 60, 0.18); }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; min-height: 100%; background: #04080a; }
+  body { font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; color: #fff;
+    background: radial-gradient(ellipse 70% 55% at 50% 0%, var(--glow) 0%, var(--glow-soft) 45%, transparent 75%), #04080a; background-attachment: fixed; }
+  .wrap { max-width: 760px; margin: 0 auto; padding: 2.2rem 1rem 3rem; }
+  .head { text-align: center; margin-bottom: 1.2rem; }
+  .logo img { height: 80px; max-width: 100%; object-fit: contain; filter: brightness(0) invert(1); }
+  h1 { font-size: 1.45rem; margin: 0.7rem 0 0.3rem; }
+  .sub { color: rgba(255,255,255,0.6); font-size: 0.92rem; margin: 0; line-height: 1.5; }
+  .card { background: linear-gradient(180deg, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 22px; padding: 1.2rem 1.3rem; margin-bottom: 1rem; }
+  .doc { width: 100%; height: 70vh; border: 0; border-radius: 14px; background: #fff; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; height: 46px; padding: 0 1.5rem; background: #fff; color: #0b1a22;
+    border-radius: 999px; font-weight: 700; font-size: 0.92rem; text-decoration: none; border: 0; cursor: pointer; }
+  .btn.sec { background: rgba(255,255,255,0.1); color: #fff; }
+  label.f { display: block; font-size: 0.8rem; color: rgba(255,255,255,0.6); margin: 0.7rem 0 0.25rem; }
+  input[type=text], input[type=email] { width: 100%; height: 44px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.15);
+    background: rgba(255,255,255,0.05); color: #fff; padding: 0 0.8rem; font: inherit; }
+  .chk { display: flex; gap: 0.6rem; align-items: flex-start; margin: 1rem 0; font-size: 0.9rem; color: rgba(255,255,255,0.8); line-height: 1.45; }
+  .msg { color: #ff9c8f; font-size: 0.85rem; margin-top: 0.6rem; }
+  .ok { color: #7ee0a5; }
+  .leg { color: rgba(255,255,255,0.4); font-size: 0.74rem; line-height: 1.55; margin-top: 1rem; }
+  .hide { display: none; }
+  @media (max-width: 600px) { .doc { height: 55vh; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div class="logo hide" id="logoBox"><img id="logo" alt=""></div>
+    <h1 id="titulo">Assinatura de documento</h1>
+    <p class="sub" id="sub">Carregando...</p>
+  </div>
+  <div id="erro" class="card hide" style="text-align:center"></div>
+  <div id="app" class="hide">
+    <div class="card">
+      <iframe class="doc" id="pdf" title="Documento"></iframe>
+      <div style="margin-top:0.8rem; text-align:center"><a class="btn sec" id="abrir" target="_blank" rel="noopener">Abrir o documento em tela cheia</a></div>
+    </div>
+    <div class="card" id="form">
+      <div style="font-weight:700">Assinar</div>
+      <label class="f" for="nome">Nome completo</label><input type="text" id="nome" autocomplete="name">
+      <label class="f" for="doc">CPF (ou CNPJ, se assinar por uma empresa)</label><input type="text" id="doc" inputmode="numeric">
+      <label class="f" for="email">E-mail</label><input type="email" id="email" autocomplete="email">
+      <label class="chk"><input type="checkbox" id="aceite"> Li o documento acima e concordo com o seu conteúdo. Entendo que esta assinatura eletrônica tem validade e fica registrada com data, hora, IP e o código do documento.</label>
+      <button class="btn" id="assinar">Assinar documento</button>
+      <div class="msg hide" id="msg"></div>
+    </div>
+    <div class="card hide" id="feito" style="text-align:center">
+      <div class="ok" style="font-weight:700; font-size:1.1rem">✓ Documento assinado</div>
+      <p class="sub" id="feitoTxt" style="margin:0.5rem 0 1rem"></p>
+      <a class="btn" id="baixar" target="_blank" rel="noopener">Baixar o documento assinado</a>
+    </div>
+    <p class="leg" id="leg"></p>
+  </div>
+</div>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var t = new URLSearchParams(location.search).get('t') || '';
+  var pdfUrl = '/api/method/crm.api.assinatura_docs.pdf_publico?t=' + encodeURIComponent(t);
+  function errText(j) { try { var m = JSON.parse(j._server_messages || '[]'); if (m.length) return JSON.parse(m[0]).message.replace(/<[^>]+>/g, ''); } catch (e) {} return 'Não foi possível concluir.'; }
+  function hexRgba(hex, a) { var m = /^#([0-9a-f]{6})$/i.exec((hex || '').trim()); if (!m) return null; var n = parseInt(m[1], 16); return 'rgba(' + (n >> 16) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')'; }
+  function feito(nome, quando) {
+    $('form').classList.add('hide'); $('feito').classList.remove('hide');
+    $('feitoTxt').textContent = 'Assinado por ' + nome + (quando ? ' em ' + quando.slice(0, 16).replace(/(\d{4})-(\d{2})-(\d{2})/, '$3/$2/$1') : '') + '.';
+    $('baixar').href = pdfUrl + '&v=' + Date.now(); $('pdf').src = pdfUrl + '&v=' + Date.now();
+  }
+  fetch('/api/method/crm.api.assinatura_docs.dados_publicos?t=' + encodeURIComponent(t))
+    .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+    .then(function (res) {
+      if (!res.ok) { $('sub').textContent = ''; $('erro').textContent = errText(res.j); $('erro').classList.remove('hide'); return; }
+      var d = res.j.message, root = document.documentElement.style, g = hexRgba(d.cor, 0.55);
+      if (g) { root.setProperty('--glow', g); root.setProperty('--glow-soft', hexRgba(d.cor, 0.18)); }
+      if (d.logo) { $('logo').src = d.logo; $('logoBox').classList.remove('hide'); }
+      $('titulo').textContent = d.documento || 'Documento';
+      $('sub').textContent = (d.cliente ? d.cliente + ' · ' : '') + (d.marca || '');
+      $('pdf').src = pdfUrl; $('abrir').href = pdfUrl;
+      $('nome').value = d.cliente || '';
+      $('leg').textContent = 'Código do documento: ' + d.codigo + '… · Assinatura eletrônica simples (Lei 14.063/2020).';
+      $('app').classList.remove('hide');
+      if (d.status === 'Assinado') feito(d.assinante_nome, d.assinado_em);
+    });
+  $('assinar').onclick = function () {
+    var fd = new FormData(); fd.append('t', t); fd.append('nome', $('nome').value); fd.append('documento', $('doc').value);
+    fd.append('email', $('email').value); fd.append('aceite', $('aceite').checked ? 1 : 0);
+    $('assinar').disabled = true; $('msg').classList.add('hide');
+    fetch('/api/method/crm.api.assinatura_docs.assinar', { method: 'POST', body: fd })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (res) {
+        $('assinar').disabled = false;
+        if (!res.ok) { $('msg').textContent = errText(res.j); $('msg').classList.remove('hide'); return; }
+        feito(res.j.message.assinante_nome, res.j.message.assinado_em);
+      })
+      .catch(function () { $('assinar').disabled = false; $('msg').textContent = 'Falha de conexão. Tente de novo.'; $('msg').classList.remove('hide'); });
+  };
+})();
+</script>
+</body>
+</html>

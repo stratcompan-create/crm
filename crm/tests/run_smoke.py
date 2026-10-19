@@ -48,6 +48,7 @@ MODULES = [
     "inteligencia",
     "audio",
     "pwa",
+    "assinatura_docs",
 ]
 
 

@@ -53,6 +53,7 @@
           <span class="text-p-sm text-ink-green-3">{{ __('Documento gerado: {0}', [generated.nome]) }}</span>
           <span class="flex gap-2">
             <a :href="generated.url" target="_blank"><Button variant="subtle" :label="__('Abrir')" /></a>
+            <Button variant="solid" iconLeft="lucide-pen-line" :label="__('Enviar para assinatura')" @click="paraAssinatura(generated.arquivo)" />
             <Button v-if="docs.data.tem_email" variant="subtle" :label="__('Enviar por e-mail')" @click="sendGenerated" />
           </span>
         </div>
@@ -129,9 +130,40 @@
               <span class="lucide-file size-4 shrink-0 text-ink-gray-5" aria-hidden="true" />
               <span class="truncate text-p-sm text-ink-gray-8">{{ f.file_name }}</span>
             </span>
-            <span class="shrink-0 text-xs text-ink-gray-5">{{ dateBr(f.creation) }} · {{ size(f.file_size) }}</span>
+            <span class="flex shrink-0 items-center gap-2 text-xs text-ink-gray-5">
+              <Button
+                v-if="/\.pdf$/i.test(f.file_name) && !/assinado\.pdf$/i.test(f.file_name)"
+                size="sm"
+                variant="ghost"
+                :label="__('Assinatura')"
+                @click.prevent.stop="paraAssinatura(f.name)"
+              />
+              {{ dateBr(f.creation) }} · {{ size(f.file_size) }}
+            </span>
           </a>
         </div>
+      </section>
+
+      <!-- Assinaturas -->
+      <section v-if="assinaturas.data?.length" class="flex flex-col gap-2">
+        <div class="text-base-semibold text-ink-gray-9">{{ __('Assinaturas') }}</div>
+        <div v-for="a in assinaturas.data" :key="a.name" class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-outline-gray-2 px-3 py-2 text-p-sm">
+          <span class="min-w-0 truncate">
+            {{ a.nome_arquivo }} ·
+            <span :class="a.status === 'Assinado' ? 'text-ink-green-3' : a.status === 'Cancelado' ? 'text-ink-gray-5' : 'text-ink-amber-3'">
+              {{ a.status === 'Assinado' ? __('Assinado por {0} em {1}', [a.assinante_nome, dateBr(a.assinado_em)]) : __(a.status) }}
+            </span>
+          </span>
+          <span class="flex gap-1">
+            <a v-if="a.url_assinado" :href="a.url_assinado" target="_blank"><Button size="sm" variant="subtle" :label="__('Baixar assinado')" /></a>
+            <Button v-if="a.link" size="sm" variant="subtle" :label="__('Copiar link')" @click="copy(a.link)" />
+            <a v-if="a.link && docs.data.telefone" :href="whatsAssinatura(a)" target="_blank" rel="noopener"><Button size="sm" variant="subtle" :label="__('WhatsApp')" /></a>
+            <Button v-if="a.status === 'Aguardando'" size="sm" variant="ghost" theme="red" :label="__('Cancelar')" @click="cancelarAssinatura(a)" />
+          </span>
+        </div>
+        <p class="text-xs text-ink-gray-5">
+          {{ __('Assinatura eletrônica simples (Lei 14.063/2020), com registro de nome, CPF, e-mail, data, hora, IP e código do documento. Onde for exigido certificado ICP-Brasil ou gov.br, use essa via.') }}
+        </p>
       </section>
     </div>
   </div>
@@ -158,7 +190,37 @@ const docs = createResource({
     if (!chosen.value.length) chosen.value = [...d.sugestao]
   },
 })
-watch(() => props.docname, () => docs.reload())
+watch(() => props.docname, () => {
+  docs.reload()
+  assinaturas.reload()
+})
+
+// assinatura eletrônica de documentos (contrato, procuração...)
+const assinaturas = createResource({
+  url: 'crm.api.assinatura_docs.listar',
+  makeParams: () => ({ deal: props.docname }),
+  auto: true,
+  onError: () => {},
+})
+async function paraAssinatura(arquivo) {
+  try {
+    const r = await call('crm.api.assinatura_docs.enviar_para_assinatura', { deal: props.docname, arquivo })
+    await navigator.clipboard.writeText(r.link).catch(() => {})
+    toast.success(__('Link de assinatura criado e copiado. Mande ao cliente.'))
+    assinaturas.reload()
+  } catch (e) {
+    toast.error(e?.messages?.[0] || __('Não foi possível enviar para assinatura.'))
+  }
+}
+async function cancelarAssinatura(a) {
+  if (!window.confirm(__('Cancelar o pedido de assinatura de {0}?', [a.nome_arquivo]))) return
+  await call('crm.api.assinatura_docs.cancelar', { name: a.name })
+  assinaturas.reload()
+}
+function whatsAssinatura(a) {
+  const tel = docs.data.telefone.length <= 11 ? '55' + docs.data.telefone : docs.data.telefone
+  return `https://wa.me/${tel}?text=${encodeURIComponent(__('Olá! Seu documento está pronto para assinar pelo celular: {0}', [a.link]))}`
+}
 
 const options = computed(() => [...(docs.data?.sugestao || []), ...custom.value])
 const folderLabel = computed(() => (docs.data?.pasta || '').replace(/^Home\//, '').replace(/\//g, ' › '))
