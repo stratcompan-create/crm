@@ -905,10 +905,14 @@ def ensure_service_layouts():
 	então uma migração sozinha não o atualiza)."""
 	import json
 
+	from crm.provision import PERFIS_JURIDICOS
+
 	extra = {
 		"CRM Lead": ["servico", "natureza"],
 		"CRM Deal": ["servico", "natureza", "valor_recorrente", "lancamento_antigo"],
 	}
+	if (frappe.db.get_default("crm_profile") or "agencia") in PERFIS_JURIDICOS:
+		extra["CRM Deal"].append("percentual_exito")
 	for dt, fields in extra.items():
 		for kind in ("Quick Entry", "Side Panel"):
 			name = f"{dt}-{kind}"

@@ -34,6 +34,8 @@
       </div>
     </div>
 
+    <CarneLeaoCard v-if="juridico" />
+
     <div v-if="!summary.loading && !summary.data?.total_geral" class="text-p-base text-ink-gray-5">
       {{ __('Ainda não há Honorários cadastrados para gerar relatório.') }}
     </div>
@@ -139,6 +141,8 @@
 </template>
 <script setup>
 import LayoutHeader from '@/components/LayoutHeader.vue'
+import CarneLeaoCard from '@/components/CarneLeaoCard.vue'
+const juridico = ['escritorio', 'escritorio_empresarial'].includes(window.crm_profile)
 import { createResource } from 'frappe-ui'
 import { computed } from 'vue'
 

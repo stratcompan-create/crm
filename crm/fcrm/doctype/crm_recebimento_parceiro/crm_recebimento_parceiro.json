@@ -1,0 +1,28 @@
+{
+	"actions": [],
+	"creation": "2026-10-19 00:00:00.000000",
+	"doctype": "DocType",
+	"editable_grid": 1,
+	"engine": "InnoDB",
+	"field_order": ["parceiro", "oab", "percentual", "valor", "pago", "data_pagamento"],
+	"fields": [
+		{"fieldname": "parceiro", "fieldtype": "Data", "label": "Parceiro ou correspondente", "reqd": 1, "in_list_view": 1},
+		{"fieldname": "oab", "fieldtype": "Data", "label": "OAB", "in_list_view": 1},
+		{"fieldname": "percentual", "fieldtype": "Percent", "label": "% dos honorários", "in_list_view": 1},
+		{"fieldname": "valor", "fieldtype": "Currency", "label": "Valor", "options": "BRL", "in_list_view": 1, "non_negative": 1},
+		{"default": "0", "fieldname": "pago", "fieldtype": "Check", "label": "Pago", "in_list_view": 1},
+		{"fieldname": "data_pagamento", "fieldtype": "Date", "label": "Pago em"}
+	],
+	"istable": 1,
+	"links": [],
+	"modified": "2026-10-19 00:00:00.000000",
+	"modified_by": "Administrator",
+	"module": "FCRM",
+	"name": "CRM Recebimento Parceiro",
+	"owner": "Administrator",
+	"permissions": [],
+	"row_format": "Dynamic",
+	"sort_field": "modified",
+	"sort_order": "DESC",
+	"states": []
+}

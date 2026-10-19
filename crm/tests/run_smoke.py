@@ -41,6 +41,7 @@ MODULES = [
     "divisao_caixa",
     "importacao",
     "perfil_escritorio",
+    "prestacao_contas",
 ]
 
 

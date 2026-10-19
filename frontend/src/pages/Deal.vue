@@ -367,6 +367,7 @@ import LayoutHeader from '@/components/LayoutHeader.vue'
 import DocumentosIcon from '~icons/lucide/folder-open'
 import FichaIcon from '~icons/lucide/clipboard-list'
 import HorasIcon from '~icons/lucide/clock'
+import PrestacaoIcon from '~icons/lucide/scale'
 import vTabsScroll from '@/directives/tabsScroll'
 import Activities from '@/components/Activities/Activities.vue'
 import OrganizationModal from '@/components/Modals/OrganizationModal.vue'
@@ -608,10 +609,15 @@ const tabs = computed(() => {
       icon: FichaIcon,
     },
     {
+      name: 'PrestacaoContas',
+      label: __('Prestação de contas'),
+      icon: PrestacaoIcon,
+      condition: () => !isAgency.value,
+    },
+    {
       name: 'Horas',
       label: __('Horas'),
       icon: HorasIcon,
-      condition: () => isAgency.value,
     },
     {
       name: 'Documentos',
