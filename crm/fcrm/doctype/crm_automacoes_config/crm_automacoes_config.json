@@ -5,7 +5,7 @@
  "engine": "InnoDB",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-21 00:00:00.000000",
+ "modified": "2026-10-19 16:00:00.000000",
  "modified_by": "Administrator",
  "module": "FCRM",
  "owner": "Administrator",
@@ -55,7 +55,8 @@
   "divisao_impostos_pct",
   "divisao_crescimento_pct",
   "divisao_custos_pct",
-  "email_adiado"
+  "email_adiado",
+  "chave_transcricao"
  ],
  "fields": [
   {
@@ -289,6 +290,11 @@
    "label": "Configuração do e-mail de envio adiada (reconhecida pelo gestor)",
    "default": "0",
    "description": "Tira o alerta vermelho de e-mail da Visão Geral enquanto o envio não é configurado. O envio automático (resumo semanal, avisos de prazo, etc.) continua desligado até configurar de verdade."
+  },
+  {
+   "fieldname": "chave_transcricao",
+   "fieldtype": "Password",
+   "label": "Chave de transcrição de áudio (OpenAI)"
   }
  ],
  "permissions": [

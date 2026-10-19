@@ -46,6 +46,7 @@ MODULES = [
     "portal",
     "seguranca",
     "inteligencia",
+    "audio",
 ]
 
 

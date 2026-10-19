@@ -92,6 +92,7 @@
                 : __('A IA ainda não está ligada. Peça a um gestor para cadastrar a chave em Configurações → Automações.')
             }}
           </div>
+          <AudioCaptura @texto="(t) => (transcript = (transcript ? transcript + '\n' : '') + t)" />
           <FormControl v-model="transcript" type="textarea" :rows="12" :placeholder="__('Cole a transcrição, anotações ou um texto/prompt com as características do projeto')" />
           <label class="flex items-center gap-2 text-p-sm text-ink-gray-7">
             <input v-model="overwrite" type="checkbox" />
@@ -112,6 +113,7 @@
 
 <script setup>
 import SeloIA from '@/components/SeloIA.vue'
+import AudioCaptura from '@/components/Activities/AudioCaptura.vue'
 import { Button, Dialog, ErrorMessage, FormControl, call, createResource, toast } from 'frappe-ui'
 import { computed, reactive, ref, watch } from 'vue'
 
