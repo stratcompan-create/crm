@@ -106,6 +106,8 @@
   "motivo_encerramento",
   "documentos_devolvidos",
   "observacoes_encerramento",
+  "indicado_por",
+  "portal_token",
   "ficha",
   "ficha_transcricao",
   "cidade_estado",
@@ -703,6 +705,20 @@
    "read_only": 1
   },
   {
+   "fieldname": "indicado_por",
+   "fieldtype": "Data",
+   "label": "Indicado por",
+   "description": "Quem indicou este cliente (cliente, parceiro, contador...)."
+  },
+  {
+   "fieldname": "portal_token",
+   "fieldtype": "Data",
+   "label": "Código do portal do cliente",
+   "read_only": 1,
+   "hidden": 1,
+   "unique": 1
+  },
+  {
    "fieldname": "ficha",
    "fieldtype": "Long Text",
    "label": "Ficha da reunião",
@@ -745,7 +761,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-19 13:00:00.000000",
+ "modified": "2026-10-19 14:00:00.000000",
  "modified_by": "Administrator",
  "module": "FCRM",
  "name": "CRM Deal",

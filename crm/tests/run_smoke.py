@@ -43,6 +43,7 @@ MODULES = [
     "perfil_escritorio",
     "prestacao_contas",
     "processo",
+    "portal",
 ]
 
 

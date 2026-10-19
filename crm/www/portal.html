@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="color-scheme" content="dark">
+<title>Acompanhe o seu caso</title>
+<link rel="icon" href="{{ favicon }}">
+<link rel="apple-touch-icon" href="{{ favicon }}">
+<style>
+  :root { --brand: #042d3c; --sage: #8aa1a9; --glow: rgba(15, 70, 85, 0.55); --glow-soft: rgba(4, 45, 60, 0.18); }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; min-height: 100%; background: #04080a; }
+  body {
+    font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; color: #fff;
+    background: radial-gradient(ellipse 70% 55% at 50% 0%, var(--glow) 0%, var(--glow-soft) 45%, transparent 75%),
+      radial-gradient(ellipse 60% 50% at 85% 100%, rgba(138, 161, 169, 0.10) 0%, transparent 70%), #04080a;
+    background-attachment: fixed;
+  }
+  .wrap { max-width: 560px; margin: 0 auto; padding: 2.5rem 1rem 3rem; }
+  .head { text-align: center; padding-bottom: 1.5rem; }
+  .logo img { height: 96px; max-width: 100%; object-fit: contain; filter: brightness(0) invert(1); }
+  h1 { font-size: 1.55rem; font-weight: 700; letter-spacing: -0.02em; margin: 0.6rem 0 0.4rem; }
+  .sub { font-size: 0.92rem; line-height: 1.5; color: rgba(255,255,255,0.6); margin: 0; }
+  .card { background: linear-gradient(180deg, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 22px; padding: 1.2rem 1.3rem; margin-bottom: 0.9rem; box-shadow: 0 20px 60px rgba(0,0,0,0.45); }
+  .tag { font-size: 0.66rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(255,255,255,0.8); margin-bottom: 0.7rem; }
+  .tag::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--sage); margin-right: 0.5rem; vertical-align: middle; }
+  .and { padding: 0.55rem 0; border-top: 1px solid rgba(255,255,255,0.07); font-size: 0.93rem; line-height: 1.5; }
+  .and:first-of-type { border-top: 0; }
+  .when { font-size: 0.76rem; color: rgba(255,255,255,0.5); }
+  .muted { color: rgba(255,255,255,0.55); font-size: 0.9rem; line-height: 1.5; }
+  ul { margin: 0.3rem 0 0.8rem; padding-left: 1.1rem; color: rgba(255,255,255,0.85); font-size: 0.92rem; line-height: 1.6; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; height: 42px; padding: 0 1.3rem; background: #fff; color: #0b1a22;
+    border-radius: 999px; font-weight: 700; font-size: 0.88rem; text-decoration: none; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 0.8rem; padding: 0.5rem 0; border-top: 1px solid rgba(255,255,255,0.07); }
+  .row:first-of-type { border-top: 0; }
+  .late { color: #ff9c8f; font-size: 0.78rem; }
+  .erro { text-align: center; color: rgba(255,255,255,0.75); padding: 2rem 0.5rem; }
+  .priv { color: rgba(255,255,255,0.38); font-size: 0.74rem; line-height: 1.55; margin: 1.4rem 0.2rem 0; text-align: center; }
+  .hide { display: none; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div class="logo hide" id="logoBox"><img id="logo" alt=""></div>
+    <h1 id="titulo">Acompanhe o seu caso</h1>
+    <p class="sub" id="sub">Carregando...</p>
+  </div>
+  <div id="erro" class="erro hide"></div>
+  <div id="app" class="hide">
+    <div class="card" id="cPesquisa" style="display:none">
+      <div class="tag">Seu caso foi concluído</div>
+      <p class="muted">Conte pra gente como foi o atendimento. Leva 30 segundos.</p>
+      <a class="btn" id="lPesquisa" href="#">Avaliar o atendimento</a>
+    </div>
+    <div class="card">
+      <div class="tag">Como está</div>
+      <div id="andamentos"></div>
+    </div>
+    <div class="card" id="cConsulta" style="display:none">
+      <div class="tag">Próxima consulta</div>
+      <div id="consulta" class="muted"></div>
+    </div>
+    <div class="card" id="cDocs" style="display:none">
+      <div class="tag">Documentos que faltam</div>
+      <div id="docs"></div>
+    </div>
+    <div class="card" id="cPag" style="display:none">
+      <div class="tag">Pagamentos em aberto</div>
+      <div id="pag"></div>
+    </div>
+    <p class="priv">Esta página é só sua. Não compartilhe o link. Dúvidas sobre o caso? Fale com o escritório pelo canal de sempre.</p>
+  </div>
+</div>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var token = new URLSearchParams(location.search).get('t') || '';
+  function esc(s) { var d = document.createElement('div'); d.textContent = s == null ? '' : String(s); return d.innerHTML; }
+  function br(d) { return d ? d.slice(0, 10).split('-').reverse().join('/') : ''; }
+  function brl(v) { return (Number(v) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
+  function hexRgba(hex, a) { var m = /^#([0-9a-f]{6})$/i.exec((hex || '').trim()); if (!m) return null; var n = parseInt(m[1], 16); return 'rgba(' + (n >> 16) + ',' + ((n >> 8) & 255) + ',' + (n & 255) + ',' + a + ')'; }
+  function errText(j) { try { var m = JSON.parse(j._server_messages || '[]'); if (m.length) return JSON.parse(m[0]).message.replace(/<[^>]+>/g, ''); } catch (e) {} return 'Não foi possível carregar.'; }
+  function fail(msg) { $('sub').textContent = ''; $('erro').textContent = msg; $('erro').classList.remove('hide'); }
+  function render(d) {
+    var root = document.documentElement.style, g = hexRgba(d.cor, 0.55);
+    if (g) { root.setProperty('--glow', g); root.setProperty('--glow-soft', hexRgba(d.cor, 0.18)); }
+    if (/^#[0-9a-f]{6}$/i.test(d.destaque || '')) root.setProperty('--sage', d.destaque);
+    if (d.logo) { $('logo').src = d.logo; $('logoBox').classList.remove('hide'); }
+    document.title = 'Seu caso' + (d.marca ? ' — ' + d.marca : '');
+    $('titulo').textContent = 'Olá' + (d.nome ? ', ' + d.nome : '') + '!';
+    $('sub').textContent = (d.servico ? d.servico : 'Seu caso') + (d.numero_processo ? ' · processo ' + d.numero_processo : '') + (d.marca ? ' · ' + d.marca : '');
+    var a = $('andamentos');
+    a.innerHTML = d.andamentos.length
+      ? d.andamentos.map(function (x) { return '<div class="and"><div class="when">' + br(x.data) + '</div>' + esc(x.texto) + '</div>'; }).join('')
+      : '<div class="muted">' + (d.encerrado ? 'Caso concluído.' : 'Ainda não há atualização registrada. O escritório vai avisar assim que houver novidade.') + '</div>';
+    if (d.consulta) { $('consulta').textContent = d.consulta; $('cConsulta').style.display = ''; }
+    if (d.documentos.length) {
+      $('docs').innerHTML = d.documentos.map(function (p) { return '<ul>' + p.faltando.map(function (i) { return '<li>' + esc(i) + '</li>'; }).join('') + '</ul><a class="btn" href="' + esc(p.link) + '">Enviar documentos</a>'; }).join('<div style="height:.8rem"></div>');
+      $('cDocs').style.display = '';
+    }
+    if (d.pagamentos.length) {
+      $('pag').innerHTML = d.pagamentos.map(function (p) {
+        return '<div class="row"><div><b>' + brl(p.valor) + '</b><div class="when">vence ' + br(p.vencimento) + (p.atrasado ? ' · <span class="late">em atraso</span>' : '') + '</div></div>'
+          + (p.link ? '<a class="btn" href="' + esc(p.link) + '" target="_blank" rel="noopener">Pagar</a>' : '') + '</div>';
+      }).join('');
+      $('cPag').style.display = '';
+    }
+    if (d.pesquisa) { $('lPesquisa').href = d.pesquisa; $('cPesquisa').style.display = ''; }
+    $('app').classList.remove('hide');
+  }
+  if (!token) { fail('Link inválido. Peça um novo ao escritório.'); return; }
+  fetch('/api/method/crm.api.portal.get_portal?t=' + encodeURIComponent(token))
+    .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+    .then(function (res) { if (!res.ok) fail(errText(res.j)); else render(res.j.message); })
+    .catch(function () { fail('Não foi possível carregar. Tente novamente.'); });
+})();
+</script>
+</body>
+</html>

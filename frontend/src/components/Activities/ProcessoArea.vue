@@ -13,6 +13,28 @@
         </div>
       </div>
 
+      <!-- portal do cliente -->
+      <section class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-outline-gray-2 px-4 py-3">
+        <div>
+          <div class="text-p-base-medium text-ink-gray-9">{{ __('Portal do cliente') }}</div>
+          <div class="text-xs text-ink-gray-5">
+            {{ __('Um link só do cliente: ele vê os andamentos, os documentos que faltam e os pagamentos em aberto, sem ligar para o escritório.') }}
+          </div>
+        </div>
+        <div class="flex gap-2">
+          <Button variant="subtle" iconLeft="lucide-link" :label="__('Copiar link')" @click="copiarPortal(false)" />
+          <Button v-if="dados.data.tem_portal" variant="ghost" :label="__('Trocar link')" @click="copiarPortal(true)" />
+        </div>
+      </section>
+
+      <div v-if="dados.data.pesquisa" class="rounded-lg bg-surface-gray-2 px-4 py-2 text-p-sm">
+        <template v-if="dados.data.pesquisa.respondida_em">
+          {{ __('Avaliação do cliente: {0}/10', [dados.data.pesquisa.nota]) }}<span v-if="dados.data.pesquisa.indicaria"> · {{ __('indicaria o escritório') }}</span>
+          <div v-if="dados.data.pesquisa.comentario" class="text-ink-gray-6">“{{ dados.data.pesquisa.comentario }}”</div>
+        </template>
+        <template v-else>{{ __('Pesquisa de satisfação enviada, aguardando resposta.') }}</template>
+      </div>
+
       <!-- número -->
       <section class="flex flex-col gap-2">
         <div class="text-p-base-medium text-ink-gray-9">{{ __('Processo') }}</div>
@@ -110,6 +132,18 @@ watch(() => props.docname, () => dados.reload())
 
 function erroDe(e, padrao) {
   toast.error(e?.messages?.[0] || padrao)
+}
+
+async function copiarPortal(novo) {
+  if (novo && !window.confirm(__('Trocar o link? O link antigo para de funcionar.'))) return
+  try {
+    const r = await call('crm.api.portal.link_portal', { deal: props.docname, novo: novo ? 1 : 0 })
+    await navigator.clipboard.writeText(r.link)
+    toast.success(__('Link do portal copiado. Mande para o cliente.'))
+    dados.reload()
+  } catch (e) {
+    erroDe(e, __('Não foi possível gerar o link.'))
+  }
 }
 
 const salvandoProc = ref(false)

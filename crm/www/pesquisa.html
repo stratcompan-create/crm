@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="color-scheme" content="dark">
+<title>Como foi o atendimento?</title>
+<link rel="icon" href="{{ favicon }}">
+<style>
+  :root { --sage: #8aa1a9; --glow: rgba(15, 70, 85, 0.55); --glow-soft: rgba(4, 45, 60, 0.18); }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; min-height: 100%; background: #04080a; }
+  body { font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; color: #fff;
+    background: radial-gradient(ellipse 70% 55% at 50% 0%, var(--glow) 0%, var(--glow-soft) 45%, transparent 75%), #04080a; background-attachment: fixed; }
+  .wrap { max-width: 480px; margin: 0 auto; padding: 3rem 1rem; }
+  .card { background: linear-gradient(180deg, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 26px; padding: 2rem 1.6rem; box-shadow: 0 30px 80px rgba(0,0,0,0.6); text-align: center; }
+  .logo img { height: 80px; max-width: 100%; object-fit: contain; filter: brightness(0) invert(1); }
+  h1 { font-size: 1.4rem; margin: 0.8rem 0 0.4rem; }
+  .sub { color: rgba(255,255,255,0.6); font-size: 0.92rem; line-height: 1.5; margin: 0 0 1.2rem; }
+  .notas { display: grid; grid-template-columns: repeat(11, 1fr); gap: 4px; margin-bottom: 0.4rem; }
+  .notas button { height: 40px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.05); color: #fff; font-weight: 700; cursor: pointer; }
+  .notas button.on { background: #fff; color: #0b1a22; }
+  .esc { display: flex; justify-content: space-between; font-size: 0.72rem; color: rgba(255,255,255,0.45); margin-bottom: 1.1rem; }
+  textarea { width: 100%; min-height: 90px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.04); color: #fff; padding: 0.7rem; font: inherit; font-size: 0.9rem; }
+  label { display: flex; gap: 0.5rem; align-items: center; justify-content: center; font-size: 0.88rem; color: rgba(255,255,255,0.75); margin: 0.9rem 0; }
+  .btn { height: 46px; padding: 0 1.6rem; background: #fff; color: #0b1a22; border-radius: 999px; font-weight: 700; border: 0; font-size: 0.92rem; cursor: pointer; }
+  .msg { margin-top: 0.8rem; font-size: 0.85rem; color: #ff9c8f; }
+  .hide { display: none; }
+  @media (max-width: 420px) { .notas button { height: 34px; font-size: 0.8rem; } }
+</style>
+</head>
+<body>
+<div class="wrap"><div class="card">
+  <div class="logo hide" id="logoBox"><img id="logo" alt=""></div>
+  <h1 id="titulo">Como foi o atendimento?</h1>
+  <p class="sub" id="sub">Carregando...</p>
+  <div id="form" class="hide">
+    <div class="notas" id="notas"></div>
+    <div class="esc"><span>Nada provável</span><span>Muito provável</span></div>
+    <textarea id="coment" placeholder="Quer contar algo? (opcional)"></textarea>
+    <label><input type="checkbox" id="indica"> Eu indicaria o escritório para alguém</label>
+    <button class="btn" id="enviar">Enviar avaliação</button>
+    <div class="msg hide" id="msg"></div>
+  </div>
+</div></div>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var token = new URLSearchParams(location.search).get('t') || '', nota = null;
+  function errText(j) { try { var m = JSON.parse(j._server_messages || '[]'); if (m.length) return JSON.parse(m[0]).message.replace(/<[^>]+>/g, ''); } catch (e) {} return 'Não foi possível enviar.'; }
+  function fim(t) { $('form').classList.add('hide'); $('sub').textContent = t; }
+  fetch('/api/method/crm.api.portal.get_pesquisa?t=' + encodeURIComponent(token))
+    .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+    .then(function (res) {
+      if (!res.ok) { $('sub').textContent = errText(res.j); return; }
+      var d = res.j.message;
+      if (d.logo) { $('logo').src = d.logo; $('logoBox').classList.remove('hide'); }
+      if (d.respondida) { fim('Você já respondeu. Muito obrigado!'); return; }
+      $('sub').textContent = 'Olá' + (d.nome ? ', ' + d.nome : '') + '! De 0 a 10, qual a chance de você indicar ' + (d.marca || 'o escritório') + ' a um amigo?';
+      for (var i = 0; i <= 10; i++) (function (n) {
+        var b = document.createElement('button'); b.textContent = n; b.type = 'button';
+        b.onclick = function () { nota = n; Array.prototype.forEach.call($('notas').children, function (x) { x.classList.remove('on'); }); b.classList.add('on'); };
+        $('notas').appendChild(b);
+      })(i);
+      $('form').classList.remove('hide');
+    });
+  $('enviar').onclick = function () {
+    if (nota === null) { $('msg').textContent = 'Escolha uma nota de 0 a 10.'; $('msg').classList.remove('hide'); return; }
+    var fd = new FormData(); fd.append('t', token); fd.append('nota', nota); fd.append('comentario', $('coment').value); fd.append('indicaria', $('indica').checked ? 1 : 0);
+    fetch('/api/method/crm.api.portal.responder_pesquisa', { method: 'POST', body: fd })
+      .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+      .then(function (res) { if (!res.ok) { $('msg').textContent = errText(res.j); $('msg').classList.remove('hide'); } else fim('Obrigado pela avaliação!'); });
+  };
+})();
+</script>
+</body>
+</html>

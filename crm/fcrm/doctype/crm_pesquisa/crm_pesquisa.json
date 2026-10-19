@@ -1,0 +1,35 @@
+{
+	"actions": [],
+	"autoname": "hash",
+	"creation": "2026-10-19 00:00:00.000000",
+	"doctype": "DocType",
+	"engine": "InnoDB",
+	"field_order": ["deal", "token", "enviada_em", "nota", "comentario", "indicaria", "respondida_em"],
+	"fields": [
+		{"fieldname": "deal", "fieldtype": "Link", "label": "Caso", "options": "CRM Deal", "reqd": 1, "in_list_view": 1, "in_standard_filter": 1},
+		{"fieldname": "token", "fieldtype": "Data", "label": "Código do link", "unique": 1, "read_only": 1},
+		{"default": "Today", "fieldname": "enviada_em", "fieldtype": "Date", "label": "Enviada em"},
+		{"fieldname": "nota", "fieldtype": "Int", "label": "Nota (0 a 10)", "in_list_view": 1},
+		{"fieldname": "comentario", "fieldtype": "Small Text", "label": "Comentário"},
+		{"default": "0", "fieldname": "indicaria", "fieldtype": "Check", "label": "Indicaria o escritório", "in_list_view": 1},
+		{"fieldname": "respondida_em", "fieldtype": "Datetime", "label": "Respondida em", "in_list_view": 1}
+	],
+	"index_web_pages_for_search": 1,
+	"links": [],
+	"modified": "2026-10-19 00:00:00.000000",
+	"modified_by": "Administrator",
+	"module": "FCRM",
+	"name": "CRM Pesquisa",
+	"naming_rule": "Random",
+	"owner": "Administrator",
+	"permissions": [
+		{"create": 1, "delete": 1, "export": 1, "read": 1, "report": 1, "role": "System Manager", "write": 1},
+		{"create": 1, "delete": 1, "export": 1, "read": 1, "report": 1, "role": "Sales Manager", "write": 1},
+		{"read": 1, "report": 1, "role": "Sales User"}
+	],
+	"row_format": "Dynamic",
+	"sort_field": "modified",
+	"sort_order": "DESC",
+	"states": [],
+	"track_changes": 1
+}

@@ -256,6 +256,7 @@ scheduler_events = {
 		"crm.api.automacoes.send_billing_reminders",
 		"crm.api.influenciadoras.avisar_prazos_entrega",
 		"crm.api.automacoes.run_posvenda",
+		"crm.api.portal.lembrar_documentos",
 		"crm.api.automacoes.sync_lead_distribution",
 		"crm.api.event.trigger_daily_event_notifications",
 		"crm.fcrm.doctype.crm_invitation.crm_invitation.expire_invitations",

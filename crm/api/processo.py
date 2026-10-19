@@ -173,6 +173,9 @@ def dados(deal: str) -> dict:
 		"observacoes_encerramento": d.get("observacoes_encerramento") or "",
 		"motivos": MOTIVOS,
 		"pendencias": _pendencias(deal),
+		"tem_portal": bool(d.get("portal_token")),
+		"pesquisa": (frappe.get_all("CRM Pesquisa", filters={"deal": deal}, fields=["nota", "comentario", "respondida_em", "indicaria"],
+									order_by="creation desc", limit=1) or [None])[0] if frappe.db.exists("DocType", "CRM Pesquisa") else None,
 	}
 
 
@@ -252,6 +255,10 @@ def encerrar(deal: str, motivo: str, documentos_devolvidos=0, observacoes: str =
 	})
 	frappe.get_doc({"doctype": "Comment", "comment_type": "Comment", "reference_doctype": "CRM Deal", "reference_name": deal,
 					"content": _("Caso encerrado ({0}).").format(motivo) + (" " + _("Encerrado com pendências: {0}.").format("; ".join(pend)) if pend else "")}).insert(ignore_permissions=True)
+	if frappe.db.exists("DocType", "CRM Pesquisa"):
+		from crm.api.portal import criar_pesquisa
+
+		criar_pesquisa(deal)
 	return {"ok": True, "pendencias": pend}
 
 

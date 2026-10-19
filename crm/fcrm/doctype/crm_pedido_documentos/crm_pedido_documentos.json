@@ -12,7 +12,9 @@
   "recebidos",
   "mensagem",
   "expira_em",
-  "ativo"
+  "ativo",
+  "lembretes_enviados",
+  "ultimo_lembrete"
  ],
  "fields": [
   {
@@ -57,11 +59,24 @@
    "fieldtype": "Check",
    "label": "Ativo",
    "default": "1"
+  },
+  {
+   "default": "0",
+   "fieldname": "lembretes_enviados",
+   "fieldtype": "Int",
+   "label": "Lembretes enviados",
+   "read_only": 1
+  },
+  {
+   "fieldname": "ultimo_lembrete",
+   "fieldtype": "Date",
+   "label": "Último lembrete",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-21 00:00:00.000000",
+ "modified": "2026-10-19 14:00:00.000000",
  "modified_by": "Administrator",
  "module": "FCRM",
  "name": "CRM Pedido Documentos",

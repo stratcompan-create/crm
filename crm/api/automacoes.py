@@ -908,8 +908,8 @@ def ensure_service_layouts():
 	from crm.provision import PERFIS_JURIDICOS
 
 	extra = {
-		"CRM Lead": ["servico", "natureza"],
-		"CRM Deal": ["servico", "natureza", "valor_recorrente", "lancamento_antigo"],
+		"CRM Lead": ["servico", "natureza", "indicado_por"],
+		"CRM Deal": ["servico", "natureza", "valor_recorrente", "lancamento_antigo", "indicado_por"],
 	}
 	if (frappe.db.get_default("crm_profile") or "agencia") in PERFIS_JURIDICOS:
 		extra["CRM Deal"].append("percentual_exito")
