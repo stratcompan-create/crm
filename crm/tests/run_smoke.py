@@ -51,6 +51,7 @@ MODULES = [
     "assinatura_docs",
     "consulta_paga",
     "ajuda",
+    "modulos",
 ]
 
 
