@@ -13,7 +13,7 @@
       </div>
       <div v-if="previa.data" class="text-p-sm text-ink-gray-6">
         {{ __('{0} cliente(s) · {1} com e-mail', [previa.data.total, previa.data.com_email]) }}
-        <span v-if="!previa.data.tem_conta_email" class="text-ink-amber-3"> · {{ __('sem e-mail de envio configurado: baixe a lista para avisar pelo WhatsApp') }}</span>
+        <span v-if="!previa.data.tem_conta_email" class="text-ink-amber-6"> · {{ __('sem e-mail de envio configurado: baixe a lista para avisar pelo WhatsApp') }}</span>
       </div>
       <FormControl v-model="f.titulo" type="text" :label="__('Assunto')" :placeholder="__('Ex.: Nova regra do INSS pode afetar o seu pedido')" />
       <FormControl v-model="f.mensagem" type="textarea" :rows="6" :label="__('Mensagem')"

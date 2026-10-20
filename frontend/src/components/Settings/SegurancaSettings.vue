@@ -11,7 +11,7 @@
         {{ __('Além da senha, cada pessoa digita um código do aplicativo autenticador do celular (Google Authenticator, Microsoft Authenticator...). No próximo login, cada usuário vê um QR code para configurar.') }}
       </p>
       <div class="flex items-center gap-3">
-        <span class="text-p-sm" :class="estado.data?.dois_fatores ? 'text-ink-green-3' : 'text-ink-gray-5'">
+        <span class="text-p-sm" :class="estado.data?.dois_fatores ? 'text-ink-green-6' : 'text-ink-gray-5'">
           {{ estado.data?.dois_fatores ? __('Ligado') : __('Desligado') }}
         </span>
         <Button

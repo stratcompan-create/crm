@@ -150,7 +150,7 @@
         <div v-for="a in assinaturas.data" :key="a.name" class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-outline-gray-2 px-3 py-2 text-p-sm">
           <span class="min-w-0 truncate">
             {{ a.nome_arquivo }} ·
-            <span :class="a.status === 'Assinado' ? 'text-ink-green-3' : a.status === 'Cancelado' ? 'text-ink-gray-5' : 'text-ink-amber-3'">
+            <span :class="a.status === 'Assinado' ? 'text-ink-green-6' : a.status === 'Cancelado' ? 'text-ink-gray-5' : 'text-ink-amber-6'">
               {{ a.status === 'Assinado' ? __('Assinado por {0} em {1}', [a.assinante_nome, dateBr(a.assinado_em)]) : __(a.status) }}
             </span>
           </span>

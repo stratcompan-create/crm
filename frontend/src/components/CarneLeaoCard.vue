@@ -16,7 +16,7 @@
       <div class="flex flex-wrap gap-2 text-p-sm">
         <span class="rounded bg-surface-gray-2 px-2 py-1">{{ __('Pessoa física') }}: <b>{{ brl(dados.data.total_pf) }}</b></span>
         <span class="rounded bg-surface-gray-2 px-2 py-1">{{ __('Pessoa jurídica (fora do carnê-leão)') }}: <b>{{ brl(dados.data.total_pj) }}</b></span>
-        <span v-if="dados.data.sem_cpf" class="rounded bg-surface-amber-2 px-2 py-1 text-ink-amber-3">
+        <span v-if="dados.data.sem_cpf" class="rounded bg-surface-amber-2 px-2 py-1 text-ink-amber-6">
           {{ __('{0} recebimento(s) sem CPF do cliente: preencha nos dados do cliente', [dados.data.sem_cpf]) }}
         </span>
       </div>

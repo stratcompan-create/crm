@@ -62,7 +62,7 @@
             <div class="flex shrink-0 items-center gap-1">
               <span
                 class="rounded px-2 py-0.5 text-xs"
-                :class="r.repasse_status === 'Repassado' ? 'bg-surface-green-2 text-ink-green-3' : 'bg-surface-amber-2 text-ink-amber-3'"
+                :class="r.repasse_status === 'Repassado' ? 'bg-surface-green-2 text-ink-green-6' : 'bg-surface-amber-2 text-ink-amber-6'"
               >
                 {{ r.repasse_status === 'Repassado' ? __('Repassado em {0}', [dataBr(r.repasse_data)]) : __('A repassar') }}
               </span>
@@ -85,7 +85,7 @@
           class="flex flex-wrap items-center justify-between gap-2 rounded border border-outline-gray-1 px-3 py-2 text-p-sm"
         >
           <span>{{ dataBr(d.data_vencimento) }} · {{ d.descricao }} · <b>{{ brl(d.valor) }}</b></span>
-          <span v-if="d.recebimento" class="text-xs text-ink-green-3">{{ __('Descontada do cliente') }}</span>
+          <span v-if="d.recebimento" class="text-xs text-ink-green-6">{{ __('Descontada do cliente') }}</span>
           <label v-else class="flex items-center gap-1.5 text-xs text-ink-gray-6">
             <input type="checkbox" :checked="!!d.reembolsavel" @change="(e) => alternarReembolso(d, e.target.checked)" />
             {{ __('Cobrar do cliente') }}
@@ -186,8 +186,8 @@ const cards = computed(() => {
   const t = dados.data?.totais || {}
   return [
     { label: __('Recebido em nome do cliente'), valor: t.recebido, cor: 'text-ink-gray-9' },
-    { label: __('Honorários do escritório'), valor: t.honorarios, cor: 'text-ink-green-3' },
-    { label: __('A repassar ao cliente'), valor: t.a_repassar, cor: 'text-ink-amber-3' },
+    { label: __('Honorários do escritório'), valor: t.honorarios, cor: 'text-ink-green-6' },
+    { label: __('A repassar ao cliente'), valor: t.a_repassar, cor: 'text-ink-amber-6' },
     { label: __('Custas a descontar'), valor: t.custas_a_descontar, cor: 'text-ink-gray-7' },
   ]
 })

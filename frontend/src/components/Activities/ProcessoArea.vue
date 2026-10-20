@@ -43,7 +43,7 @@
           <FormControl v-model="proc.tribunal" class="sm:col-span-2" type="text" :placeholder="__('Tribunal / vara')" />
           <Button variant="subtle" :label="__('Salvar')" :loading="salvandoProc" @click="salvarProcesso" />
         </div>
-        <div v-if="dados.data.aviso_numero" class="text-xs text-ink-amber-3">{{ dados.data.aviso_numero }}</div>
+        <div v-if="dados.data.aviso_numero" class="text-xs text-ink-amber-6">{{ dados.data.aviso_numero }}</div>
         <div class="text-xs text-ink-gray-5">{{ __('Prazos processuais continuam no seu software jurídico. Aqui fica só o que ajuda a atender o cliente.') }}</div>
       </section>
 
@@ -98,7 +98,7 @@
       <!-- encerramento -->
       <section v-if="!dados.data.encerrado" class="flex flex-col gap-2">
         <div class="text-p-base-medium text-ink-gray-9">{{ __('Encerrar o caso') }}</div>
-        <div v-if="dados.data.pendencias.length" class="rounded bg-surface-amber-2 px-3 py-2 text-xs text-ink-amber-3">
+        <div v-if="dados.data.pendencias.length" class="rounded bg-surface-amber-2 px-3 py-2 text-xs text-ink-amber-6">
           {{ __('Antes de encerrar:') }} {{ dados.data.pendencias.join(' · ') }}
         </div>
         <div class="grid grid-cols-1 gap-2 sm:grid-cols-3">

@@ -24,7 +24,7 @@
     <p class="text-xs text-ink-gray-5">
       {{ __('Ditar: o texto aparece enquanto você fala (grátis, funciona melhor no Chrome). Gravar ou enviar áudio (até 25 min, inclusive áudio do WhatsApp): o áudio é transcrito e entra no texto abaixo.') }}
     </p>
-    <div v-if="estado.data && !estado.data.configurado" class="rounded bg-surface-amber-1 px-3 py-2 text-xs text-ink-amber-3">
+    <div v-if="estado.data && !estado.data.configurado" class="rounded bg-surface-amber-1 px-3 py-2 text-xs text-ink-amber-6">
       <template v-if="estado.data.pode_configurar">
         {{ __('Para gravar ou enviar áudio, cadastre uma chave da OpenAI (transcrição custa centavos por minuto). O ditado funciona sem chave.') }}
         <div class="mt-2 flex gap-2">

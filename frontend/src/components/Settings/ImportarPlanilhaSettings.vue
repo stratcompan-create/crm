@@ -39,8 +39,8 @@
     <template v-if="analise && !resultado">
       <div class="mx-2 flex flex-wrap gap-2 text-p-sm">
         <span class="rounded bg-surface-gray-2 px-2 py-1">{{ __('{0} linhas na planilha', [analise.total]) }}</span>
-        <span class="rounded bg-surface-green-2 px-2 py-1 text-ink-green-3">{{ __('{0} prontas para importar', [analise.validas]) }}</span>
-        <span v-if="analise.com_erro" class="rounded bg-surface-amber-2 px-2 py-1 text-ink-amber-3">{{ __('{0} com problema (serão puladas)', [analise.com_erro]) }}</span>
+        <span class="rounded bg-surface-green-2 px-2 py-1 text-ink-green-6">{{ __('{0} prontas para importar', [analise.validas]) }}</span>
+        <span v-if="analise.com_erro" class="rounded bg-surface-amber-2 px-2 py-1 text-ink-amber-6">{{ __('{0} com problema (serão puladas)', [analise.com_erro]) }}</span>
       </div>
 
       <div class="mx-2 flex flex-col gap-2">
@@ -48,7 +48,7 @@
         <p class="text-xs text-ink-gray-5">{{ __('Confira de qual coluna da sua planilha vem cada informação. Se algo estiver errado, é só trocar.') }}</p>
         <div class="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
           <div v-for="c in campos" :key="c.campo" class="flex flex-col gap-1">
-            <span class="text-p-sm text-ink-gray-6">{{ c.rotulo }}<span v-if="c.obrigatorio" class="text-ink-red-3"> *</span></span>
+            <span class="text-p-sm text-ink-gray-6">{{ c.rotulo }}<span v-if="c.obrigatorio" class="text-ink-red-6"> *</span></span>
             <FormControl
               type="select"
               :options="opcoesColuna"
@@ -81,7 +81,7 @@
                 </tr>
                 <tr v-if="p.erros.length" class="bg-surface-amber-1">
                   <td></td>
-                  <td :colspan="camposUsados.length" class="px-3 pb-2 text-xs text-ink-amber-3">{{ p.erros.join(' · ') }}</td>
+                  <td :colspan="camposUsados.length" class="px-3 pb-2 text-xs text-ink-amber-6">{{ p.erros.join(' · ') }}</td>
                 </tr>
               </template>
             </tbody>
@@ -106,9 +106,9 @@
     <div v-if="resultado" class="mx-2 flex flex-col gap-3 rounded-lg border border-outline-gray-2 p-4">
       <div class="text-p-base-medium text-ink-gray-9">{{ __('Importação concluída') }}</div>
       <div class="flex flex-wrap gap-2 text-p-sm">
-        <span class="rounded bg-surface-green-2 px-2 py-1 text-ink-green-3">{{ __('{0} registros criados', [resultado.criados]) }}</span>
+        <span class="rounded bg-surface-green-2 px-2 py-1 text-ink-green-6">{{ __('{0} registros criados', [resultado.criados]) }}</span>
         <span v-if="resultado.ignorados" class="rounded bg-surface-gray-2 px-2 py-1">{{ __('{0} já existiam (ignorados)', [resultado.ignorados]) }}</span>
-        <span v-if="resultado.com_erro" class="rounded bg-surface-amber-2 px-2 py-1 text-ink-amber-3">{{ __('{0} linhas não entraram', [resultado.com_erro]) }}</span>
+        <span v-if="resultado.com_erro" class="rounded bg-surface-amber-2 px-2 py-1 text-ink-amber-6">{{ __('{0} linhas não entraram', [resultado.com_erro]) }}</span>
       </div>
       <div v-if="resultado.problemas?.length" class="flex flex-col gap-1 text-xs text-ink-gray-6">
         <div v-for="p in resultado.problemas" :key="p.linha">{{ __('Linha {0}: {1}', [p.linha, p.motivo]) }}</div>

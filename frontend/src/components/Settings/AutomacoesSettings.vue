@@ -108,7 +108,7 @@
           </div>
           <Toggle v-model="cfg.triagem_ativa" />
         </div>
-        <div v-if="triagem && !triagem.conectado" class="mt-3 rounded-md bg-surface-amber-1 px-3 py-2 text-p-sm text-ink-amber-3">
+        <div v-if="triagem && !triagem.conectado" class="mt-3 rounded-md bg-surface-amber-1 px-3 py-2 text-p-sm text-ink-amber-6">
           {{ __('O WhatsApp Business (API oficial da Meta) ainda não está conectado. A triagem começa a funcionar assim que a conta for ligada.') }}
         </div>
         <Field class="mt-3" :label="__('Mensagem de boas-vindas')"><FormControl v-model="cfg.triagem_boas_vindas" type="textarea" :rows="2" :placeholder="triagem?.padrao.boas_vindas" /></Field>
