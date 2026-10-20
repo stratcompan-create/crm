@@ -105,6 +105,10 @@ def get_portal(t: str = "") -> dict:
 def lembrar_documentos():
 	"""Diário: cobra os documentos que ainda não chegaram (a cada 3 dias, no máximo 3 vezes)."""
 	from crm.api.automacoes import _notify_client
+	from crm.provision import PERFIS_JURIDICOS, get_profile
+
+	if get_profile() not in PERFIS_JURIDICOS:
+		return
 
 	hoje = getdate(nowdate())
 	for p in frappe.get_all("CRM Pedido Documentos", filters={"ativo": 1},

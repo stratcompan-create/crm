@@ -194,6 +194,7 @@ doc_events = {
 	"WhatsApp Message": {
 		"validate": ["crm.api.whatsapp.validate"],
 		"on_update": ["crm.api.whatsapp.on_update"],
+		"after_insert": ["crm.api.triagem_whatsapp.ao_receber"],
 	},
 	"CRM Task": {
 		"on_update": ["crm.api.automacoes.on_task_update"],

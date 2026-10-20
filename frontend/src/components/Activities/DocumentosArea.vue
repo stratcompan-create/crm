@@ -53,7 +53,7 @@
           <span class="text-p-sm text-ink-green-3">{{ __('Documento gerado: {0}', [generated.nome]) }}</span>
           <span class="flex gap-2">
             <a :href="generated.url" target="_blank"><Button variant="subtle" :label="__('Abrir')" /></a>
-            <Button variant="solid" iconLeft="lucide-pen-line" :label="__('Enviar para assinatura')" @click="paraAssinatura(generated.arquivo)" />
+            <Button v-if="perfilJuridico" variant="solid" iconLeft="lucide-pen-line" :label="__('Enviar para assinatura')" @click="paraAssinatura(generated.arquivo)" />
             <Button v-if="docs.data.tem_email" variant="subtle" :label="__('Enviar por e-mail')" @click="sendGenerated" />
           </span>
         </div>
@@ -132,7 +132,7 @@
             </span>
             <span class="flex shrink-0 items-center gap-2 text-xs text-ink-gray-5">
               <Button
-                v-if="/\.pdf$/i.test(f.file_name) && !/assinado\.pdf$/i.test(f.file_name)"
+                v-if="perfilJuridico && /\.pdf$/i.test(f.file_name) && !/assinado\.pdf$/i.test(f.file_name)"
                 size="sm"
                 variant="ghost"
                 :label="__('Assinatura')"
@@ -145,7 +145,7 @@
       </section>
 
       <!-- Assinaturas -->
-      <section v-if="assinaturas.data?.length" class="flex flex-col gap-2">
+      <section v-if="perfilJuridico && assinaturas.data?.length" class="flex flex-col gap-2">
         <div class="text-base-semibold text-ink-gray-9">{{ __('Assinaturas') }}</div>
         <div v-for="a in assinaturas.data" :key="a.name" class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-outline-gray-2 px-3 py-2 text-p-sm">
           <span class="min-w-0 truncate">
@@ -170,6 +170,7 @@
 </template>
 
 <script setup>
+const perfilJuridico = ['escritorio', 'escritorio_empresarial'].includes(window.crm_profile)
 import { Button, ErrorMessage, FormControl, call, createResource, toast } from 'frappe-ui'
 import { computed, onMounted, reactive, ref, watch } from 'vue'
 

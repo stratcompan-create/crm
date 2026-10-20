@@ -270,7 +270,7 @@ const tabs = computed(() => {
           label: __('Importar planilha'),
           icon: 'upload',
           component: markRaw(ImportarPlanilhaSettings),
-          condition: () => isManager(),
+          condition: () => isManager() && ['escritorio', 'escritorio_empresarial'].includes(window.crm_profile),
         },
         {
           label: __('Modelos de área'),
@@ -288,13 +288,13 @@ const tabs = computed(() => {
           label: __('Comunicados aos clientes'),
           icon: 'send',
           component: markRaw(ComunicadosSettings),
-          condition: () => isManager(),
+          condition: () => isManager() && ['escritorio', 'escritorio_empresarial'].includes(window.crm_profile),
         },
         {
           label: __('Segurança e dados'),
           icon: 'shield',
           component: markRaw(SegurancaSettings),
-          condition: () => isManager(),
+          condition: () => isManager() && ['escritorio', 'escritorio_empresarial'].includes(window.crm_profile),
         },
         {
           label: __('Automações'),

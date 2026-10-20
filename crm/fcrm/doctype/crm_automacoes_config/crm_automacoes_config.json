@@ -5,7 +5,7 @@
  "engine": "InnoDB",
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-19 18:00:00.000000",
+ "modified": "2026-10-19 19:00:00.000000",
  "modified_by": "Administrator",
  "module": "FCRM",
  "owner": "Administrator",
@@ -59,7 +59,12 @@
   "chave_transcricao",
   "agenda_valor_consulta",
   "processo_ativo",
-  "prestacao_ativo"
+  "prestacao_ativo",
+  "triagem_ativa",
+  "triagem_boas_vindas",
+  "triagem_perguntas",
+  "triagem_encerramento",
+  "triagem_responsavel"
  ],
  "fields": [
   {
@@ -316,6 +321,33 @@
    "fieldname": "prestacao_ativo",
    "fieldtype": "Check",
    "label": "Aba Prestação de contas no caso"
+  },
+  {
+   "default": "0",
+   "fieldname": "triagem_ativa",
+   "fieldtype": "Check",
+   "label": "Triagem no WhatsApp"
+  },
+  {
+   "fieldname": "triagem_boas_vindas",
+   "fieldtype": "Small Text",
+   "label": "Triagem: mensagem de boas-vindas"
+  },
+  {
+   "fieldname": "triagem_perguntas",
+   "fieldtype": "Long Text",
+   "label": "Triagem: perguntas (uma por linha)"
+  },
+  {
+   "fieldname": "triagem_encerramento",
+   "fieldtype": "Small Text",
+   "label": "Triagem: mensagem final"
+  },
+  {
+   "fieldname": "triagem_responsavel",
+   "fieldtype": "Link",
+   "options": "User",
+   "label": "Triagem: quem recebe os atendimentos"
   }
  ],
  "permissions": [

@@ -91,10 +91,30 @@
           <Field :label="__('Dias da semana (1 = segunda, 7 = domingo)')"><FormControl v-model="cfg.agenda_dias" type="text" placeholder="1,2,3,4,5" /></Field>
           <Field :label="__('Antecedência mínima (horas)')"><FormControl v-model="cfg.agenda_antecedencia" type="number" /></Field>
           <Field :label="__('Mostrar quantos dias à frente')"><FormControl v-model="cfg.agenda_dias_a_frente" type="number" /></Field>
-            <Field :label="__('Valor da consulta (0 = gratuita; com valor, o cliente recebe o link de pagamento)')"><FormControl v-model="cfg.agenda_valor_consulta" type="number" /></Field>
+            <Field v-if="['escritorio', 'escritorio_empresarial'].includes(perfil)" :label="__('Valor da consulta (0 = gratuita; com valor, o cliente recebe o link de pagamento)')"><FormControl v-model="cfg.agenda_valor_consulta" type="number" /></Field>
           <Field :label="__('Link da reunião (Meet, Zoom...)')"><FormControl v-model="cfg.agenda_link" type="text" placeholder="https://" /></Field>
         </div>
         <Field class="mt-3" :label="__('Aviso na página (opcional)')"><FormControl v-model="cfg.agenda_mensagem" type="textarea" :rows="2" /></Field>
+      </section>
+
+      <!-- Triagem no WhatsApp -->
+      <section v-if="['escritorio', 'escritorio_empresarial'].includes(perfil)" class="rounded-lg border border-outline-gray-2 p-4">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <div class="text-base-semibold text-ink-gray-9">{{ __('Triagem no WhatsApp') }}</div>
+            <p class="mt-1 text-p-sm text-ink-gray-6">
+              {{ __('Quem escreve pela primeira vez vira atendimento e recebe as perguntas abaixo. O robô nunca responde dúvidas: a IA só organiza área, urgência e resumo para a equipe. Quando alguém da equipe responde, o robô para.') }}
+            </p>
+          </div>
+          <Toggle v-model="cfg.triagem_ativa" />
+        </div>
+        <div v-if="triagem && !triagem.conectado" class="mt-3 rounded-md bg-surface-amber-1 px-3 py-2 text-p-sm text-ink-amber-3">
+          {{ __('O WhatsApp Business (API oficial da Meta) ainda não está conectado. A triagem começa a funcionar assim que a conta for ligada.') }}
+        </div>
+        <Field class="mt-3" :label="__('Mensagem de boas-vindas')"><FormControl v-model="cfg.triagem_boas_vindas" type="textarea" :rows="2" :placeholder="triagem?.padrao.boas_vindas" /></Field>
+        <Field class="mt-3" :label="__('Perguntas (uma por linha, na ordem)')"><FormControl v-model="cfg.triagem_perguntas" type="textarea" :rows="4" :placeholder="triagem?.padrao.perguntas" /></Field>
+        <Field class="mt-3" :label="__('Mensagem final')"><FormControl v-model="cfg.triagem_encerramento" type="textarea" :rows="2" :placeholder="triagem?.padrao.encerramento" /></Field>
+        <Field class="mt-3" :label="__('E-mail de quem recebe os atendimentos (vazio = responsável da agenda)')"><FormControl v-model="cfg.triagem_responsavel" type="text" /></Field>
       </section>
 
       <!-- Influenciadoras -->
@@ -307,6 +327,8 @@ const somaDivisao = computed(() => {
   )
 })
 
+const triagem = ref(null)
+onMounted(() => call('crm.api.triagem_whatsapp.estado').then((r) => (triagem.value = r)).catch(() => {}))
 onMounted(async () => {
   cfg.value = await call('crm.api.automacoes.get_settings')
   reports.value = await call('crm.api.automacoes.list_weekly_reports')

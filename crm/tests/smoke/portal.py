@@ -9,7 +9,7 @@ from frappe.utils import add_days, nowdate
 from crm.api import portal, processo
 
 
-def run():
+def _run():
 	frappe.set_user("Administrator")
 	res = []
 
@@ -102,3 +102,10 @@ def run():
 			frappe.delete_doc("CRM Lead", lead.name, force=True, ignore_permissions=True)
 		frappe.db.commit()
 	return res
+
+
+def run():
+	from unittest.mock import patch
+
+	with patch("crm.provision.get_profile", return_value="escritorio"):
+		return _run()

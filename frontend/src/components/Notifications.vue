@@ -18,7 +18,7 @@
         </div>
         <div class="flex gap-1 mr-3">
           <Button
-            v-if="podePedirAvisos && !avisosPermitidos"
+            v-if="perfilJuridico && podePedirAvisos && !avisosPermitidos"
             variant="subtle"
             size="sm"
             :label="__('Ativar avisos')"
@@ -96,6 +96,7 @@
   </div>
 </template>
 <script setup>
+const perfilJuridico = ['escritorio', 'escritorio_empresarial'].includes(window.crm_profile)
 import WhatsAppIcon from '@/components/Icons/WhatsAppIcon.vue'
 import MarkAsDoneIcon from '@/components/Icons/MarkAsDoneIcon.vue'
 import NotificationsIcon from '@/components/Icons/NotificationsIcon.vue'
@@ -125,7 +126,7 @@ async function pedirAvisos() {
   avisosPermitidos.value = (await Notification.requestPermission()) === 'granted'
 }
 function avisarNoSistema() {
-  if (!avisosPermitidos.value || !document.hidden) return
+  if (!perfilJuridico || !avisosPermitidos.value || !document.hidden) return
   try {
     new Notification(document.title || 'CRM', { body: __('Você tem uma nova notificação'), icon: document.querySelector('link[rel=icon]')?.href })
   } catch (e) {}

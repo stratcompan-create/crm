@@ -284,7 +284,9 @@ def _confirm_by_email(meeting, cfg, start, end, reminder: bool = False):
 	when = start.strftime("%d/%m/%Y às %H:%M")
 	first = (meeting.nome or "").split(" ")[0]
 	link = f"<p>Link da reunião: <a href='{cfg.agenda_link}'>{cfg.agenda_link}</a></p>" if cfg.agenda_link else ""
-	if meeting.get("token"):
+	from crm.provision import PERFIS_JURIDICOS, get_profile
+
+	if meeting.get("token") and get_profile() in PERFIS_JURIDICOS:
 		botao = "display:inline-block;padding:10px 18px;border-radius:999px;text-decoration:none;font-weight:bold;margin:4px 6px 4px 0"
 		link += (f"<p><a style='{botao};background:#042d3c;color:#fff' href='{get_url('/agendar?confirmar=' + meeting.token)}'>Confirmar presença</a>"
 				 f"<a style='{botao};background:#eee;color:#333' href='{get_url('/agendar?cancelar=' + meeting.token)}'>Desmarcar</a></p>")

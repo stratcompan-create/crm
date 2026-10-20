@@ -6,7 +6,7 @@
       <router-view :key="$route.fullPath" />
     </Layout>
     <AssistenteClaude v-if="session.isLoggedIn && assistenteAtivo" />
-    <AjudaBotao v-if="session.isLoggedIn" />
+    <AjudaBotao v-if="session.isLoggedIn && perfilJuridico" />
     <Dialogs />
     <DoctypeModals />
     <EventNotificationPopup />
@@ -14,6 +14,7 @@
 </template>
 
 <script setup>
+const perfilJuridico = ['escritorio', 'escritorio_empresarial'].includes(window.crm_profile)
 import NotPermitted from '@/pages/NotPermitted.vue'
 import AssistenteClaude from '@/components/AssistenteClaude.vue'
 import AjudaBotao from '@/components/AjudaBotao.vue'

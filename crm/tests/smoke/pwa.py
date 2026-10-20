@@ -7,7 +7,7 @@ import frappe
 from crm.api import pwa
 
 
-def run():
+def _run():
 	frappe.set_user("Guest")
 	res = []
 
@@ -30,3 +30,10 @@ def run():
 	finally:
 		frappe.set_user("Administrator")
 	return res
+
+
+def run():
+	from unittest.mock import patch
+
+	with patch("crm.provision.get_profile", return_value="escritorio"):
+		return _run()

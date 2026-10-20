@@ -7,7 +7,7 @@ from crm.api import seguranca as sg
 EMAIL = "advogado.teste.sigilo@example.com"
 
 
-def run():
+def _run():
 	frappe.set_user("Administrator")
 	res = []
 
@@ -96,3 +96,10 @@ def run():
 			frappe.delete_doc("User", EMAIL, force=True, ignore_permissions=True)
 		frappe.db.commit()
 	return res
+
+
+def run():
+	from unittest.mock import patch
+
+	with patch("crm.provision.get_profile", return_value="escritorio"):
+		return _run()

@@ -9,7 +9,7 @@ from crm.api import inteligencia as it
 AREA = "Área Teste Inteligência"
 
 
-def run():
+def _run():
 	frappe.set_user("Administrator")
 	res = []
 
@@ -84,3 +84,10 @@ def run():
 			frappe.delete_doc("CRM Servico", AREA, force=True, ignore_permissions=True)
 		frappe.db.commit()
 	return res
+
+
+def run():
+	from unittest.mock import patch
+
+	with patch("crm.provision.get_profile", return_value="escritorio"):
+		return _run()

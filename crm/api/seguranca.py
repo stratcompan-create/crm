@@ -25,7 +25,9 @@ def _gestor():
 
 def carimbar_consentimento(doc, method=None):
 	"""Guarda quando a pessoa autorizou o uso dos dados."""
-	if doc.meta.has_field("consentimento_lgpd"):
+	from crm.provision import PERFIS_JURIDICOS, get_profile
+
+	if doc.meta.has_field("consentimento_lgpd") and get_profile() in PERFIS_JURIDICOS:
 		if cint(doc.get("consentimento_lgpd")) and not doc.get("consentimento_em"):
 			doc.consentimento_em = now_datetime()
 		elif not cint(doc.get("consentimento_lgpd")):

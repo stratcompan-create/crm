@@ -20,7 +20,24 @@ def _tipo(url: str) -> str:
 	return "image/svg+xml" if u.endswith(".svg") else "image/jpeg" if u.endswith((".jpg", ".jpeg")) else "image/png"
 
 
+MANIFESTO_ANTIGO = {
+	"display": "standalone", "name": "CRM", "short_name": "CRM", "start_url": "/crm",
+	"description": "CRM para gestão de leads, negócios e atendimento ao cliente.",
+	"icons": [
+		{"src": "/assets/crm/manifest/manifest-icon-192.maskable.png", "sizes": "192x192", "type": "image/png", "purpose": p}
+		for p in ("any", "maskable")
+	] + [
+		{"src": "/assets/crm/manifest/manifest-icon-512.maskable.png", "sizes": "512x512", "type": "image/png", "purpose": p}
+		for p in ("any", "maskable")
+	],
+}
+
+
 def dados_manifesto() -> dict:
+	from crm.provision import PERFIS_JURIDICOS, get_profile
+
+	if get_profile() not in PERFIS_JURIDICOS:
+		return dict(MANIFESTO_ANTIGO)
 	g = frappe.db.get_single_value
 	marca = (g("FCRM Settings", "brand_name") or "CRM").strip()
 	cor = g("FCRM Settings", "brand_color") or "#042d3c"

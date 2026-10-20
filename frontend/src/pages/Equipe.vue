@@ -15,7 +15,7 @@
   </LayoutHeader>
 
   <div class="flex-1 overflow-y-auto p-5">
-    <CargaEquipeCard v-if="isManager()" />
+    <CargaEquipeCard v-if="isManager() && perfilJuridico" />
     <div v-if="loading" class="py-10 text-center text-p-sm text-ink-gray-5">
       {{ __('Carregando...') }}
     </div>
@@ -66,6 +66,7 @@
   </div>
 </template>
 <script setup>
+const perfilJuridico = ['escritorio', 'escritorio_empresarial'].includes(window.crm_profile)
 import LayoutHeader from '@/components/LayoutHeader.vue'
 import CargaEquipeCard from '@/components/CargaEquipeCard.vue'
 import { usersStore } from '@/stores/users'

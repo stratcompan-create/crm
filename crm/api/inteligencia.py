@@ -92,6 +92,10 @@ def modelo_da_area(area: str | None) -> dict | None:
 
 def aplicar_padrao_area(doc, method=None):
 	"""Caso novo (ou que mudou de área) recebe o êxito padrão da área, se ainda não tiver percentual."""
+	from crm.provision import PERFIS_JURIDICOS, get_profile
+
+	if get_profile() not in PERFIS_JURIDICOS:
+		return
 	try:
 		if not doc.meta.has_field("percentual_exito") or flt(doc.get("percentual_exito")):
 			return

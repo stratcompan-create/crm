@@ -116,6 +116,10 @@ def _rotulo_caso(deal: str) -> str:
 
 def checar_cliente_novo(doc, method=None):
 	"""Ao criar um caso, avisa (com uma tarefa) se o cliente já aparece como parte contrária em outro."""
+	from crm.provision import PERFIS_JURIDICOS, get_profile
+
+	if get_profile() not in PERFIS_JURIDICOS:
+		return
 	try:
 		nome = doc.get("lead_name") or doc.get("organization") or f"{doc.get('first_name') or ''} {doc.get('last_name') or ''}".strip()
 		achados = verificar_conflito(nome, None, "Cliente", doc.name)

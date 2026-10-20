@@ -36,7 +36,7 @@
 
     <CarneLeaoCard v-if="juridico" />
 
-    <IndicacoesCard />
+    <IndicacoesCard v-if="juridico" />
 
     <RentabilidadeCard v-if="juridico" />
 

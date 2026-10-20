@@ -1,0 +1,115 @@
+{
+	"actions": [],
+	"autoname": "hash",
+	"creation": "2026-10-19 19:00:00.000000",
+	"doctype": "DocType",
+	"engine": "InnoDB",
+	"field_order": [
+		"lead",
+		"telefone",
+		"status",
+		"etapa",
+		"area",
+		"urgencia",
+		"resumo",
+		"respostas",
+		"concluida_em"
+	],
+	"fields": [
+		{
+			"fieldname": "lead",
+			"fieldtype": "Link",
+			"label": "Atendimento",
+			"options": "CRM Lead",
+			"in_list_view": 1,
+			"in_standard_filter": 1
+		},
+		{
+			"fieldname": "telefone",
+			"fieldtype": "Data",
+			"label": "Telefone",
+			"in_standard_filter": 1
+		},
+		{
+			"default": "Em andamento",
+			"fieldname": "status",
+			"fieldtype": "Select",
+			"label": "Situação",
+			"in_list_view": 1,
+			"in_standard_filter": 1,
+			"options": "Em andamento\nConcluída\nAssumida pela equipe\nExpirada"
+		},
+		{
+			"default": "0",
+			"fieldname": "etapa",
+			"fieldtype": "Int",
+			"label": "Pergunta atual"
+		},
+		{
+			"fieldname": "area",
+			"fieldtype": "Data",
+			"label": "Área provável",
+			"in_list_view": 1
+		},
+		{
+			"fieldname": "urgencia",
+			"fieldtype": "Select",
+			"label": "Urgência",
+			"options": "\nAlta\nMédia\nBaixa",
+			"in_list_view": 1
+		},
+		{
+			"fieldname": "resumo",
+			"fieldtype": "Small Text",
+			"label": "Resumo"
+		},
+		{
+			"fieldname": "respostas",
+			"fieldtype": "Long Text",
+			"label": "Perguntas e respostas (JSON)"
+		},
+		{
+			"fieldname": "concluida_em",
+			"fieldtype": "Datetime",
+			"label": "Concluída em"
+		}
+	],
+	"index_web_pages_for_search": 1,
+	"links": [],
+	"modified": "2026-10-19 19:00:00.000000",
+	"modified_by": "Administrator",
+	"module": "FCRM",
+	"name": "CRM Triagem",
+	"naming_rule": "Random",
+	"owner": "Administrator",
+	"permissions": [
+		{
+			"create": 1,
+			"delete": 1,
+			"export": 1,
+			"read": 1,
+			"report": 1,
+			"role": "System Manager",
+			"write": 1
+		},
+		{
+			"create": 1,
+			"delete": 1,
+			"export": 1,
+			"read": 1,
+			"report": 1,
+			"role": "Sales Manager",
+			"write": 1
+		},
+		{
+			"read": 1,
+			"report": 1,
+			"role": "Sales User"
+		}
+	],
+	"row_format": "Dynamic",
+	"sort_field": "modified",
+	"sort_order": "DESC",
+	"states": [],
+	"track_changes": 1
+}
