@@ -41,7 +41,7 @@ CONFIG_FIELDS = (
 	"posvenda_avaliacao_link posvenda_avaliacao_mensagem posvenda_indicacao_dias posvenda_indicacao_mensagem "
 	"relatorio_ativo relatorio_email relatorio_destinatarios agenda_ativa agenda_titulo agenda_duracao agenda_dias "
 	"agenda_inicio agenda_fim agenda_antecedencia agenda_dias_a_frente agenda_responsavel agenda_link "
-	"agenda_mensagem agenda_valor_consulta influenciadoras_ativo meu_site_ativo assistente_ativo credito_ia_ativo contas_ativo instagram_ativo processo_ativo prestacao_ativo triagem_ativa triagem_boas_vindas triagem_perguntas triagem_encerramento triagem_responsavel "
+	"agenda_mensagem agenda_valor_consulta influenciadoras_ativo meu_site_ativo assistente_ativo credito_ia_ativo credito_personalizado_ativo contas_ativo instagram_ativo processo_ativo prestacao_ativo triagem_ativa triagem_boas_vindas triagem_perguntas triagem_encerramento triagem_responsavel "
 	"divisao_prolabore_pct divisao_impostos_pct divisao_crescimento_pct divisao_custos_pct email_adiado"
 ).split()
 
@@ -78,6 +78,7 @@ DEFAULTS = {
 	"assistente_ativo": 1,
 	# desligado por padrao - so liga pra quem entrou no modelo de saldo pre-pago
 	"credito_ia_ativo": 0,
+	"credito_personalizado_ativo": 0,
 	"contas_ativo": 1,
 	"instagram_ativo": 1,
 	# módulos do perfil escritório (cada escritório liga só o que usa)

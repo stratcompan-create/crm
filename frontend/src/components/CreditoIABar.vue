@@ -42,6 +42,33 @@
             </span>
           </div>
         </button>
+        <div v-if="saldo.data?.personalizado" class="flex flex-col gap-2 rounded-lg border border-outline-gray-2 px-4 py-3">
+          <span class="text-p-base-medium text-ink-gray-8">{{ __('Outro valor') }}</span>
+          <div class="flex items-center gap-2">
+            <span class="text-p-base text-ink-gray-6">R$</span>
+            <input
+              id="credito-valor-livre"
+              v-model="valorLivre"
+              type="number"
+              inputmode="decimal"
+              :min="minimoReais"
+              step="1"
+              :placeholder="String(minimoReais)"
+              class="form-input w-full rounded border border-outline-gray-2 px-2 py-1.5 text-p-base"
+              @keyup.enter="comprarLivre"
+            />
+            <Button variant="solid" :label="__('Gerar link')" :disabled="comprando || !valorValido" @click="comprarLivre" />
+          </div>
+          <span v-if="valorLivre !== '' && !valorValido" class="text-p-sm text-ink-red-4">
+            {{ __('O valor mínimo é {0}.', [formatarReais(saldo.data.minimo_centavos)]) }}
+          </span>
+          <div v-else-if="valorValido" class="flex flex-col gap-0.5">
+            <span v-for="u in saldo.data.uso_referencia || []" :key="u.label" class="text-p-sm text-ink-gray-5">
+              {{ __('até {0} {1}', [Math.floor(centavosLivre / Math.max(1, u.custo_centavos)).toLocaleString('pt-BR'), u.label]) }}
+            </span>
+          </div>
+          <span v-else class="text-p-sm text-ink-gray-5">{{ __('A partir de {0}, sem limite.', [formatarReais(saldo.data.minimo_centavos)]) }}</span>
+        </div>
       </div>
     </template>
   </Dialog>
@@ -73,6 +100,24 @@ const textoSaldo = computed(() => {
   if (centavos <= 0) return __('Saldo esgotado - a IA parou de responder')
   return __('Saldo disponível: {0}', [formatarReais(centavos)])
 })
+
+const valorLivre = ref('')
+const minimoReais = computed(() => Math.round((saldo.data?.minimo_centavos || 2000) / 100))
+const centavosLivre = computed(() => Math.round(parseFloat(String(valorLivre.value).replace(',', '.')) * 100) || 0)
+const valorValido = computed(() => centavosLivre.value >= (saldo.data?.minimo_centavos || 2000))
+
+async function comprarLivre() {
+  if (!valorValido.value || comprando.value) return
+  comprando.value = true
+  try {
+    const res = await call('crm.api.credito_ia.gerar_link_credito', { valor_centavos: centavosLivre.value })
+    window.location.href = res.link
+  } catch (e) {
+    toast.error(e?.messages?.[0] || __('Não foi possível gerar o link de pagamento'))
+  } finally {
+    comprando.value = false
+  }
+}
 
 async function comprar(indice) {
   comprando.value = true

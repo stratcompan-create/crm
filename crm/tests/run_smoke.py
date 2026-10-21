@@ -54,6 +54,7 @@ MODULES = [
     "modulos",
     "triagem_whatsapp",
     "trava_perfil",
+    "credito_personalizado",
 ]
 
 

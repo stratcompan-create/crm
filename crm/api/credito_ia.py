@@ -91,6 +91,20 @@ for _faixa in FAIXAS:
 del _faixa
 
 
+# Recarga com valor livre (quarto cartão "Outro valor"): mínimo para a taxa do pagamento não pesar;
+# sem teto. Só aparece/funciona no site que tiver a chave ligada em Configurações → Automações.
+MINIMO_PERSONALIZADO_CENTAVOS = 2000
+
+
+def _personalizado_ativo() -> bool:
+	try:
+		from crm.api.automacoes import get_config
+
+		return bool(cint(get_config().get("credito_personalizado_ativo", 0)))
+	except Exception:
+		return False
+
+
 def _saldo_doc():
 	return frappe.get_single(DOCTYPE_SALDO)
 
@@ -114,6 +128,10 @@ def obter_saldo() -> dict:
 		"saldo_centavos": cint(_saldo_doc().saldo_centavos),
 		"faixas": FAIXAS,
 		"habilitado": bool(_handle_central()),
+		"personalizado": _personalizado_ativo(),
+		"minimo_centavos": MINIMO_PERSONALIZADO_CENTAVOS,
+		# custo de cada uso de referência, para a tela estimar ao vivo o que o valor digitado rende
+		"uso_referencia": [{"label": u["label"], "custo_centavos": _custo_venda_uso(u["entrada"], u["saida"])} for u in USO_REFERENCIA],
 	}
 
 
@@ -194,16 +212,24 @@ def registrar_uso(usage: dict) -> None:
 
 
 @frappe.whitelist()
-def gerar_link_credito(indice: int) -> dict:
+def gerar_link_credito(indice: int = 0, valor_centavos: int | None = None) -> dict:
 	frappe.only_for(MANAGER_ROLES)
 	handle = _handle_central()
 	if not handle:
 		frappe.throw(_("A recarga de crédito ainda não foi habilitada neste servidor. Fale com o suporte."))
 
-	i = cint(indice)
-	if i < 0 or i >= len(FAIXAS):
-		frappe.throw(_("Faixa de recarga inválida."))
-	faixa = FAIXAS[i]
+	if valor_centavos not in (None, "", 0, "0"):
+		if not _personalizado_ativo():
+			frappe.throw(_("A recarga com valor personalizado não está liberada neste site."))
+		v = cint(valor_centavos)
+		if v < MINIMO_PERSONALIZADO_CENTAVOS:
+			frappe.throw(_("O valor mínimo da recarga é {0}.").format(_formatar_reais(MINIMO_PERSONALIZADO_CENTAVOS)))
+		faixa = {"centavos": v, "rotulo": _formatar_reais(v)}
+	else:
+		i = cint(indice)
+		if i < 0 or i >= len(FAIXAS):
+			frappe.throw(_("Faixa de recarga inválida."))
+		faixa = FAIXAS[i]
 
 	compra = frappe.get_doc({
 		"doctype": DOCTYPE_COMPRA,
