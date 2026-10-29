@@ -47,6 +47,22 @@ FIELDS_JURIDICO = [
 ]
 
 
+TITLE_SECTIONS = ("intro", "diagnostico", "escopo", "cronograma", "investimento")
+
+# o que a proposta ganha além de texto: títulos de página, "hoje → com a proposta", capa, preços e condições
+PROPOSTA_EXTRA = (
+	"Inclua também em proposta: titulos (objeto com as chaves intro, diagnostico, escopo, cronograma e investimento; "
+	"cada uma {titulo, destaque}: um título curto e concreto para a página, sendo destaque o final do título, que aparece "
+	"em itálico; ex.: {\"titulo\": \"Nove pontos da rotina,\", \"destaque\": \"nove soluções\"}); capa_subtitulo (uma frase "
+	"que resume o projeto); em cada item de diagnostico_cartoes, além de titulo e texto (como é hoje), o campo solucao "
+	"(como fica com o projeto, só se foi dito); investimento_opcoes (até 4 objetos {rotulo, valor, detalhe, selo} SOMENTE "
+	"com valores ditos explicitamente no texto; ex.: rotulo \"Implantação · à vista\", valor \"R$ 3.500\", detalhe "
+	"\"Pagamento único\"; selo só quando uma vantagem foi dita, ex.: \"R$ 1.500 de economia\"; sem valores ditos = lista "
+	"vazia); condicoes (até 4 objetos {titulo, texto} só com condições ditas, como prazo mínimo, reajuste, validade ou o "
+	"que está incluso). "
+)
+
+
 def _juridico() -> bool:
 	from crm.provision import PERFIS_JURIDICOS, get_profile
 
@@ -82,9 +98,11 @@ def _system_prompt() -> str:
 		"receios do cliente; proximos = próximos passos e documentos que o cliente precisa trazer. "
 		"proposta = objeto JSON com o rascunho de uma proposta de honorários, usando SOMENTE o que foi dito: "
 		"intro_texto (2 a 4 frases apresentando o serviço), diagnostico_texto (a situação do cliente em 2 a 3 frases), "
-		"diagnostico_cartoes (até 4 objetos {titulo, texto} com os pontos de atenção), escopo_itens (até 8 objetos "
+		"diagnostico_cartoes (até 6 objetos {titulo, texto} com os pontos de atenção), escopo_itens (até 8 objetos "
 		"{titulo, texto} com o que o escritório fará), cronograma_etapas (até 5 objetos {marco, titulo, texto}, só se "
-		"etapas foram combinadas), cronograma_nota (prazo geral combinado). Lista sem base = lista vazia; texto sem base "
+		"etapas foram combinadas), cronograma_nota (prazo geral combinado). "
+		+ PROPOSTA_EXTRA
+		+ "Lista sem base = lista vazia; texto sem base "
 		"= string vazia. Nunca inclua honorários que não foram ditos e nunca prometa resultado."
 	)
 
@@ -104,10 +122,12 @@ SYSTEM_PROMPT = (
 	"objecoes = dúvidas ou resistências do cliente; proximos = próximos passos e responsáveis. "
 	"proposta = objeto JSON com o rascunho de uma proposta comercial, usando SOMENTE o que foi dito na reunião: "
 	"intro_texto (2 a 4 frases apresentando o projeto), diagnostico_texto (a situação do cliente em 2 a 3 frases), "
-	"diagnostico_cartoes (até 4 objetos {titulo, texto} com os principais problemas ou pontos de atenção), "
+	"diagnostico_cartoes (até 6 objetos {titulo, texto} com os principais problemas ou pontos de atenção), "
 	"escopo_itens (até 8 objetos {titulo, texto} com o que será entregue), "
 	"cronograma_etapas (até 5 objetos {marco, titulo, texto}, só se etapas ou datas foram combinadas), "
-	"cronograma_nota (prazo geral combinado). Lista sem base na conversa = lista vazia; texto sem base = string vazia. "
+	"cronograma_nota (prazo geral combinado). "
+	+ PROPOSTA_EXTRA
+	+ "Lista sem base na conversa = lista vazia; texto sem base = string vazia. "
 	"Nunca inclua preços que não foram ditos e nunca prometa resultado."
 )
 
@@ -323,13 +343,22 @@ def _clean_draft(raw) -> dict:
 					out.append(row)
 		return out
 
+	titulos = raw.get("titulos") if isinstance(raw.get("titulos"), dict) else {}
 	return {
 		"intro_texto": _s(raw.get("intro_texto")),
 		"diagnostico_texto": _s(raw.get("diagnostico_texto")),
-		"diagnostico_cartoes": items("diagnostico_cartoes", ("titulo", "texto"), 4),
+		"diagnostico_cartoes": items("diagnostico_cartoes", ("titulo", "texto", "solucao"), 6),
 		"escopo_itens": items("escopo_itens", ("titulo", "texto"), 8),
 		"cronograma_etapas": items("cronograma_etapas", ("marco", "titulo", "texto"), 5),
 		"cronograma_nota": _s(raw.get("cronograma_nota"), 400),
+		"titulos": {
+			sec: {"titulo": _s((t or {}).get("titulo"), 80), "destaque": _s((t or {}).get("destaque"), 80)}
+			for sec, t in titulos.items()
+			if sec in TITLE_SECTIONS and isinstance(t, dict)
+		},
+		"capa_subtitulo": _s(raw.get("capa_subtitulo"), 200),
+		"investimento_opcoes": items("investimento_opcoes", ("rotulo", "valor", "detalhe", "selo"), 4),
+		"condicoes": items("condicoes", ("titulo", "texto"), 4),
 	}
 
 
@@ -423,7 +452,27 @@ def _apply(doc, sobrescrever=0) -> dict:
 	put_list("cronograma", "etapas", draft.get("cronograma_etapas"))
 	nota = draft.get("cronograma_nota") or (f"Prazo combinado: {ficha['prazo']}" if ficha["prazo"] else "")
 	put("cronograma", "nota", nota)
-	put("investimento", "plano_texto", ficha["valor"])
+	for sec, t in (draft.get("titulos") or {}).items():
+		# título e destaque andam juntos: troca o par inteiro, para não misturar com um título digitado
+		if not t.get("titulo"):
+			continue
+		atual = (p[sec].get("titulo") or "", p[sec].get("destaque") or "")
+		padrao = atual == ("", "") or (sec == "investimento" and atual == ("Investimento", ""))
+		novo = (t["titulo"], t.get("destaque") or "")
+		if (sobrescrever or padrao) and atual != novo:
+			p[sec]["titulo"], p[sec]["destaque"] = novo
+			changed.append(f"{sec}.titulo")
+	put("capa", "subtitulo", draft.get("capa_subtitulo"))
+	opcoes = draft.get("investimento_opcoes")
+	put_list("investimento", "opcoes", opcoes)
+	if not opcoes:
+		put("investimento", "plano_texto", ficha["valor"])
+	condicoes = draft.get("condicoes")
+	# as condições padrão vêm só com títulos: sem texto, contam como vazias
+	if condicoes and (sobrescrever or not any(str(c.get("texto") or "").strip() for c in p["investimento"].get("condicoes") or [])):
+		if p["investimento"].get("condicoes") != condicoes:
+			p["investimento"]["condicoes"] = condicoes
+			changed.append("investimento.condicoes")
 	if not changed:
 		return {"ok": True, "alterados": 0}
 	res = save_proposal(doc.name, p)

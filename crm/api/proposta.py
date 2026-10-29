@@ -65,6 +65,8 @@ def default_proposal() -> dict:
 			"valor_sufixo": "", "recomendado_titulo": "", "recomendado_texto": "",
 			"fases_titulo": "", "fases_texto": "", "condicoes": [dict(c) for c in CONDICOES_PADRAO],
 			"validade_dias": 0, "validade": "",
+			# cartões de preço (ex.: à vista com selo, parcelado, mensalidade); vazio = itens do orçamento
+			"opcoes": [],
 		},
 	}
 
@@ -577,7 +579,22 @@ SECTION_LABELS = {
 
 
 def check_fit(settings, items, total, client_name, data) -> list[str]:
-	"""Avisa quais seções não cabem em uma página (o excesso seria cortado no PDF).
+	"""Avisa quais seções não cabem em uma página (o excesso seria cortado no PDF)."""
+	from crm.api import proposta_layout
+
+	try:
+		problemas = proposta_layout.overflowing(settings, items, total, client_name, data)
+	except Exception:
+		frappe.log_error("Proposta: conferência do layout novo falhou", frappe.get_traceback())
+		return _check_fit_legacy(settings, items, total, client_name, data)
+	return [
+		_("A seção “{0}” tem conteúdo demais para uma página. Reduza o texto ou o número de itens, senão parte dela será cortada no PDF.").format(_(SECTION_LABELS[k]))
+		for k in problemas
+	]
+
+
+def _check_fit_legacy(settings, items, total, client_name, data) -> list[str]:
+	"""Conferência do layout antigo (wkhtmltopdf).
 
 	Renderiza cada seção com altura livre; se o PDF ganhar páginas extras, a seção da
 	página anterior passou do limite."""
@@ -596,7 +613,7 @@ def check_fit(settings, items, total, client_name, data) -> list[str]:
 	.page.m .body { position:static; }
 	"""
 	html = f'<html><head><meta charset="utf-8"><style>{css}</style></head><body>{pages}</body></html>'
-	reader = PdfReader(io.BytesIO(render_pdf(html)))
+	reader = PdfReader(io.BytesIO(render_pdf_wkhtml(html)))
 	norm = lambda t: re.sub(r"\s+", "", (t or "")).upper()
 	starts = [norm(EYEBROWS.get(k, "")) for k, _h in sections]
 
@@ -615,6 +632,25 @@ def check_fit(settings, items, total, client_name, data) -> list[str]:
 
 
 def render_proposal_html(deal_doc, settings, items, total, client_name, data, logo_url=""):
+	"""HTML da proposta no layout novo (WeasyPrint). Gere o PDF com render_pdf."""
+	from crm.api import proposta_layout
+
+	discount = flt(deal_doc.get("budget_discount")) if deal_doc else 0
+	return proposta_layout.render_html(settings, items, total, client_name, data, logo_url, discount)
+
+
+def proposal_pdf(deal_doc, settings, items, total, client_name, data, logo_url="") -> bytes:
+	"""PDF da proposta. Se o layout novo falhar (ex.: servidor sem as bibliotecas do WeasyPrint),
+	cai no layout antigo do wkhtmltopdf em vez de deixar o usuário sem documento."""
+	try:
+		return render_pdf(render_proposal_html(deal_doc, settings, items, total, client_name, data, logo_url))
+	except Exception:
+		frappe.log_error("Proposta: layout novo falhou, usando o antigo", frappe.get_traceback())
+		html = render_proposal_html_legacy(deal_doc, settings, items, total, client_name, data, logo_url)
+		return render_pdf_wkhtml(html)
+
+
+def render_proposal_html_legacy(deal_doc, settings, items, total, client_name, data, logo_url=""):
 	from crm.api import estilo, tipografia
 
 	pal = estilo.resolve(settings, (data.get("capa") or {}).get("tema"))
@@ -655,7 +691,14 @@ def render_proposal_html(deal_doc, settings, items, total, client_name, data, lo
 
 
 def render_pdf(html: str) -> bytes:
-	"""Gera o PDF direto pelo wkhtmltopdf (paisagem, sem margens).
+	"""PDF do HTML de render_proposal_html (layout novo, WeasyPrint)."""
+	from crm.api import proposta_layout
+
+	return proposta_layout.render_pdf(html)
+
+
+def render_pdf_wkhtml(html: str) -> bytes:
+	"""Gera o PDF direto pelo wkhtmltopdf (paisagem, sem margens). Usado pelo layout antigo.
 
 	Não usa o get_pdf do Frappe porque ele reescreve o HTML e derruba as fontes embutidas."""
 	cmd = [

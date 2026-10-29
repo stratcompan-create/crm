@@ -145,8 +145,7 @@ def preview_pdf(
 		},
 	)
 	items = [frappe._dict(description="Site institucional", qty=1, unit_price=3000), frappe._dict(description="CRM", qty=1, unit_price=6000)]
-	html = proposta.render_proposal_html(None, settings, items, 9000, "Cliente Exemplo", data, "")
-	return {"pdf": base64.b64encode(proposta.render_pdf(html)).decode()}
+	return {"pdf": base64.b64encode(proposta.proposal_pdf(None, settings, items, 9000, "Cliente Exemplo", data, "")).decode()}
 
 
 # ------------------------------------------------------------------ favicon nas páginas públicas

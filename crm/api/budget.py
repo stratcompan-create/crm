@@ -50,9 +50,8 @@ def build_document(deal: str, doc_type: str = "orcamento"):
 		logo = ""
 		if deal_doc.get("organization"):
 			logo = frappe.db.get_value("CRM Organization", deal_doc.organization, "organization_logo") or ""
-		html = proposta.render_proposal_html(deal_doc, settings, items, total, client_name, data, logo)
 		proposta.create_followup_task(deal_doc, data, client_name)
-		pdf_content = proposta.render_pdf(html)
+		pdf_content = proposta.proposal_pdf(deal_doc, settings, items, total, client_name, data, logo)
 	else:
 		html = _build_html(
 			doc_type=doc_type,

@@ -20,7 +20,7 @@
         <div class="text-p-sm text-ink-gray-5">
           {{
             __(
-              'Preencha só as seções que quiser. Seções vazias não aparecem no PDF. Os valores vêm do orçamento acima.',
+              'Preencha só as seções que quiser. Seções vazias não aparecem no PDF. Os valores vêm dos cartões de preço (seção Investimento) ou, sem eles, do orçamento acima.',
             )
           }}
         </div>
@@ -251,7 +251,16 @@ const SECTIONS = [
       { k: 'numeros', label: __('Números (até 5)'), type: 'list', item: NUMBER },
       { k: 'faixa_titulo', label: __('Título da faixa escura'), type: 'text' },
       { k: 'faixa_texto', label: __('Texto da faixa escura'), type: 'textarea', hint: RICH },
-      { k: 'cartoes', label: __('Cartões (até 4)'), type: 'list', item: CARD },
+      {
+        k: 'cartoes',
+        label: __('Pontos do diagnóstico (até 6)'),
+        type: 'list',
+        item: [
+          { k: 'titulo', label: __('Título') },
+          { k: 'texto', label: __('Como é hoje'), type: 'textarea', wide: true },
+          { k: 'solucao', label: __('Com a proposta (opcional: mostra o antes e depois)'), type: 'textarea', wide: true },
+        ],
+      },
       { k: 'conclusao', label: __('Conclusão'), type: 'textarea', hint: RICH },
     ],
   },
@@ -326,6 +335,17 @@ const SECTIONS = [
     label: __('Investimento'),
     fields: [
       ...TITLE,
+      {
+        k: 'opcoes',
+        label: __('Cartões de preço (até 4; em branco = itens do orçamento)'),
+        type: 'list',
+        item: [
+          { k: 'rotulo', label: __('Rótulo (ex.: Implantação · à vista)') },
+          { k: 'valor', label: __('Valor (ex.: R$ 3.500 ou 4x R$ 1.250)') },
+          { k: 'detalhe', label: __('Detalhe (ex.: Pagamento único na assinatura)') },
+          { k: 'selo', label: __('Selo de destaque (opcional, ex.: R$ 1.500 de economia)') },
+        ],
+      },
       { k: 'plano_rotulo', label: __('Rótulo do plano'), type: 'text' },
       { k: 'plano_titulo', label: __('Nome do plano'), type: 'text' },
       { k: 'plano_texto', label: __('Descrição do plano (em branco = itens do orçamento)'), type: 'textarea' },
