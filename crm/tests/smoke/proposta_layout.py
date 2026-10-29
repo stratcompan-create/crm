@@ -40,6 +40,20 @@ def run():
         cheio = proposta._merge(proposta.default_proposal(), {"diagnostico": {"faixa_texto": longo, "cartoes": [{"titulo": f"D{i}", "texto": longo, "solucao": longo} for i in range(6)]}})
         ck("avisa seção que não cabe", any("Diagnóstico" in a for a in proposta.check_fit(settings, [], 0, "X", cheio)))
         ck("não avisa o que cabe", proposta.check_fit(settings, [], 0, "X", data) == [])
+        # páginas didáticas: escritas à mão, automáticas pelo escopo, ou desligadas
+        dida = proposta._merge(proposta.default_proposal(), {"didatico": {"paginas": [
+            {"titulo": "Triagem", "destaque": "no WhatsApp", "texto": "Atende na hora.", "pontos": "Um\nDois", "figura": "whatsapp",
+             "figura_titulo": "Escritório X", "figura_linhas": "Cliente: Vocês atendem?\nEmpresa: Sim! Qual é o seu nome?"},
+        ]}})
+        h = proposta.render_proposal_html(None, settings, [], 0, "Cliente", dida, "")
+        ck("página didática com conversa e selo de exemplo", "Vocês atendem?" in h and 'class="msg in"' in h and "Exemplo ilustrativo" in h)
+        esc = {"escopo": {"itens": [{"titulo": "Gestão de Instagram", "texto": "Posts"}, {"titulo": "Site institucional", "texto": "5 páginas"}]}}
+        h = proposta.render_proposal_html(None, settings, [], 0, "Cliente", proposta._merge(proposta.default_proposal(), esc), "")
+        ck("sem páginas: figuras automáticas pelo escopo", 'class="fig post"' in h and 'class="fig win"' in h)
+        off = proposta._merge(proposta.default_proposal(), dict(esc, didatico={"automatico": 0, "paginas": []}))
+        ck("automático desligado: sem figuras", "Exemplo ilustrativo" not in proposta.render_proposal_html(None, settings, [], 0, "Cliente", off, ""))
+        from crm.api import proposta_figuras
+        ck("todas as figuras desenham", all(proposta_figuras.render(t, "T", "A | B | pago\nC | 50%", "Marca") for t in proposta_figuras.TIPOS))
         # motor novo falhando: cai no antigo em vez de ficar sem PDF
         with mock.patch.object(proposta_layout, "render_pdf", side_effect=RuntimeError("sem weasyprint")):
             ck("reserva no wkhtmltopdf", proposta.proposal_pdf(None, settings, items, 6000, "Cliente", data, "").startswith(b"%PDF"))
@@ -54,7 +68,11 @@ def run():
                             "titulos": {"diagnostico": {"titulo": "Nove pontos,", "destaque": "nove soluções"}, "investimento": {"titulo": "Investimento e", "destaque": "condições"}, "lixo": {"titulo": "x"}},
                             "capa_subtitulo": "CRM sob medida.",
                             "investimento_opcoes": [{"rotulo": "À vista", "valor": "R$ 3.500", "detalhe": "Único", "selo": "Economia"}],
-                            "condicoes": [{"titulo": "Prazo mínimo", "texto": "6 meses"}]}}
+                            "condicoes": [{"titulo": "Prazo mínimo", "texto": "6 meses"}],
+                            "paginas_didaticas": [
+                                {"titulo": "Cobrança", "destaque": "automática", "texto": "Lembrete e baixa.", "pontos": ["Pix", "Recibo"],
+                                 "figura": "Cobranca", "figura_titulo": "Carlos", "figura_linhas": "Parcela 1/2 | R$ 500 | pago"},
+                                {"titulo": "Foguete", "texto": "Tipo inválido.", "figura": "foguete", "figura_linhas": "x"}]}}
         class R:
             ok = True; status_code = 200
             def json(self): return {"content": [{"type": "text", "text": json.dumps(ans)}]}
@@ -71,6 +89,9 @@ def run():
         ck("condições substituem as padrão vazias", p["investimento"]["condicoes"] == [{"titulo": "Prazo mínimo", "texto": "6 meses"}])
         ck("com cartões de preço, o valor não vira texto do plano", not p["investimento"].get("plano_texto"))
         ck("subtítulo da capa", p["capa"].get("subtitulo") == "CRM sob medida.")
+        pgs = p.get("didatico", {}).get("paginas") or []
+        ck("páginas didáticas da IA chegam à proposta", len(pgs) == 2 and pgs[0]["figura"] == "cobranca" and pgs[0]["pontos"] == "Pix\nRecibo", pgs)
+        ck("figura de tipo desconhecido é descartada", len(pgs) == 2 and pgs[1]["figura"] == "" and pgs[1]["figura_linhas"] == "")
     finally:
         frappe.db.rollback()
         for dt, n in reversed(made):

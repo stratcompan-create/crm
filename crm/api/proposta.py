@@ -54,6 +54,8 @@ def default_proposal() -> dict:
 			"faixa_titulo": "", "faixa_texto": "", "cartoes": [], "conclusao": "",
 		},
 		"escopo": {"titulo": "", "destaque": "", "itens": []},
+		# páginas "texto + figura" (WhatsApp, link de acompanhamento, cobrança...); vazio + automático = montadas do escopo
+		"didatico": {"automatico": 1, "paginas": []},
 		"cronograma": {
 			"titulo": "", "destaque": "", "subtitulo": "", "etapas": [],
 			"faixa_titulo": "", "faixa_texto": "", "nota": "",
@@ -570,6 +572,7 @@ def _build_sections(data, items, total):
 SECTION_LABELS = {
 	"intro": "Introdução ao projeto",
 	"diagnostico": "Diagnóstico",
+	"didatico": "Página didática (texto + figura)",
 	"escopo": "Escopo do projeto",
 	"cronograma": "Cronograma",
 	"orcamento": "Onde o investimento é aplicado",
@@ -583,7 +586,8 @@ def check_fit(settings, items, total, client_name, data) -> list[str]:
 	from crm.api import proposta_layout
 
 	try:
-		problemas = proposta_layout.overflowing(settings, items, total, client_name, data)
+		# várias páginas didáticas têm a mesma chave: um aviso só
+		problemas = list(dict.fromkeys(proposta_layout.overflowing(settings, items, total, client_name, data)))
 	except Exception:
 		frappe.log_error("Proposta: conferência do layout novo falhou", frappe.get_traceback())
 		return _check_fit_legacy(settings, items, total, client_name, data)

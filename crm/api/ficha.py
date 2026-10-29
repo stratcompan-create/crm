@@ -60,7 +60,20 @@ PROPOSTA_EXTRA = (
 	"\"Pagamento único\"; selo só quando uma vantagem foi dita, ex.: \"R$ 1.500 de economia\"; sem valores ditos = lista "
 	"vazia); condicoes (até 4 objetos {titulo, texto} só com condições ditas, como prazo mínimo, reajuste, validade ou o "
 	"que está incluso). "
+	"paginas_didaticas (de 3 a 5 objetos: os pontos mais importantes da proposta; cada um vira uma página com o texto ao "
+	"lado de uma figura que mostra aquilo funcionando): {titulo, destaque, texto (até 2 frases), pontos (até 3 frases "
+	"curtas, uma por linha), figura, figura_titulo, figura_linhas}. figura é um destes tipos: whatsapp, acompanhamento, "
+	"notificacoes, tela, cobranca, painel, site, post, passos. Escreva figura_linhas assim: whatsapp = uma mensagem por "
+	"linha, 'Cliente: texto' ou 'Empresa: texto' (figura_titulo = nome da empresa); acompanhamento = 'etapa | feito', "
+	"'etapa | atual' ou 'etapa | pendente', e uma última linha opcional com um aviso ao cliente; notificacoes = "
+	"'Título | detalhe'; tela = 'Rótulo | valor' (figura_titulo = nome da tela); cobranca = 'Descrição | valor | pago', "
+	"'vencendo' ou 'a vencer'; painel = 'valor | rótulo' para números e 'rótulo | 70%' para barras; site = três linhas: "
+	"título, texto e botão (figura_titulo = endereço do site); post = três linhas: texto da arte, legenda e botão "
+	"(figura_titulo = @perfil); passos = 'Título | texto'. As figuras são exemplos ilustrativos do dia a dia do cliente: "
+	"pessoas com nomes fictícios, valores de exemplo só do dia a dia dele (nunca o preço desta proposta) e somente "
+	"funções que aparecem no texto. "
 )
+FIGURA_TIPOS = ("whatsapp", "acompanhamento", "notificacoes", "tela", "cobranca", "painel", "site", "post", "passos")
 
 
 def _juridico() -> bool:
@@ -334,14 +347,21 @@ def _s(value, size=1200) -> str:
 def _clean_draft(raw) -> dict:
 	raw = raw if isinstance(raw, dict) else {}
 
-	def items(key, fields, limit):
+	def items(key, fields, limit, size=600):
 		out = []
 		for it in (raw.get(key) or [])[:limit]:
 			if isinstance(it, dict):
-				row = {f: _s(it.get(f), 600) for f in fields}
+				# a IA às vezes devolve listas onde se espera texto de várias linhas
+				row = {f: _s("\n".join(map(str, it.get(f))) if isinstance(it.get(f), list) else it.get(f), size) for f in fields}
 				if any(row.values()):
 					out.append(row)
 		return out
+
+	paginas = items("paginas_didaticas", ("titulo", "destaque", "texto", "pontos", "figura", "figura_titulo", "figura_linhas"), 5, 1500)
+	for pg in paginas:
+		pg["figura"] = pg["figura"].strip().lower()
+		if pg["figura"] not in FIGURA_TIPOS:
+			pg["figura"], pg["figura_linhas"] = "", ""
 
 	titulos = raw.get("titulos") if isinstance(raw.get("titulos"), dict) else {}
 	return {
@@ -359,6 +379,7 @@ def _clean_draft(raw) -> dict:
 		"capa_subtitulo": _s(raw.get("capa_subtitulo"), 200),
 		"investimento_opcoes": items("investimento_opcoes", ("rotulo", "valor", "detalhe", "selo"), 4),
 		"condicoes": items("condicoes", ("titulo", "texto"), 4),
+		"paginas_didaticas": paginas,
 	}
 
 
@@ -463,6 +484,7 @@ def _apply(doc, sobrescrever=0) -> dict:
 			p[sec]["titulo"], p[sec]["destaque"] = novo
 			changed.append(f"{sec}.titulo")
 	put("capa", "subtitulo", draft.get("capa_subtitulo"))
+	put_list("didatico", "paginas", draft.get("paginas_didaticas"))
 	opcoes = draft.get("investimento_opcoes")
 	put_list("investimento", "opcoes", opcoes)
 	if not opcoes:

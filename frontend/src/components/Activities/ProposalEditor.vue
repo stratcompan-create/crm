@@ -124,6 +124,7 @@
               <div class="text-p-sm font-medium text-ink-gray-7">
                 {{ field.label }}
               </div>
+              <div v-if="field.hint" class="whitespace-pre-line text-xs text-ink-gray-5">{{ field.hint }}</div>
               <div
                 v-for="(row, idx) in data[section.key][field.k]"
                 :key="idx"
@@ -135,6 +136,7 @@
                     :key="sub.k"
                     v-model="row[sub.k]"
                     :type="sub.type || 'text'"
+                    :options="sub.options"
                     :rows="sub.type === 'textarea' ? 3 : undefined"
                     :placeholder="sub.label"
                     :class="sub.wide ? 'sm:col-span-2' : ''"
@@ -262,6 +264,53 @@ const SECTIONS = [
         ],
       },
       { k: 'conclusao', label: __('Conclusão'), type: 'textarea', hint: RICH },
+    ],
+  },
+  {
+    key: 'didatico',
+    label: __('Páginas didáticas (texto + figura)'),
+    fields: [
+      {
+        k: 'automatico',
+        label: __('Sem páginas na lista, montar sozinho até 3 páginas com figura a partir do escopo'),
+        type: 'checkbox',
+      },
+      {
+        k: 'paginas',
+        label: __('Páginas (até 6)'),
+        hint: __(
+          'Cada página mostra o texto à esquerda e a figura à direita, marcada como "Exemplo ilustrativo". Conteúdo da figura, uma linha por item:\n' +
+            'WhatsApp: "Cliente: texto" ou "Empresa: texto" · Acompanhamento: "etapa | feito", "| atual" ou "| pendente" · ' +
+            'Notificações: "Título | detalhe" · Tela: "Rótulo | valor" · Cobrança: "Descrição | valor | pago", "vencendo" ou "a vencer" · ' +
+            'Painel: "valor | rótulo" ou "rótulo | 70%" · Site e post: título, texto e botão, um por linha · Passos: "Título | texto"',
+        ),
+        type: 'list',
+        item: [
+          { k: 'titulo', label: __('Título') },
+          { k: 'destaque', label: __('Parte em destaque (itálico)') },
+          { k: 'texto', label: __('Texto'), type: 'textarea', wide: true },
+          { k: 'pontos', label: __('Pontos (um por linha)'), type: 'textarea', wide: true },
+          {
+            k: 'figura',
+            label: __('Figura'),
+            type: 'select',
+            options: [
+              { label: __('Sem figura'), value: '' },
+              { label: __('Conversa no WhatsApp'), value: 'whatsapp' },
+              { label: __('Link de acompanhamento no celular'), value: 'acompanhamento' },
+              { label: __('Notificações'), value: 'notificacoes' },
+              { label: __('Tela do sistema com campos'), value: 'tela' },
+              { label: __('Cobrança e pagamentos'), value: 'cobranca' },
+              { label: __('Painel com números'), value: 'painel' },
+              { label: __('Página de site'), value: 'site' },
+              { label: __('Post ou anúncio'), value: 'post' },
+              { label: __('Passo a passo'), value: 'passos' },
+            ],
+          },
+          { k: 'figura_titulo', label: __('Título da figura (contato, tela, endereço, @perfil)') },
+          { k: 'figura_linhas', label: __('Conteúdo da figura (uma linha por item)'), type: 'textarea', wide: true },
+        ],
+      },
     ],
   },
   {
@@ -400,6 +449,7 @@ function filled(section) {
     if (f.type === 'list') {
       return (v || []).some((row) => Object.values(row).some((x) => String(x || '').trim()))
     }
+    if (f.type === 'checkbox') return false
     return String(v || '').trim() && !(section.key === 'investimento' && (f.k === 'titulo' || f.k === 'destaque' || f.k === 'valor_sufixo'))
   })
 }

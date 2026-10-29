@@ -59,9 +59,15 @@ def palette(style: str, C: str, A: str, N: str) -> dict:
 # ---------------------------------------------------------------- CSS
 
 def css(P: dict, fonts: dict) -> str:
-	from crm.api import tipografia
+	from crm.api import proposta_figuras, tipografia
 
 	t, s, x, n = (tipografia.family(fonts[r]) for r in tipografia.ROLES)
+	return _css_base(P, fonts, t, s, x, n) + proposta_figuras.css(P, {"t": t, "s": s, "x": x, "n": n})
+
+
+def _css_base(P: dict, fonts: dict, t: str, s: str, x: str, n: str) -> str:
+	from crm.api import tipografia
+
 	return f"""
 	{_p()._font_faces()}
 	{tipografia.faces_css(fonts.values())}
@@ -389,7 +395,40 @@ def sec_invest(d, items, total, discount=0):
 	return html
 
 
-def build_sections(data, items, total, discount=0):
+def didactic_pages(data) -> list[dict]:
+	"""Páginas "texto + figura": as escritas na proposta (pela IA ou à mão); sem nenhuma, e com o
+	automático ligado, o sistema monta até 3 a partir do escopo, para a proposta nunca ser só texto."""
+	from crm.api import proposta_figuras
+
+	d = data.get("didatico") or {}
+	pages = _filled(d.get("paginas"), "titulo", "texto", "figura_linhas")
+	if pages or not int(flt(d.get("automatico", 1))):
+		return pages[:6]
+	return proposta_figuras.auto_pages((data.get("escopo") or {}).get("itens"))
+
+
+def sec_didatico(pg, client_name):
+	from crm.api import proposta_figuras
+
+	pp = _p()
+	fig = proposta_figuras.render(pg.get("figura"), pg.get("figura_titulo"), pg.get("figura_linhas"), client_name)
+	titulo, destaque = (pg.get("titulo") or "").strip(), (pg.get("destaque") or "").strip()
+	if not (fig or titulo or pg.get("texto")):
+		return ""
+	pontos = "".join(
+		f'<div class="pt"><i>{i + 1:02d}</i><div>{pp._e(p)}</div></div>'
+		for i, p in enumerate(ln.strip(" -•") for ln in str(pg.get("pontos") or "").splitlines() if ln.strip(" -•"))
+	)
+	left = (
+		f'<div class="tx"><div class="eyebrow">Na prática</div><h1>{pp._e(titulo)} <em>{pp._e(destaque)}</em></h1>'
+		+ (f'<div class="lead">{pp._e(pg.get("texto"))}</div>' if pg.get("texto") else "")
+		+ (f'<div class="pts">{pontos}</div>' if pontos else "") + "</div>"
+	)
+	right = f'<div class="mock">{fig}<div class="cap">Exemplo ilustrativo</div></div>' if fig else ""
+	return f'<div class="dida">{left}{right}</div>'
+
+
+def build_sections(data, items, total, discount=0, client_name=""):
 	"""Lista de (chave, html) das seções com conteúdo, na ordem do documento."""
 	pp = _p()
 	has = pp._has
@@ -398,6 +437,10 @@ def build_sections(data, items, total, discount=0):
 		out.append(("intro", sec_intro(data["intro"])))
 	if has(data["diagnostico"], "titulo", "destaque", "numeros", "faixa_titulo", "faixa_texto", "cartoes", "conclusao"):
 		out.append(("diagnostico", sec_diag(data["diagnostico"])))
+	for pg in didactic_pages(data):
+		html = sec_didatico(pg, client_name)
+		if html:
+			out.append(("didatico", html))
 	if has(data["escopo"], "titulo", "destaque", "itens"):
 		out.append(("escopo", sec_escopo(data["escopo"])))
 	if has(data["cronograma"], "titulo", "destaque", "etapas", "faixa_titulo", "faixa_texto", "nota"):
@@ -456,7 +499,7 @@ def render_html(settings, items, total, client_name, data, logo_url="", discount
 	fonts = tipografia.resolve(settings, "proposta")
 	P = palette(pal["estilo"], pal["cor"], pal["destaque"], pal["neutra"])
 	brand = settings.get("brand_name") or ""
-	sections = [h for _k, h in build_sections(data, items, total, discount)]
+	sections = [h for _k, h in build_sections(data, items, total, discount, client_name)]
 	total_pages = len(sections) + 1
 	pages = "".join(_page(s, i + 2, total_pages, client_name, brand) for i, s in enumerate(sections))
 	cover = _cover(P, pal["estilo"], pal["cor"], client_name, brand, data, pp._logo_data_uri(logo_url), total_pages)
@@ -484,9 +527,10 @@ def overflowing(settings, items, total, client_name, data, discount=0) -> list[s
 	/* em bloco (não flex): o WeasyPrint só quebra página em bloco, e é a página extra que denuncia o excesso */
 	.page.m .body { position:static; display:block; }
 	.page.m .band.bottom { position:static; margin-top:5mm; }
+	.page.m .dida { height:auto; } .page.m .mock { height:150mm; }
 	"""
 	out = []
-	for key, html in build_sections(data, items, total, discount):
+	for key, html in build_sections(data, items, total, discount, client_name):
 		doc = f'<html><head><meta charset="utf-8"><style>{base}</style></head><body><div class="page m"><div class="body">{html}</div></div></body></html>'
 		if len(HTML(string=doc).render().pages) > 1:
 			out.append(key)
