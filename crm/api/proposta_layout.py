@@ -415,10 +415,14 @@ def sec_didatico(pg, client_name):
 	titulo, destaque = (pg.get("titulo") or "").strip(), (pg.get("destaque") or "").strip()
 	if not (fig or titulo or pg.get("texto")):
 		return ""
-	pontos = "".join(
-		f'<div class="pt"><i>{i + 1:02d}</i><div>{pp._e(p)}</div></div>'
-		for i, p in enumerate(ln.strip(" -•") for ln in str(pg.get("pontos") or "").splitlines() if ln.strip(" -•"))
-	)
+	# cada ponto: "Título | explicação curta" (a explicação aparece embaixo, em letra menor)
+	pontos = ""
+	for i, ln in enumerate(ln.strip(" -•") for ln in str(pg.get("pontos") or "").splitlines() if ln.strip(" -•")):
+		titulo_pt, _sep, expl = ln.partition("|")
+		pontos += (
+			f'<div class="pt"><i>{i + 1:02d}</i><div><b>{pp._e(titulo_pt.strip())}</b>'
+			+ (f"<small>{pp._e(expl.strip())}</small>" if expl.strip() else "") + "</div></div>"
+		)
 	left = (
 		f'<div class="tx"><div class="eyebrow">Na prática</div><h1>{pp._e(titulo)} <em>{pp._e(destaque)}</em></h1>'
 		+ (f'<div class="lead">{pp._e(pg.get("texto"))}</div>' if pg.get("texto") else "")

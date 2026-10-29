@@ -42,11 +42,12 @@ def run():
         ck("não avisa o que cabe", proposta.check_fit(settings, [], 0, "X", data) == [])
         # páginas didáticas: escritas à mão, automáticas pelo escopo, ou desligadas
         dida = proposta._merge(proposta.default_proposal(), {"didatico": {"paginas": [
-            {"titulo": "Triagem", "destaque": "no WhatsApp", "texto": "Atende na hora.", "pontos": "Um\nDois", "figura": "whatsapp",
+            {"titulo": "Triagem", "destaque": "no WhatsApp", "texto": "Atende na hora.", "pontos": "Um | explica o um\nDois", "figura": "whatsapp",
              "figura_titulo": "Escritório X", "figura_linhas": "Cliente: Vocês atendem?\nEmpresa: Sim! Qual é o seu nome?"},
         ]}})
         h = proposta.render_proposal_html(None, settings, [], 0, "Cliente", dida, "")
         ck("página didática com conversa e selo de exemplo", "Vocês atendem?" in h and 'class="msg in"' in h and "Exemplo ilustrativo" in h)
+        ck("ponto com título e explicação", "<b>Um</b><small>explica o um</small>" in h and "<b>Dois</b></div>" in h)
         esc = {"escopo": {"itens": [{"titulo": "Gestão de Instagram", "texto": "Posts"}, {"titulo": "Site institucional", "texto": "5 páginas"}]}}
         h = proposta.render_proposal_html(None, settings, [], 0, "Cliente", proposta._merge(proposta.default_proposal(), esc), "")
         ck("sem páginas: figuras automáticas pelo escopo", 'class="fig post"' in h and 'class="fig win"' in h)

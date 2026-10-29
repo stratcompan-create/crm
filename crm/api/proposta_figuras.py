@@ -52,6 +52,8 @@ def css(P: dict, fonts_css: dict) -> str:
 	.dida .pts {{ margin-top:4mm; }}
 	.dida .pt {{ display:flex; gap:3mm; padding:3mm 0; border-top:0.3mm solid {P['line']}; font-size:10.5pt; line-height:1.45; }}
 	.dida .pt i {{ font-style:normal; font-family:{n}; color:{P['accent']}; font-size:13pt; width:7mm; flex-shrink:0; }}
+	.dida .pt b {{ display:block; font-weight:600; font-size:11pt; color:{P['title']}; margin-bottom:0.8mm; }}
+	.dida .pt small {{ display:block; font-size:9.6pt; line-height:1.5; color:{P['muted']}; }}
 	.mock {{ width:132mm; flex-shrink:0; background:{P['soft']}; border-radius:4mm; position:relative; display:flex; align-items:center; justify-content:center; }}
 	.mock .cap {{ position:absolute; bottom:4mm; left:0; right:0; text-align:center; font-family:{s}; font-size:6.4pt; letter-spacing:0.25em;
 		text-transform:uppercase; color:{P['muted']}; }}

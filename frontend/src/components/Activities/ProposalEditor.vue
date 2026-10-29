@@ -289,7 +289,7 @@ const SECTIONS = [
           { k: 'titulo', label: __('Título') },
           { k: 'destaque', label: __('Parte em destaque (itálico)') },
           { k: 'texto', label: __('Texto'), type: 'textarea', wide: true },
-          { k: 'pontos', label: __('Pontos (um por linha)'), type: 'textarea', wide: true },
+          { k: 'pontos', label: __('Pontos, um por linha: Título | explicação curta'), type: 'textarea', wide: true },
           {
             k: 'figura',
             label: __('Figura'),
