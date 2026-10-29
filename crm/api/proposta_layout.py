@@ -203,7 +203,9 @@ def _css_base(P: dict, fonts: dict, t: str, s: str, x: str, n: str) -> str:
 	.note p {{ margin:0; }}
 	.prices {{ display:flex; gap:4mm; margin-bottom:5mm; }}
 	.price {{ flex:1; position:relative; background:{P['card']}; border:0.3mm solid {P['line']}; border-radius:3.5mm; padding:6mm 6mm 5.5mm;
-		display:flex; flex-direction:column; justify-content:flex-end; min-height:54mm; }}
+		display:flex; flex-direction:column; justify-content:center; min-height:54mm; }}
+	/* o selo fica no topo; o conteúdo desce um pouco para não encostar nele */
+	.price .selo + .k {{ margin-top:5mm; }}
 	.price b.long {{ font-size:18pt; }}
 	.price.hl {{ background:{P['hl']}; border-color:{P['hl']}; color:#ffffff; }}
 	.price .k {{ color:{P['label']}; }}
