@@ -203,7 +203,12 @@ def _css_base(P: dict, fonts: dict, t: str, s: str, x: str, n: str) -> str:
 	.lista .li i {{ font-style:normal; font-family:{n}; color:{P['accent']}; width:6mm; flex-shrink:0; text-align:right; }}
 	.lista-p .li {{ font-size:8pt; padding:0.55mm 0; }}
 	.lista-p .lg {{ margin:2.6mm 0 1mm; }}
-	.cond .card {{ min-height:40mm; }}
+	/* condições: lista enxuta em duas colunas, uma linha por item (não cartões grandes) */
+	.conds {{ display:grid; grid-template-columns:1fr 1fr; column-gap:10mm; background:{P['card']}; border:0.3mm solid {P['line']};
+		border-radius:3mm; padding:1.5mm 6mm; }}
+	.conds .cr {{ padding:2.6mm 0; border-bottom:0.3mm dashed {P['line']}; font-size:9pt; line-height:1.4; color:{P['muted']}; }}
+	.conds .cr:nth-last-child(-n+2) {{ border-bottom:0; }}
+	.conds .cr b {{ display:block; font-weight:600; color:{P['title']}; font-size:9.4pt; margin-bottom:0.4mm; }}
 	.steps {{ display:flex; gap:4mm; }}
 	.steps .st {{ flex:1; background:{P['card']}; border:0.3mm solid {P['line']}; border-top:1.4mm solid {P['accent']}; border-radius:3mm;
 		padding:5mm 5mm; min-height:62mm; }}
@@ -227,7 +232,6 @@ def _css_base(P: dict, fonts: dict, t: str, s: str, x: str, n: str) -> str:
 	.price.hl .d {{ color:#e3e6e4; }}
 	.selo {{ position:absolute; top:4.5mm; left:6mm; background:{P['accent']}; color:#ffffff; font-size:7pt; font-weight:700;
 		letter-spacing:0.06em; padding:1mm 3mm; border-radius:4mm; }}
-	.cond .card-t {{ font-size:11pt; }}
 	.items {{ width:100%; border-collapse:collapse; font-size:9pt; margin-bottom:4mm; }}
 	.items th {{ text-align:left; font-size:6.8pt; letter-spacing:0.16em; text-transform:uppercase; color:{P['muted']};
 		border-bottom:0.3mm solid {P['line']}; padding:1.6mm 1mm; }}
@@ -535,7 +539,8 @@ def sec_invest(d, items, total, discount=0):
 	if extras:
 		html += f'<div class="grid g{min(len(extras), 3)}" style="margin-bottom:4mm">{"".join(extras)}</div>'
 	if conds:
-		html += f'<div class="eyebrow" style="margin-top:1mm">Condições</div>{_cards(conds, extra="cond")}'
+		rows = "".join(f'<div class="cr"><b>{pp._e(c.get("titulo"))}</b>{pp._e(c.get("texto"))}</div>' for c in conds)
+		html += f'<div class="eyebrow" style="margin-top:1mm">Condições</div><div class="conds">{rows}</div>'
 	if d.get("validade"):
 		html += f'<div class="valid">{pp._e(d.get("validade"))}</div>'
 	return html
