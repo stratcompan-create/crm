@@ -82,6 +82,15 @@ def run():
         ck("52 itens cabem na página", proposta.check_fit(settings, [], 0, "X", com_lista) == [])
         enorme = proposta._merge(proposta.default_proposal(), {"lista": {"grupos": [{"nome": "G", "itens": "\n".join(f"Item {i}" for i in range(130))}]}})
         ck("lista grande demais avisa", any("Lista completa" in a for a in proposta.check_fit(settings, [], 0, "X", enorme)))
+        # proposta antiga: só texto do plano e condições, sem itens -> a página de investimento aparece
+        so_texto = proposta._merge(proposta.default_proposal(), {"investimento": {"plano_texto": "R$ 3.500 à vista", "condicoes": [{"titulo": "Prazo", "texto": "20 dias"}]}})
+        ck("investimento só com texto ainda aparece", "R$ 3.500 à vista" in proposta.render_proposal_html(None, settings, [], 0, "C", so_texto, ""))
+        crono = proposta._merge(proposta.default_proposal(), {"cronograma": {"etapas": [{"marco": "1", "titulo": "Diagnóstico", "texto": "x"}, {"marco": "Semana 2", "titulo": "Config", "texto": "y"}]}})
+        h = proposta.render_proposal_html(None, settings, [], 0, "C", crono, "")
+        ck("marco igual ao número da etapa não repete", '<div class="m">1</div>' not in h and '<div class="m">Semana 2</div>' in h)
+        ck("capa corta no fim do trecho, sem reticências", proposta_layout._curto("Integrada ao emissor oficial de Petrolina, emitida quando o pagamento entra e enviada ao cliente.") == "Integrada ao emissor oficial de Petrolina")
+        auto = proposta_figuras.auto_pages([{"titulo": "Modelos das áreas", "texto": "contrato e honorário próprios"}, {"titulo": "Nota fiscal automática", "texto": "emitida quando o pagamento entra"}])
+        ck("figura automática casa pelo título primeiro", auto[0]["figura"] == "cobranca" and auto[1]["figura"] == "notificacoes" and "Nota fiscal emitida" in auto[1]["figura_linhas"], [a["figura"] for a in auto])
         # motor novo falhando: cai no antigo em vez de ficar sem PDF
         with mock.patch.object(proposta_layout, "render_pdf", side_effect=RuntimeError("sem weasyprint")):
             ck("reserva no wkhtmltopdf", proposta.proposal_pdf(None, settings, items, 6000, "Cliente", data, "").startswith(b"%PDF"))

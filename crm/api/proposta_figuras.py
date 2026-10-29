@@ -314,7 +314,10 @@ AUTO = [
 	(r"acompanh|portal|andamento|status|progresso", "acompanhamento", "Seu projeto",
 	 "Contrato assinado | feito\nDocumentos recebidos | feito\nEm andamento | atual\nRevisão | pendente\nEntrega | pendente\n"
 	 "Você recebe um aviso no WhatsApp a cada nova etapa."),
-	(r"nota fiscal|automa|lembrete|aviso|notifica", "notificacoes", "",
+	(r"nota fiscal|nfs-?e", "notificacoes", "",
+	 "Pagamento confirmado | parcela 1/4 · R$ 1.000,00\nNota fiscal emitida | no emissor oficial da Prefeitura\n"
+	 "Nota enviada ao cliente | pelo WhatsApp e por e-mail\nLançada no financeiro | sem ninguém digitar"),
+	(r"automa|lembrete|aviso|notifica", "notificacoes", "",
 	 "Tarefa concluída automaticamente | sem ninguém precisar lembrar\nAviso enviado ao cliente | pelo WhatsApp e por e-mail\n"
 	 "Documento recebido | já na pasta certa\nPagamento confirmado | baixa feita sozinha"),
 	(r"cobran|pagament|honor|parcela|financeir|receb", "cobranca", "Cliente exemplo",
@@ -332,19 +335,23 @@ AUTO = [
 
 def auto_pages(escopo_itens, limite=3) -> list[dict]:
 	"""Até `limite` páginas didáticas a partir do escopo, uma figura diferente por página."""
-	pages, usados = [], set()
-	for it in escopo_itens or []:
-		texto = f"{it.get('titulo') or ''} {it.get('texto') or ''}".lower()
-		for padrao, tipo, ftitulo, linhas in AUTO:
-			if tipo not in usados and re.search(padrao, texto):
-				usados.add(tipo)
-				pages.append({
-					"titulo": it.get("titulo") or "", "destaque": "na prática", "texto": it.get("texto") or "", "pontos": "",
-					"figura": tipo, "figura_titulo": ftitulo, "figura_linhas": linhas,
-				})
-				break
-		if len(pages) >= limite:
-			break
+	pages, usados, feitos = [], set(), set()
+	# primeiro pelo título do item (sinal forte), depois pela descrição; na ordem do escopo
+	for campo in ("titulo", "texto"):
+		for n, it in enumerate(escopo_itens or []):
+			texto = str(it.get(campo) or "").lower()
+			if n in feitos or len(pages) >= limite:
+				continue
+			for padrao, tipo, ftitulo, linhas in AUTO:
+				if tipo not in usados and re.search(padrao, texto):
+					usados.add(tipo)
+					feitos.add(n)
+					pages.append({
+						"n": n, "titulo": it.get("titulo") or "", "destaque": "na prática", "texto": it.get("texto") or "", "pontos": "",
+						"figura": tipo, "figura_titulo": ftitulo, "figura_linhas": linhas,
+					})
+					break
+	pages = [{k: v for k, v in p.items() if k != "n"} for p in sorted(pages, key=lambda p: p["n"])]
 	itens = [i for i in (escopo_itens or []) if i.get("titulo")]
 	if not pages and len(itens) >= 2:
 		pages.append({

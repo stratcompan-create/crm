@@ -6,6 +6,7 @@
 # Cada seção ocupa uma folha A4 deitada e o conteúdo se distribui pela página inteira.
 
 import io
+import re
 
 from frappe.utils import add_days, flt, getdate, nowdate
 
@@ -429,7 +430,8 @@ def sec_crono(d):
 	if etapas:
 		cells = "".join(
 			f'<div class="st"><div class="dot">{i + 1}</div>'
-			+ (f'<div class="m">{pp._e(e.get("marco"))}</div>' if e.get("marco") else "")
+			# "marco" só com o número da etapa repetiria a bolinha
+			+ (f'<div class="m">{pp._e(e.get("marco"))}</div>' if str(e.get("marco") or "").strip(" º°ª.") not in ("", str(i + 1)) else "")
 			+ f'<div class="card-t">{pp._e(e.get("titulo"))}</div><div class="card-x">{pp._e(e.get("texto"))}</div></div>'
 			for i, e in enumerate(etapas)
 		)
@@ -583,7 +585,8 @@ def build_sections(data, items, total, discount=0, client_name=""):
 	if has(data["ciclos"], "titulo", "destaque", "blocos", "citacao"):
 		out.append(("ciclos", sec_ciclos(data["ciclos"])))
 	inv = dict(data["investimento"])
-	if items or total or _filled(inv.get("opcoes"), "rotulo", "valor"):
+	# sem itens nem cartões de preço, o valor escrito no plano e as condições ainda merecem a página
+	if items or total or _filled(inv.get("opcoes"), "rotulo", "valor") or inv.get("plano_texto") or _filled(inv.get("condicoes"), "texto"):
 		inv["validade"] = pp.validity_text(inv)
 		out.append(("investimento", sec_invest(inv, items, total, discount)))
 	return out
@@ -619,7 +622,13 @@ def _cover_toasts(data) -> str:
 
 def _curto(texto, limite=70) -> str:
 	texto = " ".join(str(texto or "").split())
-	return texto if len(texto) <= limite else texto[: limite - 1].rsplit(" ", 1)[0] + "…"
+	if len(texto) <= limite:
+		return texto
+	# corta no fim da maior frase/trecho que cabe, para não terminar em "…" no meio da ideia
+	cortes = [m.start() for m in re.finditer(r"[,;.:]", texto[: limite + 1]) if m.start() >= 15]
+	if cortes:
+		return texto[: cortes[-1]].rstrip()
+	return texto[: limite - 1].rsplit(" ", 1)[0] + "…"
 
 
 def _cover(P, style, color, client, brand, data, logo_uri, total_pages, brand_logo=""):
