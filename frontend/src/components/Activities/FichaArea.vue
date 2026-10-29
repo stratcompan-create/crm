@@ -96,7 +96,7 @@
           <FormControl v-model="transcript" type="textarea" :rows="12" :placeholder="__('Cole a transcrição, anotações ou um texto/prompt com as características do projeto')" />
           <label class="flex items-center gap-2 text-p-sm text-ink-gray-7">
             <input v-model="overwrite" type="checkbox" />
-            {{ __('Substituir o que já está preenchido na ficha') }}
+            {{ __('Substituir o que já está preenchido na ficha e na proposta') }}
           </label>
           <p class="text-xs text-ink-gray-5">
             {{ __('O texto é enviado à Anthropic (Claude) apenas para montar a ficha.') }}
@@ -199,11 +199,15 @@ async function toProposal() {
   applying.value = true
   try {
     await save()
-    const r = await call('crm.api.ficha.apply_to_proposal', { deal: props.docname })
+    let r = await call('crm.api.ficha.apply_to_proposal', { deal: props.docname })
+    // proposta já preenchida antes: quem clicou quer a ficha nova lá, então oferece substituir
+    if (!r.alterados && window.confirm(__('A proposta já tem conteúdo. Substituir pelo que está na ficha agora?'))) {
+      r = await call('crm.api.ficha.apply_to_proposal', { deal: props.docname, sobrescrever: 1 })
+    }
     toast.success(
       r.alterados
         ? __('Proposta preenchida com a ficha. Confira na aba Orçamento.')
-        : __('A proposta já estava preenchida. Nada foi alterado.'),
+        : __('A proposta já estava igual à ficha. Nada foi alterado.'),
     )
   } catch (e) {
     toast.error(e?.messages?.[0] || __('Não foi possível levar a ficha para a proposta.'))

@@ -18,6 +18,8 @@ MODEL = "claude-sonnet-5"
 API_URL = "https://api.anthropic.com/v1/messages"
 MAX_TRANSCRIPT = 80_000
 MAX_FIELD = 2000
+# a ficha (9 campos) + o rascunho da proposta, vindos de um texto longo, passam fácil de 2.000 tokens
+MAX_TOKENS = 8000
 
 FIELDS = [
 	("dor_objetivo", "A dor e o objetivo do cliente"),
@@ -209,7 +211,22 @@ def save_ficha(doctype: str, name: str, campos):
 	_store(doc, data)
 	if doc.doctype == "CRM Deal":
 		auto_apply(doc.name)
+	else:
+		_sync_deals(doc.name)
 	return {"ok": True}
+
+
+def _sync_deals(lead: str, sobrescrever=0) -> int:
+	"""Lead já convertido: a ficha editada no lead também vale para o negócio (e a proposta dele).
+
+	A conversão copia a ficha uma vez só; sem isso, o que for colado no lead depois de converter
+	nunca chega à proposta."""
+	ficha, transcricao = frappe.db.get_value("CRM Lead", lead, ["ficha", "ficha_transcricao"])
+	alterados = 0
+	for deal in frappe.get_all("CRM Deal", filters={"lead": lead}, pluck="name"):
+		frappe.db.set_value("CRM Deal", deal, {"ficha": ficha, "ficha_transcricao": transcricao})
+		alterados += auto_apply(deal, sobrescrever).get("alterados", 0)
+	return alterados
 
 
 # ------------------------------------------------------------------ IA (chave por site)
@@ -257,7 +274,7 @@ def _ask_claude(transcript: str) -> dict:
 			headers={"x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json"},
 			json={
 				"model": MODEL,
-				"max_tokens": 2000,
+				"max_tokens": MAX_TOKENS,
 				"system": _system_prompt(),
 				"messages": [{"role": "user", "content": f"<transcricao>\n{transcript}\n</transcricao>"}],
 			},
@@ -274,11 +291,18 @@ def _ask_claude(transcript: str) -> dict:
 	resp_data = resp.json()
 	credito_ia.registrar_uso(resp_data.get("usage"))
 	text = "".join(b.get("text", "") for b in resp_data.get("content", []) if b.get("type") == "text")
+	# resposta cortada ou fora do formato: antes virava uma ficha vazia "preenchida com sucesso"
+	if resp_data.get("stop_reason") == "max_tokens":
+		frappe.log_error("Ficha: resposta da IA cortada", text[-1500:])
+		frappe.throw(_("O texto gerou uma ficha longa demais e a resposta da IA veio cortada. Tente com um texto mais curto."))
 	match = re.search(r"\{.*\}", text, re.S)
 	try:
-		data = json.loads(match.group(0)) if match else {}
+		data = json.loads(match.group(0)) if match else None
 	except ValueError:
-		data = {}
+		data = None
+	if not isinstance(data, dict):
+		frappe.log_error("Ficha: resposta da IA fora do formato", text[:1500])
+		frappe.throw(_("A IA não devolveu a ficha no formato esperado. Tente de novo."))
 	campos = {k: str(data.get(k) or "").strip()[:MAX_FIELD] for k in _keys()}
 	return campos, _clean_draft(data.get("proposta"))
 
@@ -332,9 +356,10 @@ def fill_from_transcript(doctype: str, name: str, transcricao: str, sobrescrever
 			"content": "Ficha da reunião preenchida a partir de texto colado.",
 		}
 	).insert(ignore_permissions=True)
-	proposta = 0
 	if doc.doctype == "CRM Deal":
-		proposta = auto_apply(doc.name).get("alterados", 0)
+		proposta = auto_apply(doc.name, sobrescrever).get("alterados", 0)
+	else:
+		proposta = _sync_deals(doc.name, sobrescrever)
 	return {
 		"campos": current,
 		"preenchidos": filled,
@@ -349,25 +374,26 @@ def _lines(text: str) -> list[str]:
 	return [re.sub(r"^[\-•*\d.)\s]+", "", ln).strip() for ln in (text or "").splitlines() if ln.strip()]
 
 
-def auto_apply(deal: str) -> dict:
-	"""Preenche a proposta com a ficha, só onde ela ainda está vazia. Silencioso: nunca derruba quem chamou."""
+def auto_apply(deal: str, sobrescrever=0) -> dict:
+	"""Preenche a proposta com a ficha (só onde está vazia, ou por cima com `sobrescrever`).
+	Silencioso: nunca derruba quem chamou."""
 	try:
-		return _apply(frappe.get_doc("CRM Deal", deal))
+		return _apply(frappe.get_doc("CRM Deal", deal), cint(sobrescrever))
 	except Exception:
 		frappe.log_error("Ficha: falha ao preencher a proposta", frappe.get_traceback())
 		return {"ok": False, "alterados": 0}
 
 
 @frappe.whitelist()
-def apply_to_proposal(deal: str):
+def apply_to_proposal(deal: str, sobrescrever=0):
 	"""Botão 'Levar para a proposta'."""
 	doc = _doc("CRM Deal", deal, "write")
-	if not any(_load(doc).values()):
+	if not any(_load(doc).values()) and not _draft(doc):
 		frappe.throw(_("A ficha ainda está vazia."))
-	return _apply(doc)
+	return _apply(doc, cint(sobrescrever))
 
 
-def _apply(doc) -> dict:
+def _apply(doc, sobrescrever=0) -> dict:
 	from crm.api.proposta import get_proposal, save_proposal
 
 	ficha = _load(doc)
@@ -378,12 +404,12 @@ def _apply(doc) -> dict:
 	changed = []
 
 	def put(section, key, value):
-		if value and not p[section].get(key):
+		if value and (sobrescrever or not p[section].get(key)) and p[section].get(key) != value:
 			p[section][key] = value
 			changed.append(f"{section}.{key}")
 
 	def put_list(section, key, items):
-		if items and not p[section].get(key):
+		if items and (sobrescrever or not p[section].get(key)) and p[section].get(key) != items:
 			p[section][key] = items
 			changed.append(f"{section}.{key}")
 

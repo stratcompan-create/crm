@@ -37,6 +37,30 @@ def run():
         p2=json.loads(frappe.db.get_value("CRM Deal",deal.name,"proposal_data"))
         ck("não sobrescreve texto já escrito na proposta", p2["intro"]["texto"]=="Texto meu")
         ck("rascunho preservado ao editar a ficha à mão", "_proposta" in json.loads(frappe.db.get_value("CRM Deal",deal.name,"ficha")))
+        # texto colado no lead DEPOIS de converter chega ao negócio e à proposta
+        ans2=dict(ans); ans2["proposta"]=dict(ans["proposta"],intro_texto="Proposta nova do lead.")
+        class R2(R):
+            def json(self): return {"content":[{"type":"text","text":json.dumps(ans2)}]}
+        with mock.patch("requests.post",lambda *a,**k: R2()):
+            ficha.fill_from_transcript("CRM Lead",lead.name,"y"*200,sobrescrever=1)
+        p3=json.loads(frappe.db.get_value("CRM Deal",deal.name,"proposal_data"))
+        ck("lead já convertido: ficha nova vai para o negócio", "_proposta" in json.loads(frappe.db.get_value("CRM Deal",deal.name,"ficha")) and json.loads(frappe.db.get_value("CRM Deal",deal.name,"ficha"))["_proposta"]["intro_texto"]=="Proposta nova do lead.")
+        ck("substituir: proposta recebe o texto novo", p3["intro"]["texto"]=="Proposta nova do lead.", p3["intro"]["texto"])
+        # resposta da IA cortada: erro claro em vez de ficha vazia "preenchida"
+        class Cortada(R):
+            def json(self): return {"stop_reason":"max_tokens","content":[{"type":"text","text":'{"dor_objetivo":"abc'}]}
+        with mock.patch("requests.post",lambda *a,**k: Cortada()):
+            try:
+                ficha.fill_from_transcript("CRM Deal",deal.name,"z"*200); ck("resposta cortada gera erro",False)
+            except frappe.ValidationError:
+                ck("resposta cortada gera erro",True)
+        class Quebrada(R):
+            def json(self): return {"content":[{"type":"text","text":"não consegui"}]}
+        with mock.patch("requests.post",lambda *a,**k: Quebrada()):
+            try:
+                ficha.fill_from_transcript("CRM Deal",deal.name,"z"*200); ck("resposta sem JSON gera erro",False)
+            except frappe.ValidationError:
+                ck("resposta sem JSON gera erro",True)
     finally:
         frappe.db.rollback()
         for dt,n in reversed(made):
