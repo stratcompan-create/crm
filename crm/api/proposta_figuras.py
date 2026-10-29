@@ -84,7 +84,9 @@ def css(P: dict, fonts_css: dict) -> str:
 	.wa {{ display:flex; gap:4mm; align-items:center; }}
 	.wa .phone {{ width:60mm; }}
 	.wa .msg {{ font-size:7pt; padding:1.6mm 2.2mm; margin-bottom:1.6mm; }}
-	.wa .phone .scr {{ height:146mm; }}
+	.wa .phone .scr {{ height:116mm; }}
+	.phone .scr {{ position:relative; }}
+	.phone .bar {{ position:absolute; left:2.4mm; right:2.4mm; bottom:2.4mm; background:#ffffff; border-radius:4mm; padding:1.8mm 3mm; font-size:6.6pt; color:#9a9a9a; }}
 	.side {{ width:56mm; }}
 	.side .card2 {{ background:#ffffff; border:0.3mm solid #e1e4e3; border-radius:2.6mm; padding:3.4mm; }}
 	.side .k3 {{ font-size:5.8pt; letter-spacing:0.18em; text-transform:uppercase; color:{P['label']}; font-weight:700; margin-bottom:1.6mm; }}
@@ -193,7 +195,7 @@ def fig_whatsapp(titulo, linhas, brand):
 		lado = "in" if quem in CLIENTE else "out"
 		msgs += f'<div class="msg {lado}">{_e(texto.strip())}<span class="h">14:{minuto:02d}</span></div>'
 		minuto += 1 if lado == "out" else 0
-	phone = _phone(titulo or brand, "WhatsApp", f'<div class="chat">{msgs}</div>', brand)
+	phone = _phone(titulo or brand, "WhatsApp", f'<div class="chat">{msgs}</div><div class="bar">Mensagem</div>', brand)
 	if not equipe:
 		return phone
 	side = f'<div class="side"><div class="arrow">→</div><div class="card2"><div class="k3">O que a equipe recebe</div>{equipe}</div></div>'
