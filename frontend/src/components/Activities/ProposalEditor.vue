@@ -327,6 +327,23 @@ const SECTIONS = [
     ],
   },
   {
+    key: 'lista',
+    label: __('Lista completa (tudo o que vem, por grupos)'),
+    fields: [
+      ...TITLE,
+      {
+        k: 'grupos',
+        label: __('Grupos'),
+        hint: __('Uma página em três colunas, como a lista de funções do sistema. Itens um por linha.'),
+        type: 'list',
+        item: [
+          { k: 'nome', label: __('Nome do grupo (ex.: Chegada)') },
+          { k: 'itens', label: __('Itens, um por linha'), type: 'textarea', wide: true },
+        ],
+      },
+    ],
+  },
+  {
     key: 'cronograma',
     label: __('Cronograma'),
     fields: [

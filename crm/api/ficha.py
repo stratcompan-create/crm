@@ -74,6 +74,9 @@ PROPOSTA_EXTRA = (
 	"(figura_titulo = @perfil); passos = 'Título | texto'. As figuras são exemplos ilustrativos do dia a dia do cliente: "
 	"pessoas com nomes fictícios, valores de exemplo só do dia a dia dele (nunca o preço desta proposta) e somente "
 	"funções que aparecem no texto. "
+	"lista_completa: só se o texto trouxer uma lista de funções, módulos ou entregáveis maior que o escopo, um objeto "
+	"{titulo, destaque, grupos: [{nome, itens}]}, com itens = um por linha, só o nome curto de cada um; inclua TODOS "
+	"os itens da lista do texto, na mesma ordem e nos mesmos grupos, sem resumir nem juntar; sem lista no texto = objeto vazio. "
 )
 FIGURA_TIPOS = ("whatsapp", "acompanhamento", "notificacoes", "tela", "cobranca", "painel", "site", "post", "passos")
 
@@ -382,7 +385,25 @@ def _clean_draft(raw) -> dict:
 		"investimento_opcoes": items("investimento_opcoes", ("rotulo", "valor", "detalhe", "selo"), 4),
 		"condicoes": items("condicoes", ("titulo", "texto"), 4),
 		"paginas_didaticas": paginas,
+		"lista": _clean_lista(raw.get("lista_completa")),
 	}
+
+
+def _clean_lista(raw) -> dict:
+	"""Lista completa (ex.: as funções do sistema), por grupos; itens um por linha."""
+	raw = raw if isinstance(raw, dict) else {}
+	grupos = []
+	for g in (raw.get("grupos") or [])[:14]:
+		if not isinstance(g, dict):
+			continue
+		itens = g.get("itens")
+		itens = "\n".join(map(str, itens)) if isinstance(itens, list) else str(itens or "")
+		itens = "\n".join(ln.strip()[:120] for ln in itens.splitlines() if ln.strip())[:4000]
+		if itens:
+			grupos.append({"nome": _s(g.get("nome"), 60), "itens": itens})
+	if not grupos:
+		return {}
+	return {"titulo": _s(raw.get("titulo"), 80), "destaque": _s(raw.get("destaque"), 80), "grupos": grupos}
 
 
 @frappe.whitelist()
@@ -487,6 +508,11 @@ def _apply(doc, sobrescrever=0) -> dict:
 			changed.append(f"{sec}.titulo")
 	put("capa", "subtitulo", draft.get("capa_subtitulo"))
 	put_list("didatico", "paginas", draft.get("paginas_didaticas"))
+	lista = draft.get("lista") or {}
+	put_list("lista", "grupos", lista.get("grupos"))
+	if lista.get("grupos") and (sobrescrever or not p["lista"].get("titulo")):
+		put("lista", "titulo", lista.get("titulo"))
+		put("lista", "destaque", lista.get("destaque"))
 	opcoes = draft.get("investimento_opcoes")
 	put_list("investimento", "opcoes", opcoes)
 	if not opcoes:

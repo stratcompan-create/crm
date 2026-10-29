@@ -74,6 +74,14 @@ def run():
             ck("logo sem arquivo não quebra", proposta_layout.logo_uri("/files/nao-existe.png", False, "#000000") == "")
         finally:
             os.remove(caminho)
+        # lista completa: 52 itens cabem numa página; uma lista enorme gera aviso
+        grupos = [{"nome": f"Grupo {g}", "itens": "\n".join(f"Função {g}.{i}" for i in range(5))} for g in range(10)] + [{"nome": "Último", "itens": "A\nB"}]
+        com_lista = proposta._merge(proposta.default_proposal(), {"lista": {"grupos": grupos}})
+        h = proposta.render_proposal_html(None, settings, [], 0, "Cliente", com_lista, "")
+        ck("lista completa numerada de 1 a 52", "<i>52</i>" in h and "<i>53</i>" not in h and "Tudo o que vem" in h)
+        ck("52 itens cabem na página", proposta.check_fit(settings, [], 0, "X", com_lista) == [])
+        enorme = proposta._merge(proposta.default_proposal(), {"lista": {"grupos": [{"nome": "G", "itens": "\n".join(f"Item {i}" for i in range(130))}]}})
+        ck("lista grande demais avisa", any("Lista completa" in a for a in proposta.check_fit(settings, [], 0, "X", enorme)))
         # motor novo falhando: cai no antigo em vez de ficar sem PDF
         with mock.patch.object(proposta_layout, "render_pdf", side_effect=RuntimeError("sem weasyprint")):
             ck("reserva no wkhtmltopdf", proposta.proposal_pdf(None, settings, items, 6000, "Cliente", data, "").startswith(b"%PDF"))
@@ -92,7 +100,9 @@ def run():
                             "paginas_didaticas": [
                                 {"titulo": "Cobrança", "destaque": "automática", "texto": "Lembrete e baixa.", "pontos": ["Pix", "Recibo"],
                                  "figura": "Cobranca", "figura_titulo": "Carlos", "figura_linhas": "Parcela 1/2 | R$ 500 | pago"},
-                                {"titulo": "Foguete", "texto": "Tipo inválido.", "figura": "foguete", "figura_linhas": "x"}]}}
+                                {"titulo": "Foguete", "texto": "Tipo inválido.", "figura": "foguete", "figura_linhas": "x"}],
+                            "lista_completa": {"titulo": "As funções", "destaque": "em uma página",
+                                               "grupos": [{"nome": "Chegada", "itens": ["Triagem", "Origem"]}, {"nome": "", "itens": ""}]}}}
         class R:
             ok = True; status_code = 200
             def json(self): return {"content": [{"type": "text", "text": json.dumps(ans)}]}
@@ -112,6 +122,8 @@ def run():
         pgs = p.get("didatico", {}).get("paginas") or []
         ck("páginas didáticas da IA chegam à proposta", len(pgs) == 2 and pgs[0]["figura"] == "cobranca" and pgs[0]["pontos"] == "Pix\nRecibo", pgs)
         ck("figura de tipo desconhecido é descartada", len(pgs) == 2 and pgs[1]["figura"] == "" and pgs[1]["figura_linhas"] == "")
+        ck("lista completa da IA chega à proposta (grupo vazio descartado)",
+           p["lista"]["grupos"] == [{"nome": "Chegada", "itens": "Triagem\nOrigem"}] and p["lista"]["titulo"] == "As funções", p.get("lista"))
     finally:
         frappe.db.rollback()
         for dt, n in reversed(made):

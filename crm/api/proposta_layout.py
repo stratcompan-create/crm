@@ -16,6 +16,7 @@ DEFAULT_TITLES = {
 	"intro": ("O que este projeto", "resolve"),
 	"diagnostico": ("O que", "entendemos da situação"),
 	"escopo": ("O que está", "incluso"),
+	"lista": ("Tudo o que vem", "em uma página"),
 	"cronograma": ("Do início", "à entrega"),
 	"orcamento": ("Onde o investimento", "é aplicado"),
 	"ciclos": ("Visão de", "ciclos"),
@@ -192,6 +193,15 @@ def _css_base(P: dict, fonts: dict, t: str, s: str, x: str, n: str) -> str:
 	.dor .hj .k {{ color:{P['muted']}; margin-bottom:0.6mm; }}
 	.dor .cr .k {{ color:{P['accent']}; margin-bottom:0.6mm; }}
 	.esc .card {{ min-height:58mm; }}
+	.lista {{ display:flex; gap:9mm; margin-top:1mm; }}
+	.lista > div {{ flex:1; }}
+	.lista .lg {{ font-family:{s}; font-size:7pt; letter-spacing:0.22em; text-transform:uppercase; font-weight:700; color:{P['label']};
+		border-bottom:0.3mm solid {P['line']}; padding-bottom:1.2mm; margin:3.6mm 0 1.4mm; }}
+	.lista > div > .lg:first-child {{ margin-top:0; }}
+	.lista .li {{ display:flex; gap:2.4mm; font-size:9pt; line-height:1.3; padding:0.9mm 0; }}
+	.lista .li i {{ font-style:normal; font-family:{n}; color:{P['accent']}; width:6mm; flex-shrink:0; text-align:right; }}
+	.lista-p .li {{ font-size:8pt; padding:0.55mm 0; }}
+	.lista-p .lg {{ margin:2.6mm 0 1mm; }}
 	.cond .card {{ min-height:40mm; }}
 	.steps {{ display:flex; gap:4mm; }}
 	.steps .st {{ flex:1; background:{P['card']}; border:0.3mm solid {P['line']}; border-top:1.4mm solid {P['accent']}; border-radius:3mm;
@@ -373,6 +383,45 @@ def sec_escopo(d):
 	return html + f'<div class="grid esc {_cols(len(rows))}">{cells}</div>'
 
 
+def sec_lista(d):
+	"""Lista completa do que vem no projeto, por grupos, em três colunas equilibradas."""
+	pp = _p()
+	grupos = []
+	for g in _filled(d.get("grupos"), "nome", "itens"):
+		itens = [ln.strip(" -•") for ln in str(g.get("itens") or "").splitlines() if ln.strip(" -•")]
+		if itens:
+			grupos.append((g.get("nome") or "", itens))
+	total = sum(len(i) for _n, i in grupos)
+	if not total:
+		return ""
+	# altura de cada grupo em "linhas": título do grupo + itens (item longo quebra em duas linhas)
+	peso = [1.6 + sum(2 if len(it) > 46 else 1 for it in itens) for _n, itens in grupos]
+	# a leitura segue de cima para baixo: testa todos os dois cortes e fica com a coluna mais alta menor
+	k = len(grupos)
+	melhor = (float("inf"), k, k)
+	for a in range(k + 1):
+		for b in range(a, k + 1):
+			altura = max(sum(peso[:a]), sum(peso[a:b]), sum(peso[b:]))
+			if altura < melhor[0]:
+				melhor = (altura, a, b)
+	_alt, a, b = melhor
+	colunas = [grupos[:a], grupos[a:b], grupos[b:]]
+	# folha comporta ~31 linhas na letra pequena (~36 na normal): além disso, avisa que vai cortar
+	cheia = _alt > (31 if total > 40 else 27)
+	n, html_cols = 0, ""
+	for coluna in colunas:
+		bloco = ""
+		for nome, itens in coluna:
+			linhas = ""
+			for it in itens:
+				n += 1
+				linhas += f'<div class="li"><i>{n}</i><span>{pp._e(it)}</span></div>'
+			bloco += (f'<div class="lg">{pp._e(nome)}</div>' if nome else "") + linhas
+		html_cols += f"<div>{bloco}</div>"
+	tamanho = "lista-p" if total > 40 else ""
+	return _title("lista", d) + f'<div class="lista {tamanho}"{" data-cheia=1" if cheia else ""}>{html_cols}</div>'
+
+
 def sec_crono(d):
 	pp = _p()
 	html = _title("cronograma", d)
@@ -524,6 +573,9 @@ def build_sections(data, items, total, discount=0, client_name=""):
 			out.append(("didatico", html))
 	if has(data["escopo"], "titulo", "destaque", "itens"):
 		out.append(("escopo", sec_escopo(data["escopo"])))
+	lista = sec_lista(data.get("lista") or {})
+	if lista:
+		out.append(("lista", lista))
 	if has(data["cronograma"], "titulo", "destaque", "etapas", "faixa_titulo", "faixa_texto", "nota"):
 		out.append(("cronograma", sec_crono(data["cronograma"])))
 	if has(data["orcamento"], "titulo", "destaque", "cartoes", "faixa_titulo", "faixa_texto"):
@@ -642,7 +694,11 @@ def overflowing(settings, items, total, client_name, data, discount=0) -> list[s
 	"""
 	out = []
 	for key, html in build_sections(data, items, total, discount, client_name):
-		doc = f'<html><head><meta charset="utf-8"><style>{base}</style></head><body><div class="page m"><div class="body">{html}</div></div></body></html>'
+		# a lista é em colunas flex, que o WeasyPrint não quebra em páginas: ela mesma diz se encheu
+		if "data-cheia=1" in html:
+			out.append(key)
+			continue
+		doc =f'<html><head><meta charset="utf-8"><style>{base}</style></head><body><div class="page m"><div class="body">{html}</div></div></body></html>'
 		if len(HTML(string=doc).render().pages) > 1:
 			out.append(key)
 	return out

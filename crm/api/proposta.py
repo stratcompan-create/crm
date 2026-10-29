@@ -31,6 +31,7 @@ EYEBROWS = {
 	"intro": "Introdução ao projeto",
 	"diagnostico": "Diagnóstico",
 	"escopo": "Escopo do projeto",
+	"lista": "Lista completa",
 	"cronograma": "Cronograma",
 	"orcamento": "Orçamento · onde o investimento é aplicado",
 	"ciclos": "Visão de ciclos",
@@ -56,6 +57,8 @@ def default_proposal() -> dict:
 		"escopo": {"titulo": "", "destaque": "", "itens": []},
 		# páginas "texto + figura" (WhatsApp, link de acompanhamento, cobrança...); vazio + automático = montadas do escopo
 		"didatico": {"automatico": 1, "paginas": []},
+		# tudo o que vem no projeto, por grupos (ex.: as funções do sistema): uma página em três colunas
+		"lista": {"titulo": "", "destaque": "", "subtitulo": "", "grupos": []},
 		"cronograma": {
 			"titulo": "", "destaque": "", "subtitulo": "", "etapas": [],
 			"faixa_titulo": "", "faixa_texto": "", "nota": "",
@@ -574,6 +577,7 @@ SECTION_LABELS = {
 	"diagnostico": "Diagnóstico",
 	"didatico": "Página didática (texto + figura)",
 	"escopo": "Escopo do projeto",
+	"lista": "Lista completa",
 	"cronograma": "Cronograma",
 	"orcamento": "Onde o investimento é aplicado",
 	"ciclos": "Visão de ciclos",
