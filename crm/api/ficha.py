@@ -19,7 +19,7 @@ API_URL = "https://api.anthropic.com/v1/messages"
 MAX_TRANSCRIPT = 80_000
 MAX_FIELD = 2000
 # a ficha (9 campos) + o rascunho da proposta, vindos de um texto longo, passam fácil de 2.000 tokens
-MAX_TOKENS = 8000
+MAX_TOKENS = 16000
 
 FIELDS = [
 	("dor_objetivo", "A dor e o objetivo do cliente"),
@@ -298,7 +298,7 @@ def save_ai_key(chave: str = ""):
 	return {"configurada": bool(chave)}
 
 
-def _ask_claude(transcript: str) -> dict:
+def _ask_claude(transcript: str, lista_pronta: bool = False) -> dict:
 	from crm.api import credito_ia
 
 	key = _api_key()
@@ -314,9 +314,11 @@ def _ask_claude(transcript: str) -> dict:
 				"model": MODEL,
 				"max_tokens": MAX_TOKENS,
 				"system": _system_prompt(),
-				"messages": [{"role": "user", "content": f"<transcricao>\n{transcript}\n</transcricao>"}],
+				"messages": [{"role": "user", "content": f"<transcricao>\n{transcript}\n</transcricao>" + (
+					"\n\nA lista completa de funções já foi copiada do texto pelo sistema: devolva lista_completa como objeto vazio {}."
+					if lista_pronta else "")}],
 			},
-			timeout=120,
+			timeout=240,
 		)
 	except requests.RequestException:
 		frappe.log_error("Ficha: falha ao falar com a IA", frappe.get_traceback())
@@ -406,13 +408,35 @@ def _clean_lista(raw) -> dict:
 	return {"titulo": _s(raw.get("titulo"), 80), "destaque": _s(raw.get("destaque"), 80), "grupos": grupos}
 
 
+def _lista_do_texto(texto: str) -> dict:
+	"""Lista completa copiada direto do texto quando ele já vem estruturado (títulos de grupo + itens
+	"- **N. Nome.** descrição"). Sem IA: copiar 50+ itens pela IA estoura o tempo e o tamanho da resposta."""
+	grupos, atual = [], None
+	for ln in (texto or "").splitlines():
+		cab = re.match(r"^\s*#{2,4}\s+(?:\d+[.)]\s*)?(.+?)\s*$", ln)
+		if cab:
+			atual = {"nome": cab.group(1).split(":")[0].strip(" *"), "itens": []}
+			grupos.append(atual)
+			continue
+		item = re.match(r"^\s*[-*•]\s+\*\*\s*\d+[.)]\s+(.+?)\*\*", ln)
+		if item and atual is not None:
+			atual["itens"].append(item.group(1).strip().rstrip(".:").strip())
+	grupos = [g for g in grupos if g["itens"]]
+	if sum(len(g["itens"]) for g in grupos) < 10:
+		return {}
+	return _clean_lista({"grupos": grupos})
+
+
 @frappe.whitelist()
 def fill_from_transcript(doctype: str, name: str, transcricao: str, sobrescrever=0):
 	doc = _doc(doctype, name, "write")
 	transcricao = (transcricao or "").strip()
 	if len(transcricao) < 80:
 		frappe.throw(_("Cole um texto mais completo (está muito curto para preencher a ficha)."))
-	extracted, draft = _ask_claude(transcricao[:MAX_TRANSCRIPT])
+	lista = _lista_do_texto(transcricao)
+	extracted, draft = _ask_claude(transcricao[:MAX_TRANSCRIPT], lista_pronta=bool(lista))
+	if lista:
+		draft["lista"] = lista
 	current = _load(doc)
 	filled = []
 	for k in _keys():

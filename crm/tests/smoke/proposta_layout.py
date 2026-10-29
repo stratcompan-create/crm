@@ -91,6 +91,11 @@ def run():
         ck("capa corta no fim do trecho, sem reticências", proposta_layout._curto("Integrada ao emissor oficial de Petrolina, emitida quando o pagamento entra e enviada ao cliente.") == "Integrada ao emissor oficial de Petrolina")
         auto = proposta_figuras.auto_pages([{"titulo": "Modelos das áreas", "texto": "contrato e honorário próprios"}, {"titulo": "Nota fiscal automática", "texto": "emitida quando o pagamento entra"}])
         ck("figura automática casa pelo título primeiro", auto[0]["figura"] == "cobranca" and auto[1]["figura"] == "notificacoes" and "Nota fiscal emitida" in auto[1]["figura_linhas"], [a["figura"] for a in auto])
+        texto_lista = "## Tudo o que vem\n\n### 1. Chegada: quem procura\n\n" + "".join(f"- **{i}. Função {i}.** Descrição longa da função {i}.\n  continua aqui.\n" for i in range(1, 7)) \
+            + "\n### 2. Consulta\n\n" + "".join(f"- **{i}. Função {i}.** Texto.\n" for i in range(7, 13)) + "\n## Valores\n\n- **À vista: R$ 3.500**\n1. **Nota fiscal:** dor\n"
+        lt = ficha._lista_do_texto(texto_lista)
+        ck("lista copiada do texto sem IA, por grupo", [g["nome"] for g in lt.get("grupos", [])] == ["Chegada", "Consulta"] and lt["grupos"][1]["itens"].splitlines()[0] == "Função 7", lt)
+        ck("texto sem lista estruturada não inventa lista", ficha._lista_do_texto("## Dores\n- **Nota fiscal:** um turno") == {})
         # motor novo falhando: cai no antigo em vez de ficar sem PDF
         with mock.patch.object(proposta_layout, "render_pdf", side_effect=RuntimeError("sem weasyprint")):
             ck("reserva no wkhtmltopdf", proposta.proposal_pdf(None, settings, items, 6000, "Cliente", data, "").startswith(b"%PDF"))
