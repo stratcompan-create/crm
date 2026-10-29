@@ -96,6 +96,11 @@ def run():
         lt = ficha._lista_do_texto(texto_lista)
         ck("lista copiada do texto sem IA, por grupo", [g["nome"] for g in lt.get("grupos", [])] == ["Chegada", "Consulta"] and lt["grupos"][1]["itens"].splitlines()[0] == "Função 7", lt)
         ck("texto sem lista estruturada não inventa lista", ficha._lista_do_texto("## Dores\n- **Nota fiscal:** um turno") == {})
+        seis = proposta._merge(proposta.default_proposal(), {"diagnostico": {"faixa_texto": "Situação.", "cartoes": [{"titulo": f"Dor {i}", "texto": "Hoje assim, " * 4, "solucao": "Com a proposta assim, " * 4} for i in range(6)]}})
+        ck("6 cartões 'hoje → com a proposta' viram 2 páginas e cabem", len(proposta_layout._diag_partes(seis["diagnostico"])) == 2 and proposta.check_fit(settings, [], 0, "X", seis) == [])
+        ck("valor longo no cartão da equipe vai embaixo do rótulo", 'class="row col"' in proposta_figuras.render("whatsapp", "E", "Cliente: Oi\nEquipe: Resumo | Caso de guarda com detenção, atendimento imediato", ""))
+        dup = proposta._merge(proposta.default_proposal(), {"investimento": {"plano_texto": "- Parcelado: R$ 5.000 em 4x", "opcoes": [{"rotulo": "À vista", "valor": "R$ 3.500"}]}})
+        ck("com cartões de preço o texto do plano não se repete", "Parcelado: R$ 5.000 em 4x" not in proposta.render_proposal_html(None, settings, [], 0, "C", dup, ""))
         # motor novo falhando: cai no antigo em vez de ficar sem PDF
         with mock.patch.object(proposta_layout, "render_pdf", side_effect=RuntimeError("sem weasyprint")):
             ck("reserva no wkhtmltopdf", proposta.proposal_pdf(None, settings, items, 6000, "Cliente", data, "").startswith(b"%PDF"))

@@ -541,6 +541,10 @@ def _apply(doc, sobrescrever=0) -> dict:
 	put_list("investimento", "opcoes", opcoes)
 	if not opcoes:
 		put("investimento", "plano_texto", ficha["valor"])
+	elif sobrescrever and p["investimento"].get("plano_texto"):
+		# os cartões de preço substituem o texto do plano de uma versão anterior
+		p["investimento"]["plano_texto"] = ""
+		changed.append("investimento.plano_texto")
 	condicoes = draft.get("condicoes")
 	# as condições padrão vêm só com títulos: sem texto, contam como vazias
 	if condicoes and (sobrescrever or not any(str(c.get("texto") or "").strip() for c in p["investimento"].get("condicoes") or [])):

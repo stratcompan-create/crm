@@ -372,6 +372,23 @@ def sec_diag(d):
 	return html
 
 
+def _diag_partes(d) -> list[dict]:
+	"""Cartões "Hoje → Com a proposta" são altos: com a faixa no topo cabem 3 na página; o resto
+	segue em páginas de continuação (6 por página), em vez de vazar por cima do rodapé."""
+	rows = _filled(d.get("cartoes"), "titulo", "texto", "solucao")
+	if not any(r.get("solucao") for r in rows):
+		return [d]
+	primeira = 3 if (_filled(d.get("numeros"), "valor", "rotulo") or d.get("faixa_titulo") or d.get("faixa_texto")) else 6
+	if len(rows) <= primeira:
+		return [d]
+	partes = [dict(d, cartoes=rows[:primeira], conclusao="")]
+	resto = rows[primeira:]
+	for i in range(0, len(resto), 6):
+		partes.append(dict(d, cartoes=resto[i : i + 6], numeros=[], faixa_titulo="", faixa_texto="",
+			conclusao=d.get("conclusao") if i + 6 >= len(resto) else ""))
+	return partes
+
+
 def sec_escopo(d):
 	pp = _p()
 	html = _title("escopo", d)
@@ -510,7 +527,8 @@ def sec_invest(d, items, total, discount=0):
 		)
 		html += f'<table class="items"><tr><th>Descrição</th><th class="c">Qtd</th><th class="r">Valor unitário</th><th class="r">Subtotal</th></tr>{rows}</table>'
 	plano = ""
-	if d.get("plano_titulo") or d.get("plano_texto"):
+	# com cartões de preço, o texto do plano (às vezes sobra de uma versão antiga) só repetiria os valores
+	if (d.get("plano_titulo") or d.get("plano_texto")) and not _filled(d.get("opcoes"), "rotulo", "valor"):
 		plano = _block(d.get("plano_rotulo") or d.get("plano_titulo"), (f'**{d.get("plano_titulo")}**\n\n' if d.get("plano_rotulo") and d.get("plano_titulo") else "") + (d.get("plano_texto") or ""))
 	extras = [b for b in (plano, _block(d.get("recomendado_titulo"), d.get("recomendado_texto")), _block(d.get("fases_titulo"), d.get("fases_texto"))) if b]
 	conds = _filled(d.get("condicoes"), "texto")
@@ -568,7 +586,8 @@ def build_sections(data, items, total, discount=0, client_name=""):
 	if has(data["intro"], "titulo", "destaque", "texto", "cartoes", "numeros"):
 		out.append(("intro", sec_intro(data["intro"])))
 	if has(data["diagnostico"], "titulo", "destaque", "numeros", "faixa_titulo", "faixa_texto", "cartoes", "conclusao"):
-		out.append(("diagnostico", sec_diag(data["diagnostico"])))
+		for parte in _diag_partes(data["diagnostico"]):
+			out.append(("diagnostico", sec_diag(parte)))
 	for pg in didactic_pages(data):
 		html = sec_didatico(pg, client_name)
 		if html:

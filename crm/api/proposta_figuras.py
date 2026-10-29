@@ -90,6 +90,8 @@ def css(P: dict, fonts_css: dict) -> str:
 	.side .k3 {{ font-size:5.8pt; letter-spacing:0.18em; text-transform:uppercase; color:{P['label']}; font-weight:700; margin-bottom:1.6mm; }}
 	.side .row {{ font-size:7.4pt; padding:1.8mm 0; }}
 	.side .pill {{ background:{P['soft']}; color:{P['title']}; }}
+	.side .row.col {{ display:block; }}
+	.side .row.col small {{ display:block; margin-top:0.8mm; font-size:7pt; line-height:1.4; color:{P['title']}; font-weight:600; }}
 	.side .arrow {{ font-family:{n}; font-size:16pt; color:{P['accent']}; margin-bottom:2mm; }}
 	.portal {{ padding:4mm 3.6mm; background:#ffffff; height:100%; }}
 	.portal h4 {{ font-family:{t}; font-weight:400; font-size:11pt; color:{P['title']}; margin:0 0 1mm 0; }}
@@ -180,7 +182,11 @@ def fig_whatsapp(titulo, linhas, brand):
 		if quem == "equipe":
 			# o que a equipe recebe organizado: cartão ao lado do celular
 			rot, val = _parts(texto, 2)
-			equipe += f'<div class="row"><span>{_e(rot)}</span>' + (f'<span class="pill">{_e(val)}</span>' if val else "") + "</div>"
+			if len(val or "") > 16:
+				# valor longo (ex.: o resumo) não cabe na etiqueta: vai embaixo do rótulo
+				equipe += f'<div class="row col"><span>{_e(rot)}</span><small>{_e(val)}</small></div>'
+			else:
+				equipe += f'<div class="row"><span>{_e(rot)}</span>' + (f'<span class="pill">{_e(val)}</span>' if val else "") + "</div>"
 			continue
 		if msgs.count('class="msg') >= limite:
 			continue
