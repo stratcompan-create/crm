@@ -140,7 +140,7 @@ def _css_base(P: dict, fonts: dict, t: str, s: str, x: str, n: str) -> str:
 	p {{ margin:0 0 2.4mm 0; }}
 	.page {{ width:{W}mm; height:{H}mm; position:relative; overflow:hidden; page-break-after:always; background:{P['page']}; }}
 	.page:last-child {{ page-break-after:auto; }}
-	.hdr, .ftr {{ position:absolute; left:16mm; right:16mm; display:flex; justify-content:space-between; font-family:{s};
+	.hdr, .ftr {{ position:absolute; left:16mm; right:16mm; display:flex; justify-content:space-between; align-items:center; font-family:{s};
 		font-size:6.4pt; letter-spacing:0.28em; text-transform:uppercase; color:{P['muted']}; }}
 	.hdr {{ top:9mm; font-weight:600; }}
 	.ftr {{ bottom:8mm; border-top:0.25mm solid {P['line']}; padding-top:2mm; letter-spacing:0.16em; }}
@@ -151,9 +151,8 @@ def _css_base(P: dict, fonts: dict, t: str, s: str, x: str, n: str) -> str:
 	.cover-brand {{ position:absolute; top:12mm; left:22mm; height:13mm; }}
 	.cover-toasts {{ position:absolute; right:20mm; top:46mm; width:92mm; }}
 	.ct {{ display:flex; gap:3mm; align-items:center; border-radius:3mm; padding:3.6mm 4mm; margin-bottom:3mm; }}
-	.ct .ic {{ width:7.5mm; height:7.5mm; border-radius:50%; background:{P['accent']}; flex-shrink:0; position:relative; }}
-	.ct .ic::after {{ content:''; position:absolute; left:2.75mm; top:1.5mm; width:1.6mm; height:3.2mm; border:solid #ffffff;
-		border-width:0 0.6mm 0.6mm 0; transform:rotate(45deg); }}
+	.ct .ic {{ width:7.5mm; height:7.5mm; border-radius:50%; background:{P['accent']}; flex-shrink:0;
+		display:flex; align-items:center; justify-content:center; }}
 	.ct b {{ display:block; font-size:9.4pt; }}
 	.ct small {{ font-size:7.6pt; line-height:1.35; }}
 	/* página em bloco, sem coluna flex: no WeasyPrint, grade dentro de coluna flex estica além da folha */
@@ -196,7 +195,7 @@ def _css_base(P: dict, fonts: dict, t: str, s: str, x: str, n: str) -> str:
 	.cond .card {{ min-height:40mm; }}
 	.steps {{ display:flex; gap:4mm; }}
 	.steps .st {{ flex:1; background:{P['card']}; border:0.3mm solid {P['line']}; border-top:1.4mm solid {P['accent']}; border-radius:3mm;
-		padding:5mm 5mm; min-height:86mm; }}
+		padding:5mm 5mm; min-height:62mm; }}
 	.steps .dot {{ width:12mm; height:12mm; line-height:12mm; border-radius:50%; text-align:center; background:{P['hl']}; color:#ffffff;
 		font-family:{n}; font-size:14pt; margin-bottom:4mm; }}
 	.steps .m {{ font-family:{s}; font-size:7pt; letter-spacing:0.18em; text-transform:uppercase; color:{P['label']}; margin-bottom:1mm; }}
@@ -550,12 +549,14 @@ def _page(inner, n, total, client, brand, logo=""):
 
 def _cover_toasts(data) -> str:
 	"""Avisos na capa (como no material feito à mão): os primeiros itens do escopo, já "acontecendo"."""
+	from crm.api import proposta_figuras
+
 	pp = _p()
 	itens = _filled((data.get("escopo") or {}).get("itens"), "titulo")[:4]
 	if len(itens) < 3:
 		return ""
 	cells = "".join(
-		f'<div class="ct"><span class="ic"></span><div><b>{pp._e(it.get("titulo"))}</b>'
+		f'<div class="ct"><span class="ic">{proposta_figuras.CHECK}</span><div><b>{pp._e(it.get("titulo"))}</b>'
 		+ (f'<small>{pp._e(_curto(it.get("texto")))}</small>' if it.get("texto") else "") + "</div></div>"
 		for it in itens
 	)

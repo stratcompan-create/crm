@@ -21,6 +21,12 @@ TIPOS = {
 	"passos": ("Passo a passo", "Um passo por linha: 'Título | texto'."),
 }
 
+# check desenhado em vetor: centralizado no círculo em qualquer tamanho (o caractere ✓ fica torto)
+CHECK = (
+	'<img class="chk" src="data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22>'
+	'<path d=%22M6 12.5l4 4L18 8%22 fill=%22none%22 stroke=%22white%22 stroke-width=%223%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22/></svg>">'
+)
+
 CLIENTE = ("cliente", "lead", "paciente", "contato", "visitante", "aluno", "comprador")
 
 
@@ -100,9 +106,9 @@ def css(P: dict, fonts_css: dict) -> str:
 	.toasts {{ width:104mm; }}
 	.stack {{ width:112mm; }} .stack .win {{ width:100%; }}
 	.toast {{ display:flex; gap:3mm; align-items:center; background:{P['hl']}; color:#ffffff; border-radius:3mm; padding:3.6mm 4mm; margin-bottom:3mm; }}
-	.toast .ic {{ width:7.5mm; height:7.5mm; border-radius:50%; background:{P['accent']}; flex-shrink:0; position:relative; }}
-	.toast .ic::after {{ content:''; position:absolute; left:2.75mm; top:1.5mm; width:1.6mm; height:3.2mm; border:solid #ffffff;
-		border-width:0 0.6mm 0.6mm 0; transform:rotate(45deg); }}
+	.toast .ic {{ width:7.5mm; height:7.5mm; border-radius:50%; background:{P['accent']}; flex-shrink:0;
+		display:flex; align-items:center; justify-content:center; }}
+	.chk {{ width:4.6mm; height:4.6mm; display:block; }}
 
 	.toast b {{ display:block; font-size:9pt; }}
 	.toast small {{ font-size:7.4pt; color:#dfe7e4; }}
@@ -209,7 +215,7 @@ def fig_acompanhamento(titulo, linhas, brand):
 
 def fig_notificacoes(titulo, linhas, brand):
 	itens = "".join(
-		f'<div class="toast"><span class="ic"></span><div><b>{_e(t)}</b><small>{_e(d)}</small></div></div>'
+		f'<div class="toast"><span class="ic">{CHECK}</span><div><b>{_e(t)}</b><small>{_e(d)}</small></div></div>'
 		for t, d in (_parts(ln, 2) for ln in _lines(linhas)[:4])
 	)
 	return f'<div class="fig toasts">{itens}</div>'
@@ -236,7 +242,7 @@ def fig_cobranca(titulo, linhas, brand):
 			avisos.append(("lembrete", "Lembrete enviado no WhatsApp", f"{desc} · com o link de pagamento"))
 		if chave == "pago" and not any(a[0] == "pago" for a in avisos):
 			avisos.append(("pago", f"Pagamento confirmado · {valor}", f"{desc} · baixa automática e recibo enviado"))
-	toasts = "".join(f'<div class="toast"><span class="ic"></span><div><b>{_e(t)}</b><small>{_e(d)}</small></div></div>' for _k, t, d in avisos)
+	toasts = "".join(f'<div class="toast"><span class="ic">{CHECK}</span><div><b>{_e(t)}</b><small>{_e(d)}</small></div></div>' for _k, t, d in avisos)
 	win = _win(brand or "financeiro", f'<h4>{_e(titulo or "Honorários")}</h4>{rows}')
 	return f'<div class="fig stack">{win}<div class="toasts" style="width:100%;margin-top:4mm">{toasts}</div></div>' if toasts else win
 
