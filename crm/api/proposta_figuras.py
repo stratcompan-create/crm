@@ -10,7 +10,7 @@ import re
 
 # tipo -> (nome na tela, como escrever as linhas)
 TIPOS = {
-	"whatsapp": ("Conversa no WhatsApp", "Uma mensagem por linha: 'Cliente: texto' ou 'Empresa: texto'. Título = nome do contato."),
+	"whatsapp": ("Conversa no WhatsApp", "Uma mensagem por linha: 'Cliente: texto' ou 'Empresa: texto'. Opcional: 'Equipe: Rótulo | valor' mostra ao lado o que a equipe recebe. Título = nome da empresa."),
 	"acompanhamento": ("Link de acompanhamento no celular", "Uma etapa por linha: 'texto | feito', '| atual' ou '| pendente'. Título = nome do caso ou projeto."),
 	"notificacoes": ("Notificações", "Uma por linha: 'Título | detalhe'."),
 	"tela": ("Tela do sistema com campos", "Um campo por linha: 'Rótulo | valor'. Título = nome da tela."),
@@ -45,7 +45,12 @@ def _initials(name: str) -> str:
 
 
 def css(P: dict, fonts_css: dict) -> str:
+	from crm.api.estilo import mix
+
 	t, s, x, n = fonts_css["t"], fonts_css["s"], fonts_css["x"], fonts_css["n"]
+	# fundo do painel da figura: tom quente sobre página clara (como no material feito à mão)
+	escura = sum(int(P["page"][i:i + 2], 16) for i in (1, 3, 5)) < 384
+	mock_bg = P["soft"] if escura else mix(P["page"], "#8a7350", 0.13)
 	return f"""
 	.dida {{ display:flex; gap:9mm; height:174mm; }}
 	.dida .tx {{ flex:1; }}
@@ -54,7 +59,7 @@ def css(P: dict, fonts_css: dict) -> str:
 	.dida .pt i {{ font-style:normal; font-family:{n}; color:{P['accent']}; font-size:13pt; width:7mm; flex-shrink:0; }}
 	.dida .pt b {{ display:block; font-weight:600; font-size:11pt; color:{P['title']}; margin-bottom:0.8mm; }}
 	.dida .pt small {{ display:block; font-size:9.6pt; line-height:1.5; color:{P['muted']}; }}
-	.mock {{ width:132mm; flex-shrink:0; background:{P['soft']}; border-radius:4mm; position:relative; display:flex; align-items:center; justify-content:center; }}
+	.mock {{ width:132mm; flex-shrink:0; background:{mock_bg}; border-radius:4mm; position:relative; display:flex; align-items:center; justify-content:center; }}
 	.mock .cap {{ position:absolute; bottom:4mm; left:0; right:0; text-align:center; font-family:{s}; font-size:6.4pt; letter-spacing:0.25em;
 		text-transform:uppercase; color:{P['muted']}; }}
 	.fig {{ font-family:{x}; color:#1f2a2e; }}
@@ -68,7 +73,18 @@ def css(P: dict, fonts_css: dict) -> str:
 	.chat {{ padding:3mm 2.6mm; }}
 	.msg {{ font-size:7.6pt; line-height:1.38; padding:2mm 2.6mm; border-radius:2.4mm; margin-bottom:2mm; max-width:82%; }}
 	.msg.in {{ background:#ffffff; }}
-	.msg.out {{ background:#d9f5c8; margin-left:auto; }}
+	.msg.out {{ background:#d9f5c8; margin-left:auto; border-left:0.8mm solid #2f8f55; }}
+	.msg .h {{ display:block; text-align:right; font-size:5.8pt; color:#8a948f; margin-top:0.6mm; }}
+	.wa {{ display:flex; gap:4mm; align-items:center; }}
+	.wa .phone {{ width:60mm; }}
+	.wa .msg {{ font-size:7pt; padding:1.6mm 2.2mm; margin-bottom:1.6mm; }}
+	.wa .phone .scr {{ height:146mm; }}
+	.side {{ width:56mm; }}
+	.side .card2 {{ background:#ffffff; border:0.3mm solid #e1e4e3; border-radius:2.6mm; padding:3.4mm; }}
+	.side .k3 {{ font-size:5.8pt; letter-spacing:0.18em; text-transform:uppercase; color:{P['label']}; font-weight:700; margin-bottom:1.6mm; }}
+	.side .row {{ font-size:7.4pt; padding:1.8mm 0; }}
+	.side .pill {{ background:{P['soft']}; color:{P['title']}; }}
+	.side .arrow {{ font-family:{n}; font-size:16pt; color:{P['accent']}; margin-bottom:2mm; }}
 	.portal {{ padding:4mm 3.6mm; background:#ffffff; height:100%; }}
 	.portal h4 {{ font-family:{t}; font-weight:400; font-size:11pt; color:{P['title']}; margin:0 0 1mm 0; }}
 	.portal .sub {{ font-size:6.6pt; color:#7a8689; margin-bottom:4mm; }}
@@ -84,11 +100,10 @@ def css(P: dict, fonts_css: dict) -> str:
 	.toasts {{ width:104mm; }}
 	.stack {{ width:112mm; }} .stack .win {{ width:100%; }}
 	.toast {{ display:flex; gap:3mm; align-items:center; background:{P['hl']}; color:#ffffff; border-radius:3mm; padding:3.6mm 4mm; margin-bottom:3mm; }}
-	.toast:nth-child(even) {{ margin-left:8mm; margin-right:-8mm; }}
 	.toast .ic {{ width:7.5mm; height:7.5mm; border-radius:50%; background:{P['accent']}; flex-shrink:0; position:relative; }}
 	.toast .ic::after {{ content:''; position:absolute; left:2.75mm; top:1.5mm; width:1.6mm; height:3.2mm; border:solid #ffffff;
 		border-width:0 0.6mm 0.6mm 0; transform:rotate(45deg); }}
-	.stack .toast:nth-child(even) {{ margin-left:6mm; margin-right:0; }}
+
 	.toast b {{ display:block; font-size:9pt; }}
 	.toast small {{ font-size:7.4pt; color:#dfe7e4; }}
 	.win {{ width:112mm; background:#ffffff; border-radius:3mm; border:0.3mm solid #d9dedd; overflow:hidden; }}
@@ -148,14 +163,29 @@ def _phone(titulo, sub, body, brand=""):
 
 
 def fig_whatsapp(titulo, linhas, brand):
-	msgs = ""
-	for ln in _lines(linhas)[:8]:
+	msgs, equipe, minuto = "", "", 2
+	# com o cartão da equipe ao lado o celular fica estreito: cabem menos mensagens
+	limite = 6 if any(ln.lower().startswith("equipe:") for ln in _lines(linhas)) else 8
+	for ln in _lines(linhas):
 		quem, _sep, texto = ln.partition(":")
 		if not _sep:
 			quem, texto = "empresa", ln
-		lado = "in" if quem.strip().lower() in CLIENTE else "out"
-		msgs += f'<div class="msg {lado}">{_e(texto.strip())}</div>'
-	return _phone(titulo or brand, "WhatsApp", f'<div class="chat">{msgs}</div>', brand)
+		quem = quem.strip().lower()
+		if quem == "equipe":
+			# o que a equipe recebe organizado: cartão ao lado do celular
+			rot, val = _parts(texto, 2)
+			equipe += f'<div class="row"><span>{_e(rot)}</span>' + (f'<span class="pill">{_e(val)}</span>' if val else "") + "</div>"
+			continue
+		if msgs.count('class="msg') >= limite:
+			continue
+		lado = "in" if quem in CLIENTE else "out"
+		msgs += f'<div class="msg {lado}">{_e(texto.strip())}<span class="h">14:{minuto:02d}</span></div>'
+		minuto += 1 if lado == "out" else 0
+	phone = _phone(titulo or brand, "WhatsApp", f'<div class="chat">{msgs}</div>', brand)
+	if not equipe:
+		return phone
+	side = f'<div class="side"><div class="arrow">→</div><div class="card2"><div class="k3">O que a equipe recebe</div>{equipe}</div></div>'
+	return f'<div class="fig wa">{phone}{side}</div>'
 
 
 def fig_acompanhamento(titulo, linhas, brand):

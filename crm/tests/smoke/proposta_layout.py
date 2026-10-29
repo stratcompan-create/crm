@@ -55,6 +55,25 @@ def run():
         ck("automático desligado: sem figuras", "Exemplo ilustrativo" not in proposta.render_proposal_html(None, settings, [], 0, "Cliente", off, ""))
         from crm.api import proposta_figuras
         ck("todas as figuras desenham", all(proposta_figuras.render(t, "T", "A | B | pago\nC | 50%", "Marca") for t in proposta_figuras.TIPOS))
+        wa = proposta_figuras.render("whatsapp", "Escritório", "Cliente: Oi\nEmpresa: Olá\nEquipe: Área | Trabalhista", "")
+        ck("cartão 'o que a equipe recebe' ao lado do celular", "O que a equipe recebe" in wa and "Trabalhista" in wa and "Equipe" not in wa.split("O que a equipe")[0])
+        # logo da marca: fundo liso removido, recortado e pintado quando sumiria no fundo
+        import base64, os
+        from PIL import Image
+        caminho = frappe.get_site_path("public", "files", "zz-logo-teste.png")
+        img = Image.new("RGB", (200, 120), (238, 238, 236))
+        for x in range(60, 140):
+            for y in range(30, 90):
+                img.putpixel((x, y), (10, 60, 80))
+        img.save(caminho)
+        try:
+            uri = proposta_layout.logo_uri("/files/zz-logo-teste.png", True, "#ffffff")
+            logo = Image.open(io.BytesIO(base64.b64decode(uri.split(",", 1)[1]))).convert("RGBA")
+            ck("logo sem o fundo e recortado rente", logo.size == (80, 60) and logo.getpixel((0, 0))[3] > 200, logo.size)
+            ck("logo escuro na capa escura vira branco", logo.getpixel((40, 30))[:3] == (255, 255, 255))
+            ck("logo sem arquivo não quebra", proposta_layout.logo_uri("/files/nao-existe.png", False, "#000000") == "")
+        finally:
+            os.remove(caminho)
         # motor novo falhando: cai no antigo em vez de ficar sem PDF
         with mock.patch.object(proposta_layout, "render_pdf", side_effect=RuntimeError("sem weasyprint")):
             ck("reserva no wkhtmltopdf", proposta.proposal_pdf(None, settings, items, 6000, "Cliente", data, "").startswith(b"%PDF"))

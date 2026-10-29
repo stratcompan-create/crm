@@ -29,6 +29,68 @@ def _p():
 	return proposta
 
 
+# ---------------------------------------------------------------- logo da marca
+
+_logo_cache: dict = {}
+
+
+def _logo_path(url: str) -> str:
+	import frappe
+
+	url = (url or "").split("?")[0]
+	if url.startswith("/private/files/"):
+		return frappe.get_site_path(*url.lstrip("/").split("/"))
+	if url.startswith("/files/"):
+		return frappe.get_site_path("public", *url.lstrip("/").split("/"))
+	return ""
+
+
+def logo_uri(url: str, fundo_escuro: bool, cor: str) -> str:
+	"""Logo da marca pronto para a página: sem o fundo (o arquivo costuma ser uma foto com fundo
+	liso), recortado rente ao desenho e, se ele sumiria no fundo da página, pintado de `cor`."""
+	import base64
+
+	from PIL import Image, ImageChops
+
+	key = (url, fundo_escuro, cor)
+	if key in _logo_cache:
+		return _logo_cache[key]
+	out = ""
+	try:
+		path = _logo_path(url)
+		if path:
+			im = Image.open(path).convert("RGBA")
+			im.thumbnail((700, 700))
+			w, h = im.size
+			px = im.load()
+			cantos = [px[0, 0], px[w - 1, 0], px[0, h - 1], px[w - 1, h - 1]]
+			alpha = im.getchannel("A")
+			if not all(c[3] < 20 for c in cantos):
+				# fundo liso: o que difere da cor dos cantos é o desenho
+				fundo = tuple(sum(c[i] for c in cantos) // 4 for i in range(3))
+				diff = ImageChops.difference(im.convert("RGB"), Image.new("RGB", im.size, fundo)).convert("L")
+				alpha = ImageChops.multiply(alpha, diff.point(lambda v: 0 if v < 14 else min(255, (v - 14) * 6)))
+			box = alpha.point(lambda v: 255 if v > 40 else 0).getbbox()
+			if box:
+				im, alpha = im.crop(box), alpha.crop(box)
+				gray = im.convert("L")
+				pesos = alpha.point(lambda v: 1 if v > 128 else 0)
+				n = sum(pesos.getdata()) or 1
+				lum = sum(g for g, p in zip(gray.getdata(), pesos.getdata()) if p) / n
+				some = lum < 120 if fundo_escuro else lum > 185
+				if some:
+					rgb = tuple(int(cor[i:i + 2], 16) for i in (1, 3, 5))
+					im = Image.new("RGBA", im.size, rgb + (255,))
+				im.putalpha(alpha)
+				buf = io.BytesIO()
+				im.save(buf, "PNG", optimize=True)
+				out = "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
+	except Exception:
+		out = ""
+	_logo_cache[key] = out
+	return out
+
+
 # ---------------------------------------------------------------- paleta por estilo
 
 def palette(style: str, C: str, A: str, N: str) -> dict:
@@ -84,6 +146,16 @@ def _css_base(P: dict, fonts: dict, t: str, s: str, x: str, n: str) -> str:
 	.ftr {{ bottom:8mm; border-top:0.25mm solid {P['line']}; padding-top:2mm; letter-spacing:0.16em; }}
 	.ftr b {{ color:{P['title']}; }}
 	.dia {{ display:inline-block; width:2.4mm; height:2.4mm; border:0.3mm solid {P['accent']}; transform:rotate(45deg); margin-right:2.6mm; }}
+	.hdr .hl {{ display:flex; align-items:center; }}
+	.hlogo {{ height:6mm; margin-right:3mm; }}
+	.cover-brand {{ position:absolute; top:12mm; left:22mm; height:13mm; }}
+	.cover-toasts {{ position:absolute; right:20mm; top:46mm; width:92mm; }}
+	.ct {{ display:flex; gap:3mm; align-items:center; border-radius:3mm; padding:3.6mm 4mm; margin-bottom:3mm; }}
+	.ct .ic {{ width:7.5mm; height:7.5mm; border-radius:50%; background:{P['accent']}; flex-shrink:0; position:relative; }}
+	.ct .ic::after {{ content:''; position:absolute; left:2.75mm; top:1.5mm; width:1.6mm; height:3.2mm; border:solid #ffffff;
+		border-width:0 0.6mm 0.6mm 0; transform:rotate(45deg); }}
+	.ct b {{ display:block; font-size:9.4pt; }}
+	.ct small {{ font-size:7.6pt; line-height:1.35; }}
 	/* página em bloco, sem coluna flex: no WeasyPrint, grade dentro de coluna flex estica além da folha */
 	.body {{ position:absolute; top:19mm; left:16mm; right:16mm; bottom:17mm; }}
 	.price > * {{ flex-shrink:0; }}
@@ -179,10 +251,14 @@ def cover_css(P: dict, dark: bool) -> str:
 		return """
 		.cover-name { color:#ffffff; } .cover-s, .cover-meta div { color:#dfe5e3; }
 		.cover-meta { border-top:0.3mm solid rgba(255,255,255,0.22); }
+		.ct { background:rgba(255,255,255,0.10); border:0.3mm solid rgba(255,255,255,0.20); color:#ffffff; }
+		.ct small { color:#d3dcda; }
 		"""
 	return f"""
 	.cover-name {{ color:{P['title']}; }} .cover-s, .cover-meta div {{ color:{P['muted']}; }}
 	.cover-meta {{ border-top:0.3mm solid {P['line']}; }}
+	.ct {{ background:{P['card']}; border:0.3mm solid {P['line']}; color:{P['ink']}; }}
+	.ct small {{ color:{P['muted']}; }}
 	"""
 
 
@@ -462,22 +538,46 @@ def build_sections(data, items, total, discount=0, client_name=""):
 
 # ---------------------------------------------------------------- documento
 
-def _page(inner, n, total, client, brand):
+def _page(inner, n, total, client, brand, logo=""):
 	pp = _p()
+	marca = f'<img class="hlogo" src="{logo}">' if logo else '<span class="dia"></span>'
 	return (
-		f'<div class="page"><div class="hdr"><span><span class="dia"></span>{pp._e(client)}</span><span>{n:02d} / {total:02d}</span></div>'
+		f'<div class="page"><div class="hdr"><span class="hl">{marca}{pp._e(brand + " · " if brand else "")}{pp._e(client)}</span><span>{n:02d} / {total:02d}</span></div>'
 		f'<div class="body">{inner}</div>'
 		f'<div class="ftr"><span>{pp._e(brand)} × <b>{pp._e(client)}</b></span><span>Proposta comercial · {n:02d} / {total:02d}</span></div></div>'
 	)
 
 
-def _cover(P, style, color, client, brand, data, logo_uri, total_pages):
+def _cover_toasts(data) -> str:
+	"""Avisos na capa (como no material feito à mão): os primeiros itens do escopo, já "acontecendo"."""
+	pp = _p()
+	itens = _filled((data.get("escopo") or {}).get("itens"), "titulo")[:4]
+	if len(itens) < 3:
+		return ""
+	cells = "".join(
+		f'<div class="ct"><span class="ic"></span><div><b>{pp._e(it.get("titulo"))}</b>'
+		+ (f'<small>{pp._e(_curto(it.get("texto")))}</small>' if it.get("texto") else "") + "</div></div>"
+		for it in itens
+	)
+	return f'<div class="cover-toasts">{cells}</div>'
+
+
+def _curto(texto, limite=70) -> str:
+	texto = " ".join(str(texto or "").split())
+	return texto if len(texto) <= limite else texto[: limite - 1].rsplit(" ", 1)[0] + "…"
+
+
+def _cover(P, style, color, client, brand, data, logo_uri, total_pages, brand_logo=""):
 	from crm.api import estilo
 
 	pp = _p()
 	dark = estilo.is_dark_cover(style)
 	backdrop = f'<img class="cover-bg" src="{pp._cover_background(color)}">' if dark else '<div class="cover-frame"></div>'
 	emblem = f'<img class="cover-logo" src="{logo_uri}">' if logo_uri else ""
+	toasts = _cover_toasts(data)
+	backdrop += (f'<img class="cover-brand" src="{brand_logo}">' if brand_logo else "") + toasts
+	if toasts:
+		backdrop += '<style>.cover-in { right:120mm; } .cover-name { font-size:34pt; }</style>'
 	sub = (data["capa"].get("subtitulo") or "").strip()
 	meta = [("Para", client), ("Data", getdate(nowdate()).strftime("%d/%m/%Y"))]
 	dias = int(flt(data["investimento"].get("validade_dias")))
@@ -505,8 +605,12 @@ def render_html(settings, items, total, client_name, data, logo_url="", discount
 	brand = settings.get("brand_name") or ""
 	sections = [h for _k, h in build_sections(data, items, total, discount, client_name)]
 	total_pages = len(sections) + 1
-	pages = "".join(_page(s, i + 2, total_pages, client_name, brand) for i, s in enumerate(sections))
-	cover = _cover(P, pal["estilo"], pal["cor"], client_name, brand, data, pp._logo_data_uri(logo_url), total_pages)
+	marca = settings.get("brand_logo") or ""
+	dark_cover = estilo.is_dark_cover(pal["estilo"])
+	hlogo = logo_uri(marca, pal["estilo"] == "cor", "#ffffff" if pal["estilo"] == "cor" else P["title"])
+	clogo = logo_uri(marca, dark_cover, "#ffffff" if dark_cover else P["title"])
+	pages = "".join(_page(s, i + 2, total_pages, client_name, brand, hlogo) for i, s in enumerate(sections))
+	cover = _cover(P, pal["estilo"], pal["cor"], client_name, brand, data, pp._logo_data_uri(logo_url), total_pages, clogo)
 	style = css(P, fonts) + cover_css(P, estilo.is_dark_cover(pal["estilo"]))
 	return f'<html><head><meta charset="utf-8"><style>{style}</style></head><body>{cover}{pages}</body></html>'
 
