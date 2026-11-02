@@ -1,0 +1,40 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "hash",
+ "creation": "2026-11-02 00:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": ["contato", "lead", "direction", "tipo", "column_break_1", "timestamp", "status", "pelo_celular", "section_break_1", "message", "anexo", "erro", "wamid", "ycloud_id"],
+ "fields": [
+  {"fieldname": "contato", "fieldtype": "Link", "in_list_view": 1, "in_standard_filter": 1, "label": "Contato", "options": "CRM WhatsApp Contato", "reqd": 1, "search_index": 1},
+  {"fieldname": "lead", "fieldtype": "Link", "in_standard_filter": 1, "label": "Lead", "options": "CRM Lead", "search_index": 1},
+  {"fieldname": "direction", "fieldtype": "Select", "in_list_view": 1, "label": "Direção", "options": "Received\nSent", "reqd": 1},
+  {"fieldname": "tipo", "fieldtype": "Data", "label": "Tipo"},
+  {"fieldname": "column_break_1", "fieldtype": "Column Break"},
+  {"fieldname": "timestamp", "fieldtype": "Datetime", "in_list_view": 1, "label": "Quando", "search_index": 1},
+  {"fieldname": "status", "fieldtype": "Data", "label": "Status"},
+  {"default": "0", "fieldname": "pelo_celular", "fieldtype": "Check", "label": "Enviada pelo celular"},
+  {"fieldname": "section_break_1", "fieldtype": "Section Break", "label": "Mensagem"},
+  {"fieldname": "message", "fieldtype": "Long Text", "in_list_view": 1, "label": "Mensagem", "reqd": 1},
+  {"fieldname": "anexo", "fieldtype": "Attach", "label": "Anexo"},
+  {"fieldname": "erro", "fieldtype": "Small Text", "label": "Erro", "read_only": 1},
+  {"fieldname": "wamid", "fieldtype": "Data", "hidden": 1, "label": "ID no WhatsApp", "read_only": 1, "search_index": 1},
+  {"fieldname": "ycloud_id", "fieldtype": "Data", "hidden": 1, "label": "ID na YCloud", "read_only": 1, "search_index": 1}
+ ],
+ "links": [],
+ "modified": "2026-11-02 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "FCRM",
+ "name": "CRM WhatsApp Mensagem",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {"create": 1, "delete": 1, "email": 1, "export": 1, "print": 1, "read": 1, "report": 1, "role": "System Manager", "share": 1, "write": 1},
+  {"create": 1, "delete": 1, "email": 1, "export": 1, "print": 1, "read": 1, "report": 1, "role": "Sales Manager", "share": 1, "write": 1}
+ ],
+ "sort_field": "timestamp",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 0
+}

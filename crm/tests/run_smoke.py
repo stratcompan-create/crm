@@ -56,6 +56,7 @@ MODULES = [
     "trava_perfil",
     "credito_personalizado",
     "proposta_layout",
+    "whatsapp_ycloud",
 ]
 
 
