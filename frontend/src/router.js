@@ -64,6 +64,11 @@ const routes = [
     component: () => import('@/pages/Prospeccao.vue'),
   },
   {
+    path: '/anuncios',
+    name: 'Anuncios',
+    component: () => import('@/pages/Anuncios.vue'),
+  },
+  {
     path: '/meu-site',
     name: 'MeuSite',
     component: () => import('@/pages/MeuSite.vue'),

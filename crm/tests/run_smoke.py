@@ -57,6 +57,7 @@ MODULES = [
     "credito_personalizado",
     "proposta_layout",
     "whatsapp_ycloud",
+    "anuncios",
 ]
 
 

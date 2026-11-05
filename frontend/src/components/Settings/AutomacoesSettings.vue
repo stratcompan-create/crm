@@ -196,6 +196,23 @@
         </div>
       </section>
 
+      <!-- Anúncios -->
+      <section class="rounded-lg border border-outline-gray-2 p-4">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <div class="text-base-semibold text-ink-gray-9">{{ __('Aba "Anúncios"') }}</div>
+            <p class="mt-1 text-p-sm text-ink-gray-6">
+              {{
+                __(
+                  'Painel de anúncios do Google e da Meta: a IA monta a campanha, explica cada escolha e a campanha nasce pausada. Só gestor vê.',
+                )
+              }}
+            </p>
+          </div>
+          <Toggle v-model="cfg.anuncios_ativo" />
+        </div>
+      </section>
+
       <!-- Saldo de IA -->
       <section class="rounded-lg border border-outline-gray-2 p-4">
         <div class="flex items-start justify-between gap-3">

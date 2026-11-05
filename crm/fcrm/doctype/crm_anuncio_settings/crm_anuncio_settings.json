@@ -1,0 +1,40 @@
+{
+	"actions": [],
+	"creation": "2026-11-05 00:00:00.000000",
+	"doctype": "DocType",
+	"engine": "InnoDB",
+	"field_order": [
+		"publicacao_direta",
+		"google_customer_id",
+		"google_developer_token",
+		"google_refresh_token",
+		"meta_ad_account_id",
+		"meta_access_token",
+		"teto_orcamento_diario_centavos"
+	],
+	"fields": [
+		{"default": "0", "fieldname": "publicacao_direta", "fieldtype": "Check", "label": "Publicar direto nas plataformas (precisa das credenciais aprovadas)"},
+		{"fieldname": "google_customer_id", "fieldtype": "Data", "label": "Google Ads - ID da conta"},
+		{"fieldname": "google_developer_token", "fieldtype": "Password", "label": "Google Ads - developer token"},
+		{"fieldname": "google_refresh_token", "fieldtype": "Password", "label": "Google Ads - refresh token"},
+		{"fieldname": "meta_ad_account_id", "fieldtype": "Data", "label": "Meta - ID da conta de anúncios"},
+		{"fieldname": "meta_access_token", "fieldtype": "Password", "label": "Meta - token de acesso"},
+		{"default": "20000", "fieldname": "teto_orcamento_diario_centavos", "fieldtype": "Int", "label": "Teto de orçamento diário (centavos)"}
+	],
+	"index_web_pages_for_search": 1,
+	"issingle": 1,
+	"links": [],
+	"modified": "2026-11-05 00:00:00.000000",
+	"modified_by": "Administrator",
+	"module": "FCRM",
+	"name": "CRM Anuncio Settings",
+	"owner": "Administrator",
+	"permissions": [
+		{"create": 1, "delete": 1, "read": 1, "write": 1, "role": "System Manager"},
+		{"read": 1, "write": 1, "role": "Sales Manager"}
+	],
+	"row_format": "Dynamic",
+	"sort_field": "modified",
+	"sort_order": "DESC",
+	"states": []
+}

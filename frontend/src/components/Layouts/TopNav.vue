@@ -62,6 +62,7 @@ const allSections = [
   { key: 'overview', label: 'Visão Geral', route: 'Dashboard' },
   { key: 'meusite', label: 'Meu Site', route: 'MeuSite' },
   { key: 'instagram', label: 'Instagram', route: 'Instagram' },
+  { key: 'anuncios', label: 'Anúncios', route: 'Anuncios' },
   { key: 'financeiro', label: 'Financeiro', route: 'Financeiro' },
   { key: 'crm', label: 'CRM', route: 'Leads' },
 ]
@@ -70,6 +71,14 @@ const sections = computed(() =>
   allSections.filter((s) => {
     if (s.key === 'meusite') return !!window.meu_site_ativo
     if (s.key === 'instagram') return !!window.instagram_ativo
+    if (s.key === 'anuncios') {
+      if (!window.anuncios_ativo) return false
+      try {
+        return isManager()
+      } catch (e) {
+        return false
+      }
+    }
     if (s.key !== 'financeiro') return true
     try {
       return isManager()
@@ -84,6 +93,7 @@ const activeKey = computed(() => {
   if (name === 'Dashboard') return 'overview'
   if (name === 'MeuSite') return 'meusite'
   if (name === 'Instagram') return 'instagram'
+  if (name === 'Anuncios') return 'anuncios'
   if (
     name === 'Financeiro' ||
     name === 'Financeiro Despesas' ||

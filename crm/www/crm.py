@@ -96,6 +96,8 @@ def get_boot():
 			"assistente_ativo": cint(_config_flag("assistente_ativo", 1)),
 			"contas_ativo": cint(_config_flag("contas_ativo", 1)),
 			"instagram_ativo": cint(_config_flag("instagram_ativo", 1)),
+			# painel de anuncios: vale pra agencia E pro escritorio
+			"anuncios_ativo": cint(_config_flag("anuncios_ativo", 1)),
 			"processo_ativo": cint(_config_flag("processo_ativo", 1)),
 			"prestacao_ativo": cint(_config_flag("prestacao_ativo", 1)),
 			"timezone": {
