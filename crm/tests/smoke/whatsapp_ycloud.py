@@ -136,6 +136,78 @@ def run():
 		ck("assinatura válida aceita", yc._assinatura_valida(corpo, f"t=1700000000,s={assinatura}", "segredo"))
 		ck("corpo alterado recusado", not yc._assinatura_valida(corpo + b" ", f"t=1700000000,s={assinatura}", "segredo"))
 		ck("sem cabeçalho recusado", not yc._assinatura_valida(corpo, None, "segredo"))
+
+		# resposta dada pelo celular, nos dois eventos da YCloud
+		yc.processar_evento(
+			{"type": "whatsapp.smb.message.created",
+			 "whatsappMessage": {"id": "Y6" + U, "wamid": "W6" + U, "to": "+" + tel_sem9, "type": "text",
+								 "text": {"body": "Respondi pelo celular"}, "status": "sent"}}
+		)
+		cel = frappe.db.get_value(yc.MENSAGEM, {"wamid": "W6" + U}, ["direction", "pelo_celular", "message"], as_dict=True)
+		ck("evento smb.message.created grava resposta do celular", cel and cel.direction == "Sent" and cel.pelo_celular == 1)
+		ck("texto aparece como resumo da conversa", frappe.db.get_value(yc.CONTATO, tel_sem9, "ultima_mensagem") == "Respondi pelo celular")
+
+		# apagada e editada
+		ck("mensagem apagada tem texto claro", yc._conteudo({"type": "revoke"})[0] == "🚫 Mensagem apagada")
+		ck(
+			"mensagem editada mostra o texto novo",
+			"novo" in yc._conteudo({"type": "edit", "edit": {"message": {"text": {"body": "novo"}}}})[0],
+		)
+		ck("editada sem texto não quebra", "editada" in yc._conteudo({"type": "edit"})[0])
+
+		# duas mensagens quase juntas: tenta de novo em vez de perder
+		original = yc.processar_evento
+		chamadas = []
+
+		def falha_uma_vez(evento):
+			chamadas.append(1)
+			if len(chamadas) == 1:
+				raise frappe.QueryDeadlockError("1020")
+
+		yc.processar_evento = falha_uma_vez
+		yc._processar_com_novas_tentativas({"id": "e1"})
+		ck("conflito no banco tenta de novo", len(chamadas) == 2)
+
+		# falha definitiva: responde 500 para a YCloud reenviar
+		def falha_sempre(evento):
+			raise frappe.QueryDeadlockError("1020")
+
+		class _Req:
+			headers = {}
+
+			def get_data(self):
+				return b'{"id":"evt_falha_' + U.encode() + b'","type":"x"}'
+
+		req = _Req()
+		t = "1700000000"
+		req.headers = {
+			"YCloud-Signature": f"t={t},s=" + hmac.new(b"segredo", f"{t}.".encode() + req.get_data(), hashlib.sha256).hexdigest()
+		}
+		request_antigo = getattr(frappe.local, "request", None)
+		segredo_antigo = frappe.local.conf.get("ycloud_webhook_secret")
+		erros_antes = frappe.db.count("Error Log")
+		try:
+			frappe.local.request = req
+			frappe.local.conf["ycloud_webhook_secret"] = "segredo"
+			frappe.local.response = frappe._dict()
+			yc.processar_evento = falha_sempre
+			resposta = yc.webhook()
+			ck("falha definitiva responde 500 para a YCloud reenviar",
+			   frappe.local.response.get("http_status_code") == 500 and resposta["status"] == "error")
+			ck("falha definitiva fica registrada", frappe.db.count("Error Log") == erros_antes + 1)
+			yc.processar_evento = lambda evento: None
+			frappe.local.response = frappe._dict()
+			resposta = yc.webhook()
+			ck("reenvio depois da falha é processado", resposta["status"] == "ok" and not frappe.local.response.get("http_status_code"))
+		finally:
+			yc.processar_evento = original
+			frappe.local.request = request_antigo
+			if segredo_antigo is None:
+				frappe.local.conf.pop("ycloud_webhook_secret", None)
+			else:
+				frappe.local.conf["ycloud_webhook_secret"] = segredo_antigo
+			for nome in frappe.get_all("Error Log", filters={"method": ["like", "WhatsApp (YCloud)%"]}, order_by="creation desc", limit=1, pluck="name"):
+				frappe.delete_doc("Error Log", nome, ignore_permissions=True, force=True)
 	finally:
 		yc.requests.post = post_antigo
 		for k, v in conf_antiga.items():

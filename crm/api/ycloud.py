@@ -24,6 +24,7 @@ import hashlib
 import hmac
 import json
 import re
+import time
 from datetime import datetime
 
 import frappe
@@ -42,7 +43,10 @@ EVENTOS = (
 	"whatsapp.inbound_message.received",
 	"whatsapp.message.updated",
 	"whatsapp.smb.message.echoes",
+	"whatsapp.smb.message.created",
 )
+# duas mensagens quase juntas disputam a mesma conversa no banco: tenta de novo antes de desistir
+TENTATIVAS = 4
 ROTULO_MIDIA = {
 	"image": "📷 Foto",
 	"audio": "🎤 Áudio",
@@ -162,20 +166,34 @@ def webhook():
 		return {"status": "duplicate"}
 
 	try:
-		processar_evento(evento)
+		_processar_com_novas_tentativas(evento)
 		if evento.get("id"):
 			frappe.cache.set_value(chave_evento, 1, expires_in_sec=2 * 24 * 3600)
 	except Exception:
 		frappe.db.rollback()
 		frappe.log_error("WhatsApp (YCloud): falha ao processar evento", frappe.get_traceback())
+		# sem 2xx a YCloud reenvia o evento; o wamid impede duplicar o que já tiver entrado
+		frappe.local.response.http_status_code = 500
+		return {"status": "error", "reason": "processing failed"}
 	return {"status": "ok"}
+
+
+def _processar_com_novas_tentativas(evento: dict):
+	for tentativa in range(1, TENTATIVAS + 1):
+		try:
+			return processar_evento(evento)
+		except (frappe.QueryDeadlockError, frappe.DuplicateEntryError, frappe.UniqueValidationError):
+			frappe.db.rollback()
+			if tentativa == TENTATIVAS:
+				raise
+			time.sleep(0.2 * tentativa)
 
 
 def processar_evento(evento: dict):
 	tipo = evento.get("type")
 	if tipo == "whatsapp.inbound_message.received":
 		receber(evento.get("whatsappInboundMessage") or {})
-	elif tipo == "whatsapp.smb.message.echoes":
+	elif tipo in ("whatsapp.smb.message.echoes", "whatsapp.smb.message.created"):
 		eco_do_celular(evento.get("whatsappMessage") or {})
 	elif tipo == "whatsapp.message.updated":
 		atualizar_status(evento.get("whatsappMessage") or {})
@@ -250,6 +268,12 @@ def _conteudo(m: dict) -> tuple[str, dict | None]:
 		return escolha.get("title") or "[Resposta]", None
 	if tipo == "contacts":
 		return "👤 Contato compartilhado", None
+	if tipo == "revoke":
+		return "🚫 Mensagem apagada", None
+	if tipo == "edit":
+		edicao = m.get("edit") or {}
+		corpo = ((edicao.get("message") or edicao).get("text") or {}).get("body")
+		return (f"✏️ Mensagem editada: {corpo}" if corpo else "✏️ Mensagem editada (veja no celular)"), None
 	return "[Mensagem que o CRM ainda não mostra; veja no celular]", None
 
 
@@ -492,6 +516,26 @@ def marcar_pessoal(telefone: str, pessoal: int = 1):
 
 
 # ------------------------------------------------------------------ instalação
+
+def atualizar_eventos() -> dict:
+	"""Passa a lista EVENTOS para o webhook que já existe. O segredo continua o mesmo."""
+	url = frappe.utils.get_url("/api/method/crm.api.ycloud.webhook")
+	r = requests.get(f"{API}/webhookEndpoints", headers=_headers(), timeout=TIMEOUT)
+	r.raise_for_status()
+	alvo = next((i for i in r.json().get("items", []) if i.get("url") == url), None)
+	if not alvo:
+		frappe.throw(f"Webhook não encontrado na YCloud: {url}")
+	r = requests.patch(
+		f"{API}/webhookEndpoints/{alvo['id']}",
+		headers=_headers(),
+		json={"enabledEvents": list(EVENTOS)},
+		timeout=TIMEOUT,
+	)
+	if not r.ok:
+		frappe.throw(f"YCloud recusou a atualização: {r.status_code} {r.text[:300]}")
+	dados = r.json()
+	return {"status": dados.get("status"), "eventos": dados.get("enabledEvents")}
+
 
 def configurar_webhook(url: str | None = None) -> dict:
 	"""Cria o endereço de webhook na YCloud e guarda o segredo no site_config.
