@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="color-scheme" content="dark">
+<title>Confirmar audiência</title>
+<link rel="icon" href="{{ favicon }}">
+<style>
+  :root { --glow: rgba(15, 70, 85, 0.55); --glow-soft: rgba(4, 45, 60, 0.18); }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; min-height: 100%; background: #04080a; }
+  body { font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; color: #fff;
+    background: radial-gradient(ellipse 70% 55% at 50% 0%, var(--glow) 0%, var(--glow-soft) 45%, transparent 75%), #04080a; background-attachment: fixed; }
+  .wrap { max-width: 520px; margin: 0 auto; padding: 2.5rem 1rem 4rem; }
+  .card { background: linear-gradient(180deg, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.02) 100%); border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 26px; padding: 2rem 1.6rem; box-shadow: 0 30px 80px rgba(0,0,0,0.6); }
+  .logo { text-align: center; } .logo img { height: 70px; max-width: 100%; object-fit: contain; filter: brightness(0) invert(1); }
+  h1 { font-size: 1.35rem; margin: 0.9rem 0 0.3rem; text-align: center; }
+  .quando { text-align: center; font-size: 1.5rem; font-weight: 700; margin: 1.1rem 0 0.2rem; }
+  .meta { text-align: center; color: rgba(255,255,255,0.62); font-size: 0.9rem; line-height: 1.6; margin-bottom: 1.4rem; }
+  .sub { color: rgba(255,255,255,0.6); font-size: 0.92rem; line-height: 1.5; text-align: center; }
+  .acoes { display: flex; flex-direction: column; gap: 0.6rem; margin: 1.2rem 0 0.4rem; }
+  .btn { height: 52px; border: 0; border-radius: 999px; font-weight: 700; font-size: 0.98rem; cursor: pointer; font-family: inherit; }
+  .sim { background: #fff; color: #06222c; }
+  .nao { background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.16); }
+  h2 { font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(255,255,255,0.45); margin: 2rem 0 0.7rem; }
+  ul { padding-left: 1.1rem; margin: 0; font-size: 0.9rem; line-height: 1.65; color: rgba(255,255,255,0.8); }
+  li { margin-bottom: 0.5rem; }
+  textarea { width: 100%; min-height: 80px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.14); background: rgba(255,255,255,0.04); color: #fff; padding: 0.7rem; font: inherit; font-size: 0.9rem; margin-bottom: 0.6rem; }
+  .ok { text-align: center; font-size: 1.05rem; line-height: 1.6; }
+  .selo { display: inline-block; padding: 0.3rem 0.9rem; border-radius: 999px; font-size: 0.82rem; font-weight: 700; margin-bottom: 0.8rem; }
+  .selo.v { background: rgba(120, 230, 170, 0.14); color: #86efac; }
+  .selo.r { background: rgba(255, 170, 140, 0.14); color: #fdba74; }
+  .rodape { text-align: center; color: rgba(255,255,255,0.35); font-size: 0.74rem; margin-top: 1.6rem; line-height: 1.5; }
+  .msg { text-align: center; font-size: 0.85rem; color: #ff9c8f; margin-top: 0.7rem; }
+  a.link { color: #9fd8e8; word-break: break-all; }
+  .hide { display: none; }
+</style>
+</head>
+<body>
+<div class="wrap"><div class="card">
+  <div class="logo hide" id="logoBox"><img id="logo" alt=""></div>
+  <h1 id="titulo">Confirmar audiência</h1>
+  <p class="sub" id="sub">Carregando...</p>
+
+  <div id="conteudo" class="hide">
+    <div class="quando" id="quando"></div>
+    <div class="meta" id="meta"></div>
+
+    <div id="painelAcoes">
+      <div class="acoes">
+        <button class="btn sim" id="btnSim">Confirmo que vou</button>
+        <button class="btn nao" id="btnNao">Não vou poder ir</button>
+      </div>
+      <p class="sub" style="font-size:0.82rem">Sua resposta vai direto para o escritório.</p>
+    </div>
+
+    <div id="painelMotivo" class="hide">
+      <h2>Por que não vai poder ir?</h2>
+      <textarea id="motivo" placeholder="Conte rapidamente o motivo (opcional)"></textarea>
+      <div class="acoes">
+        <button class="btn sim" id="btnEnviarNao">Enviar resposta</button>
+        <button class="btn nao" id="btnVoltar">Voltar</button>
+      </div>
+    </div>
+
+    <div id="painelFim" class="hide ok"></div>
+
+    <div id="blocoOrient">
+      <h2>O que levar e o que esperar</h2>
+      <ul id="orient"></ul>
+    </div>
+    <div class="msg hide" id="msg"></div>
+  </div>
+  <div class="rodape" id="rodape"></div>
+</div></div>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var token = new URLSearchParams(location.search).get('t') || '';
+  var acaoUrl = new URLSearchParams(location.search).get('acao') || '';
+  var marca = '';
+
+  function errText(j) {
+    try { var m = JSON.parse(j._server_messages || '[]'); if (m.length) return JSON.parse(m[0]).message.replace(/<[^>]+>/g, ''); } catch (e) {}
+    return 'Não foi possível carregar. Tente abrir o link novamente.';
+  }
+  function post(metodo, corpo) {
+    return fetch('/api/method/crm.api.audiencia.' + metodo, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Frappe-CSRF-Token': (window.csrf_token || 'None') },
+      body: JSON.stringify(corpo)
+    }).then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); });
+  }
+  function fim(html, classe) {
+    $('painelAcoes').classList.add('hide');
+    $('painelMotivo').classList.add('hide');
+    $('painelFim').classList.remove('hide');
+    $('painelFim').innerHTML = (classe ? '<div class="selo ' + classe + '">' + (classe === 'v' ? 'Presença confirmada' : 'Ausência avisada') + '</div>' : '') + html;
+  }
+  function responder(acao, obs) {
+    $('msg').classList.add('hide');
+    post('responder', { token: token, acao: acao, observacao: obs || '' }).then(function (res) {
+      if (!res.ok) { $('msg').textContent = errText(res.j); $('msg').classList.remove('hide'); return; }
+      var d = res.j.message || {};
+      if (d.situacao === 'cancelada') { fim('Essa audiência foi cancelada pelo escritório. Você não precisa comparecer.', ''); return; }
+      if (d.situacao === 'passou') { fim('Essa data já passou. Fale com o escritório se precisar de ajuda.', ''); return; }
+      if (acao === 'confirmar') {
+        fim('Obrigado! O escritório já sabe que você vai comparecer em <b>' + d.quando + '</b>.<br>Leia abaixo o que levar.', 'v');
+      } else {
+        fim('Avisado. O escritório vai entrar em contato com você sobre a audiência de <b>' + d.quando + '</b>.<br>Não deixe de atender.', 'r');
+        $('blocoOrient').classList.add('hide');
+      }
+    });
+  }
+
+  if (!token) { $('sub').textContent = 'Link inválido.'; return; }
+
+  fetch('/api/method/crm.api.audiencia.dados_publicos?token=' + encodeURIComponent(token))
+    .then(function (r) { return r.json().then(function (j) { return { ok: r.ok, j: j }; }); })
+    .then(function (res) {
+      if (!res.ok) { $('sub').textContent = errText(res.j); return; }
+      var d = res.j.message;
+      marca = d.marca || '';
+      if (d.logo) { $('logo').src = d.logo; $('logoBox').classList.remove('hide'); }
+      $('rodape').innerHTML = (marca ? marca + '<br>' : '') + 'Mensagem informativa. Não representa garantia de resultado.';
+      $('titulo').textContent = 'Olá, ' + (d.nome || '') + '!';
+      $('sub').textContent = 'Audiência ' + String(d.tipo || '').toLowerCase() + (d.modalidade === 'Videoconferência' ? ' por videoconferência' : '');
+      $('quando').textContent = d.quando;
+      var meta = [];
+      if (d.vara) meta.push(d.vara);
+      if (d.modalidade === 'Videoconferência') {
+        if (d.link_virtual) meta.push('Sala virtual: <a class="link" href="' + d.link_virtual + '">' + d.link_virtual + '</a>');
+        else meta.push('O link da sala é enviado pelo escritório antes do dia.');
+      } else if (d.local) meta.push(d.local);
+      $('meta').innerHTML = meta.join('<br>');
+      (d.orientacoes || []).forEach(function (o) {
+        var li = document.createElement('li'); li.textContent = o; $('orient').appendChild(li);
+      });
+      $('conteudo').classList.remove('hide');
+      $('sub').classList.add('hide');
+
+      if (d.cancelada) { fim('Essa audiência foi cancelada pelo escritório. Você não precisa comparecer.', ''); $('blocoOrient').classList.add('hide'); return; }
+      if (d.passou) { fim('Essa data já passou. Fale com o escritório se precisar de ajuda.', ''); $('blocoOrient').classList.add('hide'); return; }
+      if (d.ja_respondeu) {
+        if (d.resposta === 'Confirmado') fim('Você já confirmou presença. Obrigado!<br>Leia abaixo o que levar.', 'v');
+        else { fim('Você já avisou que não vai poder ir. O escritório entra em contato.', 'r'); $('blocoOrient').classList.add('hide'); }
+        return;
+      }
+      // o e-mail traz o botão já com a ação: responde de uma vez, sem pedir dois cliques
+      if (acaoUrl === 'confirmar') { responder('confirmar'); }
+      else if (acaoUrl === 'nao') { $('painelAcoes').classList.add('hide'); $('painelMotivo').classList.remove('hide'); }
+    });
+
+  $('btnSim').addEventListener('click', function () { responder('confirmar'); });
+  $('btnNao').addEventListener('click', function () { $('painelAcoes').classList.add('hide'); $('painelMotivo').classList.remove('hide'); });
+  $('btnVoltar').addEventListener('click', function () { $('painelMotivo').classList.add('hide'); $('painelAcoes').classList.remove('hide'); });
+  $('btnEnviarNao').addEventListener('click', function () { responder('nao', $('motivo').value); });
+})();
+</script>
+</body>
+</html>

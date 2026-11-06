@@ -58,6 +58,9 @@ MODULES = [
     "proposta_layout",
     "whatsapp_ycloud",
     "anuncios",
+    "prescricao",
+    "audiencia",
+    "testemunhas",
 ]
 
 

@@ -69,6 +69,21 @@ const routes = [
     component: () => import('@/pages/Anuncios.vue'),
   },
   {
+    path: '/prescricao',
+    name: 'Prescricao',
+    component: () => import('@/pages/Prescricao.vue'),
+  },
+  {
+    path: '/audiencias',
+    name: 'Audiencias',
+    component: () => import('@/pages/Audiencias.vue'),
+  },
+  {
+    path: '/testemunhas',
+    name: 'Testemunhas',
+    component: () => import('@/pages/Testemunhas.vue'),
+  },
+  {
     path: '/meu-site',
     name: 'MeuSite',
     component: () => import('@/pages/MeuSite.vue'),

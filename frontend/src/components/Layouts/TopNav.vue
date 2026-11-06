@@ -54,6 +54,9 @@ const CRM_ROUTE_NAMES = [
   'WhatsApp',
   'Equipe',
   'Prospeccao',
+  'Audiencias',
+  'Prescricao',
+  'Testemunhas',
 ]
 
 const { isManager } = usersStore()

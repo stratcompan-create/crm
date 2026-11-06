@@ -41,7 +41,7 @@ CONFIG_FIELDS = (
 	"posvenda_avaliacao_link posvenda_avaliacao_mensagem posvenda_indicacao_dias posvenda_indicacao_mensagem "
 	"relatorio_ativo relatorio_email relatorio_destinatarios agenda_ativa agenda_titulo agenda_duracao agenda_dias "
 	"agenda_inicio agenda_fim agenda_antecedencia agenda_dias_a_frente agenda_responsavel agenda_link "
-	"agenda_mensagem agenda_valor_consulta influenciadoras_ativo meu_site_ativo assistente_ativo credito_ia_ativo credito_personalizado_ativo contas_ativo instagram_ativo anuncios_ativo processo_ativo prestacao_ativo triagem_ativa triagem_boas_vindas triagem_perguntas triagem_encerramento triagem_responsavel "
+	"agenda_mensagem agenda_valor_consulta influenciadoras_ativo meu_site_ativo assistente_ativo credito_ia_ativo credito_personalizado_ativo contas_ativo instagram_ativo anuncios_ativo prescricao_ativo prescricao_anos prescricao_retroativo_anos prescricao_dias_critico prescricao_dias_atencao audiencia_ativo testemunhas_ativo testemunhas_limite_alerta processo_ativo prestacao_ativo triagem_ativa triagem_boas_vindas triagem_perguntas triagem_encerramento triagem_responsavel "
 	"divisao_prolabore_pct divisao_impostos_pct divisao_crescimento_pct divisao_custos_pct email_adiado"
 ).split()
 
@@ -83,6 +83,18 @@ DEFAULTS = {
 	"instagram_ativo": 1,
 	# painel de anuncios: vale pra agencia E pro escritorio (nao e funcao de advogado)
 	"anuncios_ativo": 1,
+	# funcoes do escritorio - lote 1 (radar de prescricao, audiencia, testemunhas).
+	# so aparecem em perfil juridico; cada escritorio desliga o que nao usa.
+	"prescricao_ativo": 1,
+	# prazo bienal para ajuizar e alcance quinquenal do pedido (CF art. 7o, XXIX).
+	# fica em configuracao porque outras areas tem prazo diferente.
+	"prescricao_anos": 2,
+	"prescricao_retroativo_anos": 5,
+	"prescricao_dias_critico": 30,
+	"prescricao_dias_atencao": 90,
+	"audiencia_ativo": 1,
+	"testemunhas_ativo": 1,
+	"testemunhas_limite_alerta": 3,
 	# módulos do perfil escritório (cada escritório liga só o que usa)
 	"processo_ativo": 1,
 	"prestacao_ativo": 1,

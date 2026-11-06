@@ -168,6 +168,37 @@
           <span class="text-p-sm text-ink-gray-8">{{ __('Aba Prestação de contas (alvará, repasse, custas, parceiros)') }}</span>
           <Toggle v-model="cfg.prestacao_ativo" />
         </div>
+        <div class="mt-2 flex items-center justify-between gap-3">
+          <span class="text-p-sm text-ink-gray-8">{{ __('Aba Audiências (confirmação do cliente e das testemunhas 7 dias antes e na véspera)') }}</span>
+          <Toggle v-model="cfg.audiencia_ativo" />
+        </div>
+        <div class="mt-2 flex items-center justify-between gap-3">
+          <span class="text-p-sm text-ink-gray-8">{{ __('Aba Prescrição (fila dos atendimentos por prazo; só gestor vê)') }}</span>
+          <Toggle v-model="cfg.prescricao_ativo" />
+        </div>
+        <div v-if="cfg.prescricao_ativo" class="mt-3 grid gap-3 sm:grid-cols-2">
+          <Field :label="__('Prazo para ajuizar, em anos contados da saída')">
+            <FormControl v-model="cfg.prescricao_anos" type="number" />
+          </Field>
+          <Field :label="__('Alcance do pedido para trás, em anos contados do ajuizamento')">
+            <FormControl v-model="cfg.prescricao_retroativo_anos" type="number" />
+          </Field>
+          <Field :label="__('Zona crítica: faltando quantos dias')">
+            <FormControl v-model="cfg.prescricao_dias_critico" type="number" />
+          </Field>
+          <Field :label="__('Zona de atenção: faltando quantos dias')">
+            <FormControl v-model="cfg.prescricao_dias_atencao" type="number" />
+          </Field>
+        </div>
+        <div class="mt-2 flex items-center justify-between gap-3">
+          <span class="text-p-sm text-ink-gray-8">{{ __('Aba Testemunhas (busca por local e período entre todos os casos; só gestor vê)') }}</span>
+          <Toggle v-model="cfg.testemunhas_ativo" />
+        </div>
+        <div v-if="cfg.testemunhas_ativo" class="mt-3">
+          <Field :label="__('Avisar quando a mesma testemunha aparecer em quantos casos')">
+            <FormControl v-model="cfg.testemunhas_limite_alerta" type="number" />
+          </Field>
+        </div>
       </section>
 
       <!-- Contas -->

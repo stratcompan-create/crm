@@ -233,6 +233,9 @@ import TeamIcon from '~icons/lucide/users'
 import TargetIcon from '~icons/lucide/target'
 import WorkflowIcon from '~icons/lucide/workflow'
 import ProspectIcon from '~icons/lucide/radar'
+import HourglassIcon from '~icons/lucide/hourglass'
+import GavelIcon from '~icons/lucide/gavel'
+import WitnessIcon from '~icons/lucide/user-search'
 import ReportIcon from '~icons/lucide/bar-chart-3'
 import CalculatorIcon from '~icons/lucide/calculator'
 import ReceiptIcon from '~icons/lucide/receipt'
@@ -493,6 +496,11 @@ watch(
 // Coisas que só fazem sentido para a agência (CRM de advogado não mostra).
 const isAgency = computed(() => (window.crm_profile || 'agencia') === 'agencia')
 
+// Funcoes que so existem no CRM de escritorio de advocacia.
+const isJuridico = computed(() =>
+  ['escritorio', 'escritorio_empresarial'].includes(window.crm_profile),
+)
+
 const links = [
   {
     label: 'Leads',
@@ -509,6 +517,27 @@ const links = [
     label: 'Deals',
     icon: DealsIcon,
     to: 'Deals',
+  },
+  {
+    label: 'Audiências',
+    icon: GavelIcon,
+    to: 'Audiencias',
+    // confirmar audiencia e trabalho de toda a equipe, nao so do gestor
+    condition: () => isJuridico.value && !!window.audiencia_ativo,
+  },
+  {
+    label: 'Prescrição',
+    icon: HourglassIcon,
+    to: 'Prescricao',
+    // a fila mostra estimativa de valor por atendimento: informacao de gestao
+    condition: () => isJuridico.value && isManager() && !!window.prescricao_ativo,
+  },
+  {
+    label: 'Testemunhas',
+    icon: WitnessIcon,
+    to: 'Testemunhas',
+    // a busca cruza casos, e o CRM tem permissao por caso: so gestor
+    condition: () => isJuridico.value && isManager() && !!window.testemunhas_ativo,
   },
   {
     label: 'Mapas',

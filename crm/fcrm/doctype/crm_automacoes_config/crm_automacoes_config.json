@@ -1,376 +1,439 @@
 {
- "actions": [],
- "creation": "2026-09-21 00:00:00.000000",
- "doctype": "DocType",
- "engine": "InnoDB",
- "index_web_pages_for_search": 1,
- "links": [],
- "modified": "2026-10-20 22:00:00.000000",
- "modified_by": "Administrator",
- "module": "FCRM",
- "owner": "Administrator",
- "row_format": "Dynamic",
- "sort_field": "modified",
- "sort_order": "DESC",
- "states": [],
- "issingle": 1,
- "name": "CRM Automacoes Config",
- "field_order": [
-  "cobranca_ativa",
-  "cobranca_dias_antes",
-  "cobranca_dias_atraso",
-  "cobranca_assunto",
-  "cobranca_mensagem",
-  "parcelas_padrao",
-  "parcelas_intervalo",
-  "onboarding_ativo",
-  "posvenda_ativo",
-  "posvenda_avaliacao_dias",
-  "posvenda_avaliacao_link",
-  "posvenda_avaliacao_mensagem",
-  "posvenda_indicacao_dias",
-  "posvenda_indicacao_mensagem",
-  "relatorio_ativo",
-  "relatorio_email",
-  "relatorio_destinatarios",
-  "agenda_ativa",
-  "agenda_titulo",
-  "agenda_duracao",
-  "agenda_dias",
-  "agenda_inicio",
-  "agenda_fim",
-  "agenda_antecedencia",
-  "agenda_dias_a_frente",
-  "agenda_responsavel",
-  "agenda_link",
-  "agenda_mensagem",
-  "anthropic_api_key",
-  "influenciadoras_ativo",
-  "meu_site_ativo",
-  "assistente_ativo",
-  "credito_ia_ativo",
-  "contas_ativo",
-  "instagram_ativo",
-  "divisao_prolabore_pct",
-  "divisao_impostos_pct",
-  "divisao_crescimento_pct",
-  "divisao_custos_pct",
-  "email_adiado",
-  "chave_transcricao",
-  "agenda_valor_consulta",
-  "processo_ativo",
-  "prestacao_ativo",
-  "triagem_ativa",
-  "triagem_boas_vindas",
-  "triagem_perguntas",
-  "triagem_encerramento",
-  "triagem_responsavel",
-  "credito_personalizado_ativo"
- ],
- "fields": [
-  {
-   "fieldname": "cobranca_ativa",
-   "fieldtype": "Check",
-   "label": "Cobrança automática ligada",
-   "default": "1"
-  },
-  {
-   "fieldname": "cobranca_dias_antes",
-   "fieldtype": "Int",
-   "label": "Avisar quantos dias antes do vencimento",
-   "default": "3"
-  },
-  {
-   "fieldname": "cobranca_dias_atraso",
-   "fieldtype": "Data",
-   "label": "Cobrar depois do vencimento (dias, separados por vírgula)",
-   "default": "1,7,15"
-  },
-  {
-   "fieldname": "cobranca_assunto",
-   "fieldtype": "Data",
-   "label": "Assunto do lembrete"
-  },
-  {
-   "fieldname": "cobranca_mensagem",
-   "fieldtype": "Text",
-   "label": "Mensagem do lembrete"
-  },
-  {
-   "fieldname": "parcelas_padrao",
-   "fieldtype": "Int",
-   "label": "Parcelas ao ganhar um negócio",
-   "default": "1"
-  },
-  {
-   "fieldname": "parcelas_intervalo",
-   "fieldtype": "Int",
-   "label": "Dias entre parcelas",
-   "default": "30"
-  },
-  {
-   "fieldname": "onboarding_ativo",
-   "fieldtype": "Check",
-   "label": "Criar tarefas de início ao ganhar um negócio",
-   "default": "1"
-  },
-  {
-   "fieldname": "posvenda_ativo",
-   "fieldtype": "Check",
-   "label": "Pós-venda automático ligado",
-   "default": "1"
-  },
-  {
-   "fieldname": "posvenda_avaliacao_dias",
-   "fieldtype": "Int",
-   "label": "Pedir avaliação depois de (dias)",
-   "default": "7"
-  },
-  {
-   "fieldname": "posvenda_avaliacao_link",
-   "fieldtype": "Data",
-   "label": "Link para avaliação (Google, por exemplo)"
-  },
-  {
-   "fieldname": "posvenda_avaliacao_mensagem",
-   "fieldtype": "Text",
-   "label": "Mensagem do pedido de avaliação"
-  },
-  {
-   "fieldname": "posvenda_indicacao_dias",
-   "fieldtype": "Int",
-   "label": "Pedir indicação depois de (dias)",
-   "default": "30"
-  },
-  {
-   "fieldname": "posvenda_indicacao_mensagem",
-   "fieldtype": "Text",
-   "label": "Mensagem do pedido de indicação"
-  },
-  {
-   "fieldname": "relatorio_ativo",
-   "fieldtype": "Check",
-   "label": "Relatório semanal por e-mail ligado",
-   "default": "1"
-  },
-  {
-   "fieldname": "relatorio_destinatarios",
-   "fieldtype": "Small Text",
-   "label": "Receber o relatório (e-mails, um por linha; vazio = gestores)"
-  },
-  {
-   "fieldname": "agenda_ativa",
-   "fieldtype": "Check",
-   "label": "Agendamento online ligado",
-   "default": "0"
-  },
-  {
-   "fieldname": "agenda_titulo",
-   "fieldtype": "Data",
-   "label": "Título da reunião"
-  },
-  {
-   "fieldname": "agenda_duracao",
-   "fieldtype": "Int",
-   "label": "Duração (minutos)",
-   "default": "30"
-  },
-  {
-   "fieldname": "agenda_dias",
-   "fieldtype": "Data",
-   "label": "Dias da semana (1=segunda ... 7=domingo)",
-   "default": "1,2,3,4,5"
-  },
-  {
-   "fieldname": "agenda_inicio",
-   "fieldtype": "Data",
-   "label": "Começa às",
-   "default": "09:00"
-  },
-  {
-   "fieldname": "agenda_fim",
-   "fieldtype": "Data",
-   "label": "Termina às",
-   "default": "18:00"
-  },
-  {
-   "fieldname": "agenda_antecedencia",
-   "fieldtype": "Int",
-   "label": "Antecedência mínima (horas)",
-   "default": "4"
-  },
-  {
-   "fieldname": "agenda_dias_a_frente",
-   "fieldtype": "Int",
-   "label": "Mostrar quantos dias à frente",
-   "default": "14"
-  },
-  {
-   "fieldname": "agenda_responsavel",
-   "fieldtype": "Link",
-   "label": "Responsável pelas reuniões",
-   "options": "User"
-  },
-  {
-   "fieldname": "agenda_link",
-   "fieldtype": "Data",
-   "label": "Link da reunião (Meet, Zoom...)"
-  },
-  {
-   "fieldname": "agenda_mensagem",
-   "fieldtype": "Small Text",
-   "label": "Aviso na página de agendamento"
-  },
-  {
-   "fieldname": "relatorio_email",
-   "fieldtype": "Check",
-   "label": "Enviar o resumo também por e-mail",
-   "default": "1"
-  },
-  {
-   "fieldname": "anthropic_api_key",
-   "fieldtype": "Password",
-   "label": "Chave da API da Anthropic"
-  },
-  {
-   "fieldname": "influenciadoras_ativo",
-   "fieldtype": "Check",
-   "label": "Gestão de influenciadoras ligada",
-   "default": "0"
-  },
-  {
-   "fieldname": "meu_site_ativo",
-   "fieldtype": "Check",
-   "label": "Aba \"Meu Site\" ligada",
-   "default": "1"
-  },
-  {
-   "fieldname": "assistente_ativo",
-   "fieldtype": "Check",
-   "label": "Assistente de suporte (chat) ligado",
-   "default": "1"
-  },
-  {
-   "fieldname": "credito_ia_ativo",
-   "fieldtype": "Check",
-   "label": "Controle de saldo de IA ligado (cobranca pre-paga)",
-   "default": "0"
-  },
-  {
-   "fieldname": "contas_ativo",
-   "fieldtype": "Check",
-   "label": "Aba \"Contas\" ligada",
-   "default": "1"
-  },
-  {
-   "fieldname": "instagram_ativo",
-   "fieldtype": "Check",
-   "label": "Aba \"Instagram\" ligada",
-   "default": "1"
-  },
-  {
-   "fieldname": "divisao_prolabore_pct",
-   "fieldtype": "Int",
-   "label": "Divisão do caixa: Pró-labore (%)",
-   "default": "60",
-   "description": "Os 4 percentuais de divisão do caixa precisam somar 100%."
-  },
-  {
-   "fieldname": "divisao_impostos_pct",
-   "fieldtype": "Int",
-   "label": "Divisão do caixa: Impostos (%)",
-   "default": "15"
-  },
-  {
-   "fieldname": "divisao_crescimento_pct",
-   "fieldtype": "Int",
-   "label": "Divisão do caixa: Crescimento/investimento (%)",
-   "default": "15"
-  },
-  {
-   "fieldname": "divisao_custos_pct",
-   "fieldtype": "Int",
-   "label": "Divisão do caixa: Custos da empresa (%)",
-   "default": "10"
-  },
-  {
-   "fieldname": "email_adiado",
-   "fieldtype": "Check",
-   "label": "Configuração do e-mail de envio adiada (reconhecida pelo gestor)",
-   "default": "0",
-   "description": "Tira o alerta vermelho de e-mail da Visão Geral enquanto o envio não é configurado. O envio automático (resumo semanal, avisos de prazo, etc.) continua desligado até configurar de verdade."
-  },
-  {
-   "fieldname": "chave_transcricao",
-   "fieldtype": "Password",
-   "label": "Chave de transcrição de áudio (OpenAI)"
-  },
-  {
-   "fieldname": "agenda_valor_consulta",
-   "fieldtype": "Currency",
-   "label": "Valor da consulta agendada online (0 = gratuita)",
-   "options": "BRL"
-  },
-  {
-   "default": "1",
-   "fieldname": "processo_ativo",
-   "fieldtype": "Check",
-   "label": "Aba Processo no caso"
-  },
-  {
-   "default": "1",
-   "fieldname": "prestacao_ativo",
-   "fieldtype": "Check",
-   "label": "Aba Prestação de contas no caso"
-  },
-  {
-   "default": "0",
-   "fieldname": "triagem_ativa",
-   "fieldtype": "Check",
-   "label": "Triagem no WhatsApp"
-  },
-  {
-   "fieldname": "triagem_boas_vindas",
-   "fieldtype": "Small Text",
-   "label": "Triagem: mensagem de boas-vindas"
-  },
-  {
-   "fieldname": "triagem_perguntas",
-   "fieldtype": "Long Text",
-   "label": "Triagem: perguntas (uma por linha)"
-  },
-  {
-   "fieldname": "triagem_encerramento",
-   "fieldtype": "Small Text",
-   "label": "Triagem: mensagem final"
-  },
-  {
-   "fieldname": "triagem_responsavel",
-   "fieldtype": "Link",
-   "options": "User",
-   "label": "Triagem: quem recebe os atendimentos"
-  },
-  {
-   "default": "0",
-   "fieldname": "credito_personalizado_ativo",
-   "fieldtype": "Check",
-   "label": "Crédito de IA: permitir valor personalizado na recarga"
-  }
- ],
- "permissions": [
-  {
-   "create": 1,
-   "delete": 1,
-   "read": 1,
-   "write": 1,
-   "role": "System Manager"
-  },
-  {
-   "create": 1,
-   "delete": 1,
-   "read": 1,
-   "write": 1,
-   "role": "Sales Manager"
-  }
- ]
+	"actions": [],
+	"creation": "2026-09-21 00:00:00.000000",
+	"doctype": "DocType",
+	"engine": "InnoDB",
+	"index_web_pages_for_search": 1,
+	"links": [],
+	"modified": "2026-10-20 22:00:00.000000",
+	"modified_by": "Administrator",
+	"module": "FCRM",
+	"owner": "Administrator",
+	"row_format": "Dynamic",
+	"sort_field": "modified",
+	"sort_order": "DESC",
+	"states": [],
+	"issingle": 1,
+	"name": "CRM Automacoes Config",
+	"field_order": [
+		"cobranca_ativa",
+		"cobranca_dias_antes",
+		"cobranca_dias_atraso",
+		"cobranca_assunto",
+		"cobranca_mensagem",
+		"parcelas_padrao",
+		"parcelas_intervalo",
+		"onboarding_ativo",
+		"posvenda_ativo",
+		"posvenda_avaliacao_dias",
+		"posvenda_avaliacao_link",
+		"posvenda_avaliacao_mensagem",
+		"posvenda_indicacao_dias",
+		"posvenda_indicacao_mensagem",
+		"relatorio_ativo",
+		"relatorio_email",
+		"relatorio_destinatarios",
+		"agenda_ativa",
+		"agenda_titulo",
+		"agenda_duracao",
+		"agenda_dias",
+		"agenda_inicio",
+		"agenda_fim",
+		"agenda_antecedencia",
+		"agenda_dias_a_frente",
+		"agenda_responsavel",
+		"agenda_link",
+		"agenda_mensagem",
+		"anthropic_api_key",
+		"influenciadoras_ativo",
+		"meu_site_ativo",
+		"assistente_ativo",
+		"credito_ia_ativo",
+		"contas_ativo",
+		"instagram_ativo",
+		"divisao_prolabore_pct",
+		"divisao_impostos_pct",
+		"divisao_crescimento_pct",
+		"divisao_custos_pct",
+		"email_adiado",
+		"chave_transcricao",
+		"agenda_valor_consulta",
+		"processo_ativo",
+		"prestacao_ativo",
+		"triagem_ativa",
+		"triagem_boas_vindas",
+		"triagem_perguntas",
+		"triagem_encerramento",
+		"triagem_responsavel",
+		"credito_personalizado_ativo",
+		"anuncios_ativo",
+		"prescricao_ativo",
+		"prescricao_anos",
+		"prescricao_retroativo_anos",
+		"prescricao_dias_critico",
+		"prescricao_dias_atencao",
+		"audiencia_ativo",
+		"testemunhas_ativo",
+		"testemunhas_limite_alerta"
+	],
+	"fields": [
+		{
+			"fieldname": "cobranca_ativa",
+			"fieldtype": "Check",
+			"label": "Cobrança automática ligada",
+			"default": "1"
+		},
+		{
+			"fieldname": "cobranca_dias_antes",
+			"fieldtype": "Int",
+			"label": "Avisar quantos dias antes do vencimento",
+			"default": "3"
+		},
+		{
+			"fieldname": "cobranca_dias_atraso",
+			"fieldtype": "Data",
+			"label": "Cobrar depois do vencimento (dias, separados por vírgula)",
+			"default": "1,7,15"
+		},
+		{
+			"fieldname": "cobranca_assunto",
+			"fieldtype": "Data",
+			"label": "Assunto do lembrete"
+		},
+		{
+			"fieldname": "cobranca_mensagem",
+			"fieldtype": "Text",
+			"label": "Mensagem do lembrete"
+		},
+		{
+			"fieldname": "parcelas_padrao",
+			"fieldtype": "Int",
+			"label": "Parcelas ao ganhar um negócio",
+			"default": "1"
+		},
+		{
+			"fieldname": "parcelas_intervalo",
+			"fieldtype": "Int",
+			"label": "Dias entre parcelas",
+			"default": "30"
+		},
+		{
+			"fieldname": "onboarding_ativo",
+			"fieldtype": "Check",
+			"label": "Criar tarefas de início ao ganhar um negócio",
+			"default": "1"
+		},
+		{
+			"fieldname": "posvenda_ativo",
+			"fieldtype": "Check",
+			"label": "Pós-venda automático ligado",
+			"default": "1"
+		},
+		{
+			"fieldname": "posvenda_avaliacao_dias",
+			"fieldtype": "Int",
+			"label": "Pedir avaliação depois de (dias)",
+			"default": "7"
+		},
+		{
+			"fieldname": "posvenda_avaliacao_link",
+			"fieldtype": "Data",
+			"label": "Link para avaliação (Google, por exemplo)"
+		},
+		{
+			"fieldname": "posvenda_avaliacao_mensagem",
+			"fieldtype": "Text",
+			"label": "Mensagem do pedido de avaliação"
+		},
+		{
+			"fieldname": "posvenda_indicacao_dias",
+			"fieldtype": "Int",
+			"label": "Pedir indicação depois de (dias)",
+			"default": "30"
+		},
+		{
+			"fieldname": "posvenda_indicacao_mensagem",
+			"fieldtype": "Text",
+			"label": "Mensagem do pedido de indicação"
+		},
+		{
+			"fieldname": "relatorio_ativo",
+			"fieldtype": "Check",
+			"label": "Relatório semanal por e-mail ligado",
+			"default": "1"
+		},
+		{
+			"fieldname": "relatorio_destinatarios",
+			"fieldtype": "Small Text",
+			"label": "Receber o relatório (e-mails, um por linha; vazio = gestores)"
+		},
+		{
+			"fieldname": "agenda_ativa",
+			"fieldtype": "Check",
+			"label": "Agendamento online ligado",
+			"default": "0"
+		},
+		{
+			"fieldname": "agenda_titulo",
+			"fieldtype": "Data",
+			"label": "Título da reunião"
+		},
+		{
+			"fieldname": "agenda_duracao",
+			"fieldtype": "Int",
+			"label": "Duração (minutos)",
+			"default": "30"
+		},
+		{
+			"fieldname": "agenda_dias",
+			"fieldtype": "Data",
+			"label": "Dias da semana (1=segunda ... 7=domingo)",
+			"default": "1,2,3,4,5"
+		},
+		{
+			"fieldname": "agenda_inicio",
+			"fieldtype": "Data",
+			"label": "Começa às",
+			"default": "09:00"
+		},
+		{
+			"fieldname": "agenda_fim",
+			"fieldtype": "Data",
+			"label": "Termina às",
+			"default": "18:00"
+		},
+		{
+			"fieldname": "agenda_antecedencia",
+			"fieldtype": "Int",
+			"label": "Antecedência mínima (horas)",
+			"default": "4"
+		},
+		{
+			"fieldname": "agenda_dias_a_frente",
+			"fieldtype": "Int",
+			"label": "Mostrar quantos dias à frente",
+			"default": "14"
+		},
+		{
+			"fieldname": "agenda_responsavel",
+			"fieldtype": "Link",
+			"label": "Responsável pelas reuniões",
+			"options": "User"
+		},
+		{
+			"fieldname": "agenda_link",
+			"fieldtype": "Data",
+			"label": "Link da reunião (Meet, Zoom...)"
+		},
+		{
+			"fieldname": "agenda_mensagem",
+			"fieldtype": "Small Text",
+			"label": "Aviso na página de agendamento"
+		},
+		{
+			"fieldname": "relatorio_email",
+			"fieldtype": "Check",
+			"label": "Enviar o resumo também por e-mail",
+			"default": "1"
+		},
+		{
+			"fieldname": "anthropic_api_key",
+			"fieldtype": "Password",
+			"label": "Chave da API da Anthropic"
+		},
+		{
+			"fieldname": "influenciadoras_ativo",
+			"fieldtype": "Check",
+			"label": "Gestão de influenciadoras ligada",
+			"default": "0"
+		},
+		{
+			"fieldname": "meu_site_ativo",
+			"fieldtype": "Check",
+			"label": "Aba \"Meu Site\" ligada",
+			"default": "1"
+		},
+		{
+			"fieldname": "assistente_ativo",
+			"fieldtype": "Check",
+			"label": "Assistente de suporte (chat) ligado",
+			"default": "1"
+		},
+		{
+			"fieldname": "credito_ia_ativo",
+			"fieldtype": "Check",
+			"label": "Controle de saldo de IA ligado (cobranca pre-paga)",
+			"default": "0"
+		},
+		{
+			"fieldname": "contas_ativo",
+			"fieldtype": "Check",
+			"label": "Aba \"Contas\" ligada",
+			"default": "1"
+		},
+		{
+			"fieldname": "instagram_ativo",
+			"fieldtype": "Check",
+			"label": "Aba \"Instagram\" ligada",
+			"default": "1"
+		},
+		{
+			"fieldname": "divisao_prolabore_pct",
+			"fieldtype": "Int",
+			"label": "Divisão do caixa: Pró-labore (%)",
+			"default": "60",
+			"description": "Os 4 percentuais de divisão do caixa precisam somar 100%."
+		},
+		{
+			"fieldname": "divisao_impostos_pct",
+			"fieldtype": "Int",
+			"label": "Divisão do caixa: Impostos (%)",
+			"default": "15"
+		},
+		{
+			"fieldname": "divisao_crescimento_pct",
+			"fieldtype": "Int",
+			"label": "Divisão do caixa: Crescimento/investimento (%)",
+			"default": "15"
+		},
+		{
+			"fieldname": "divisao_custos_pct",
+			"fieldtype": "Int",
+			"label": "Divisão do caixa: Custos da empresa (%)",
+			"default": "10"
+		},
+		{
+			"fieldname": "email_adiado",
+			"fieldtype": "Check",
+			"label": "Configuração do e-mail de envio adiada (reconhecida pelo gestor)",
+			"default": "0",
+			"description": "Tira o alerta vermelho de e-mail da Visão Geral enquanto o envio não é configurado. O envio automático (resumo semanal, avisos de prazo, etc.) continua desligado até configurar de verdade."
+		},
+		{
+			"fieldname": "chave_transcricao",
+			"fieldtype": "Password",
+			"label": "Chave de transcrição de áudio (OpenAI)"
+		},
+		{
+			"fieldname": "agenda_valor_consulta",
+			"fieldtype": "Currency",
+			"label": "Valor da consulta agendada online (0 = gratuita)",
+			"options": "BRL"
+		},
+		{
+			"default": "1",
+			"fieldname": "processo_ativo",
+			"fieldtype": "Check",
+			"label": "Aba Processo no caso"
+		},
+		{
+			"default": "1",
+			"fieldname": "prestacao_ativo",
+			"fieldtype": "Check",
+			"label": "Aba Prestação de contas no caso"
+		},
+		{
+			"default": "0",
+			"fieldname": "triagem_ativa",
+			"fieldtype": "Check",
+			"label": "Triagem no WhatsApp"
+		},
+		{
+			"fieldname": "triagem_boas_vindas",
+			"fieldtype": "Small Text",
+			"label": "Triagem: mensagem de boas-vindas"
+		},
+		{
+			"fieldname": "triagem_perguntas",
+			"fieldtype": "Long Text",
+			"label": "Triagem: perguntas (uma por linha)"
+		},
+		{
+			"fieldname": "triagem_encerramento",
+			"fieldtype": "Small Text",
+			"label": "Triagem: mensagem final"
+		},
+		{
+			"fieldname": "triagem_responsavel",
+			"fieldtype": "Link",
+			"options": "User",
+			"label": "Triagem: quem recebe os atendimentos"
+		},
+		{
+			"default": "0",
+			"fieldname": "credito_personalizado_ativo",
+			"fieldtype": "Check",
+			"label": "Crédito de IA: permitir valor personalizado na recarga"
+		},
+		{
+			"default": "1",
+			"fieldname": "anuncios_ativo",
+			"fieldtype": "Check",
+			"label": "Aba Anúncios"
+		},
+		{
+			"default": "1",
+			"fieldname": "prescricao_ativo",
+			"fieldtype": "Check",
+			"label": "Radar de prescrição"
+		},
+		{
+			"default": "2",
+			"fieldname": "prescricao_anos",
+			"fieldtype": "Int",
+			"label": "Prazo para ajuizar (anos da saída)"
+		},
+		{
+			"default": "5",
+			"fieldname": "prescricao_retroativo_anos",
+			"fieldtype": "Int",
+			"label": "Alcance do pedido para trás (anos do ajuizamento)"
+		},
+		{
+			"default": "30",
+			"fieldname": "prescricao_dias_critico",
+			"fieldtype": "Int",
+			"label": "Zona crítica (dias restantes)"
+		},
+		{
+			"default": "90",
+			"fieldname": "prescricao_dias_atencao",
+			"fieldtype": "Int",
+			"label": "Zona de atenção (dias restantes)"
+		},
+		{
+			"default": "1",
+			"fieldname": "audiencia_ativo",
+			"fieldtype": "Check",
+			"label": "Agenda de audiências"
+		},
+		{
+			"default": "1",
+			"fieldname": "testemunhas_ativo",
+			"fieldtype": "Check",
+			"label": "Banco de testemunhas"
+		},
+		{
+			"default": "3",
+			"fieldname": "testemunhas_limite_alerta",
+			"fieldtype": "Int",
+			"label": "Avisar quando a testemunha aparecer em N casos"
+		}
+	],
+	"permissions": [
+		{
+			"create": 1,
+			"delete": 1,
+			"read": 1,
+			"write": 1,
+			"role": "System Manager"
+		},
+		{
+			"create": 1,
+			"delete": 1,
+			"read": 1,
+			"write": 1,
+			"role": "Sales Manager"
+		}
+	]
 }

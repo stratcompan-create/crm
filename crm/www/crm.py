@@ -98,6 +98,11 @@ def get_boot():
 			"instagram_ativo": cint(_config_flag("instagram_ativo", 1)),
 			# painel de anuncios: vale pra agencia E pro escritorio
 			"anuncios_ativo": cint(_config_flag("anuncios_ativo", 1)),
+			# funcoes do escritorio (lote 1): a tela so aparece em perfil juridico,
+			# mas a flag vai no boot sempre para o menu nao precisar de outra chamada
+			"prescricao_ativo": cint(_config_flag("prescricao_ativo", 1)),
+			"audiencia_ativo": cint(_config_flag("audiencia_ativo", 1)),
+			"testemunhas_ativo": cint(_config_flag("testemunhas_ativo", 1)),
 			"processo_ativo": cint(_config_flag("processo_ativo", 1)),
 			"prestacao_ativo": cint(_config_flag("prestacao_ativo", 1)),
 			"timezone": {
