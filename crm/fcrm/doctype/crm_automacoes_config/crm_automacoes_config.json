@@ -65,6 +65,7 @@
 		"triagem_perguntas",
 		"triagem_encerramento",
 		"triagem_responsavel",
+		"triagem_palavra_chave",
 		"credito_personalizado_ativo",
 		"anuncios_ativo",
 		"prescricao_ativo",
@@ -358,6 +359,11 @@
 			"fieldtype": "Link",
 			"options": "User",
 			"label": "Triagem: quem recebe os atendimentos"
+		},
+		{
+			"fieldname": "triagem_palavra_chave",
+			"fieldtype": "Data",
+			"label": "Triagem: palavras que ligam o robô (vazio = todo contato novo)"
 		},
 		{
 			"default": "0",

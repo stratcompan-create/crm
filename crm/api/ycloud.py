@@ -441,9 +441,20 @@ def _erro_amigavel(resposta: dict | str) -> str:
 	return _("O WhatsApp não aceitou a mensagem: {0}").format(texto[:300])
 
 
+def conectado() -> bool:
+	"""Este CRM fala pelo WhatsApp da YCloud? (chave gravada no site e número confirmado)"""
+	return bool(_chave() and _numero())
+
+
 @frappe.whitelist(methods=["POST"])
 def send_message(telefone: str, message: str) -> dict:
+	"""Envio pela caixa de entrada: só gestor."""
 	_managers_only()
+	return enviar_texto(telefone, message)
+
+
+def enviar_texto(telefone: str, message: str) -> dict:
+	"""Envio cru, sem trava de permissão — usado também pela triagem, que roda em segundo plano."""
 	telefone, texto = _digitos(telefone), (message or "").strip()
 	if not telefone or not texto:
 		frappe.throw(_("Escreva a mensagem antes de enviar."))

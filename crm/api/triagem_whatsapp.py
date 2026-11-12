@@ -1,12 +1,20 @@
 # Copyright (c) 2026, Stratcompany and contributors
 # For license information, please see license.txt
 #
-# Triagem no WhatsApp (API oficial da Meta, app `whatsapp` instalado).
+# Triagem no WhatsApp.
 # Quem escreve pela primeira vez vira Atendimento e recebe perguntas FIXAS, escritas pelo
 # escritório (nome, o que aconteceu, prazo, cidade). O robô nunca responde dúvida jurídica:
 # a IA só lê as respostas por dentro e organiza área, urgência e resumo para o advogado.
 # Quando alguém da equipe responde à mão, o robô para naquela conversa.
-# Fica pronto para ligar: basta a conta do WhatsApp Business estar configurada (Meta).
+#
+# Fala por dois motores, conforme o que o site tiver conectado:
+#   - YCloud (coexistência, o número continua no celular) — é o caso da agência
+#   - app `whatsapp` (API oficial da Meta) — escritório com conta Business própria
+#
+# PERFIL AGÊNCIA: o número é pessoal também (o dono usa o mesmo WhatsApp). Por isso lá o robô
+# NÃO aborda quem escrever qualquer coisa: só entra em cena quando a mensagem traz a palavra
+# combinada do anúncio ou do vídeo (ex.: "DEMO"). Em perfil de escritório, o número é do
+# escritório e todo contato novo entra na triagem, como antes.
 
 import json
 import re
@@ -34,6 +42,26 @@ ENCERRAMENTO = (
 	"contato. Se for urgente, escreva URGENTE aqui."
 )
 
+# --- perfil agência: quem escreve é advogado interessado no sistema, não cliente com um caso
+BOAS_VINDAS_AGENCIA = (
+	"Olá! Aqui é a Stratcompany. Vou fazer três perguntas rápidas para entender o seu "
+	"escritório e já te mandar o acesso de demonstração."
+)
+PERGUNTAS_AGENCIA = (
+	"Qual é o seu nome e o nome do escritório?\n"
+	"Em que área você atua?\n"
+	"Hoje são quantas pessoas no escritório (só você, ou equipe)?\n"
+	"O que te chamou atenção: a triagem no WhatsApp, o acompanhamento do cliente, o financeiro, ou o sistema todo?"
+)
+ENCERRAMENTO_AGENCIA = (
+	"Perfeito, obrigado! Já tenho o que preciso — em instantes te mando o acesso de "
+	"demonstração para você mexer à vontade, sem compromisso."
+)
+# palavra que liga o robô no perfil agência (a do CTA do vídeo). Configurável.
+PALAVRA_CHAVE = "DEMO, CRM, SISTEMA"
+# o que a agência vende — a IA diz em qual deles o contato está interessado
+SERVICOS = ("CRM Jurídico", "Site", "Tráfego pago", "Audiovisual", "Conteúdo")
+
 # sinais de urgência que dispensam a IA (o advogado é avisado na hora)
 URGENTE = re.compile(
 	r"\b(urgente|pres[oa]|pris[aã]o|flagrante|audi[eê]ncia (hoje|amanh[aã])|liminar|despejo|"
@@ -48,8 +76,66 @@ def _cfg():
 	return get_config()
 
 
+def _na_agencia() -> bool:
+	from crm.provision import PERFIS_JURIDICOS, get_profile
+
+	return get_profile() not in PERFIS_JURIDICOS
+
+
+def padroes() -> dict:
+	"""Textos de fábrica da triagem, conforme o perfil do site."""
+	if _na_agencia():
+		return {
+			"boas_vindas": BOAS_VINDAS_AGENCIA,
+			"perguntas": PERGUNTAS_AGENCIA,
+			"encerramento": ENCERRAMENTO_AGENCIA,
+			"palavra_chave": PALAVRA_CHAVE,
+		}
+	return {
+		"boas_vindas": BOAS_VINDAS,
+		"perguntas": PERGUNTAS,
+		"encerramento": ENCERRAMENTO,
+		"palavra_chave": "",
+	}
+
+
+def _texto(cfg, campo: str) -> str:
+	return (cfg.get("triagem_" + campo) or "").strip() or padroes()[campo]
+
+
 def _perguntas(cfg) -> list[str]:
-	return [p.strip() for p in (cfg.get("triagem_perguntas") or PERGUNTAS).splitlines() if p.strip()]
+	return [p.strip() for p in _texto(cfg, "perguntas").splitlines() if p.strip()]
+
+
+def _palavras_chave(cfg) -> list[str]:
+	bruto = cfg.get("triagem_palavra_chave")
+	bruto = bruto.strip() if bruto else padroes()["palavra_chave"]
+	return [p.strip().casefold() for p in re.split(r"[,;\n]", bruto) if p.strip()]
+
+
+def _pode_iniciar(texto: str, cfg) -> bool:
+	"""Começar uma triagem com quem nunca escreveu antes.
+
+	No escritório, sim: o número é do escritório. Na agência o número também é pessoal,
+	então o robô só entra quando a mensagem traz a palavra combinada no anúncio ou no vídeo.
+	Palavra em branco na configuração = robô atende todo mundo (quem liga, assume).
+	"""
+	palavras = _palavras_chave(cfg)
+	if not palavras:
+		return True
+	alvo = (texto or "").casefold()
+	return any(re.search(r"\b" + re.escape(p) + r"\b", alvo) for p in palavras)
+
+
+def _motor() -> str:
+	"""Por onde este CRM fala no WhatsApp."""
+	from crm.api import ycloud
+
+	if ycloud.conectado():
+		return "ycloud"
+	if "whatsapp" in frappe.get_installed_apps():
+		return "meta"
+	return ""
 
 
 def _responsavel(cfg) -> str:
@@ -64,12 +150,17 @@ def _responsavel(cfg) -> str:
 
 
 def _enviar(telefone: str, lead: str, texto: str):
-	"""Manda pela API oficial, marcado como mensagem do robô (não conta como 'equipe assumiu')."""
-	from whatsapp.whatsapp.api.messages import send_message
-
+	"""Manda pelo motor conectado, marcado como mensagem do robô (não conta como 'equipe assumiu')."""
 	frappe.flags.triagem_enviando = True
 	try:
-		send_message(to=telefone, message=texto, reference_doctype="CRM Lead", reference_docname=lead)
+		if _motor() == "ycloud":
+			from crm.api import ycloud
+
+			ycloud.enviar_texto(telefone, texto)
+		else:
+			from whatsapp.whatsapp.api.messages import send_message
+
+			send_message(to=telefone, message=texto, reference_doctype="CRM Lead", reference_docname=lead)
 	finally:
 		frappe.flags.triagem_enviando = False
 
@@ -107,23 +198,50 @@ def _triagem_aberta(telefone: str):
 
 # ------------------------------------------------------------------ ganchos do WhatsApp Message
 
+def _equipe_assumiu(filtros: dict):
+	for nome in frappe.get_all("CRM Triagem", dict(filtros, status="Em andamento"), pluck="name"):
+		frappe.db.set_value("CRM Triagem", nome, "status", "Assumida pela equipe")
+
+
 def ao_receber(doc, method=None):
-	"""after_insert de WhatsApp Message: entrada → triagem; saída manual → equipe assumiu."""
+	"""after_insert de WhatsApp Message (app da Meta): entrada → triagem; saída manual → equipe assumiu."""
 	if doc.direction == "Outgoing":
 		if not frappe.flags.triagem_enviando and doc.reference_doctype == "CRM Lead" and doc.reference_docname:
-			for nome in frappe.get_all("CRM Triagem", {"lead": doc.reference_docname, "status": "Em andamento"}, pluck="name"):
-				frappe.db.set_value("CRM Triagem", nome, "status", "Assumida pela equipe")
+			_equipe_assumiu({"lead": doc.reference_docname})
 		return
-	from crm.provision import PERFIS_JURIDICOS, get_profile
-
-	if get_profile() not in PERFIS_JURIDICOS or not cint(_cfg().get("triagem_ativa")):
+	if not cint(_cfg().get("triagem_ativa")):
 		return
 	frappe.enqueue(
 		"crm.api.triagem_whatsapp.processar", queue="short", mensagem=doc.name, enqueue_after_commit=True
 	)
 
 
+def ao_receber_ycloud(doc, method=None):
+	"""after_insert de CRM WhatsApp Mensagem (YCloud, número em coexistência).
+
+	Resposta humana — pelo CRM ou pelo próprio celular — encerra o robô naquela conversa.
+	É o que protege quem usa o mesmo número no dia a dia: assim que o dono responde, o robô cala.
+	"""
+	if doc.direction != "Received":
+		if not frappe.flags.triagem_enviando:
+			_equipe_assumiu({"telefone": doc.contato})
+		return
+	if not cint(_cfg().get("triagem_ativa")):
+		return
+	from crm.api import ycloud
+
+	if cint(frappe.db.get_value(ycloud.CONTATO, doc.contato, "pessoal")):
+		return  # contato marcado como pessoal nunca é abordado pelo robô
+	frappe.enqueue(
+		"crm.api.triagem_whatsapp.processar_ycloud", queue="short", mensagem=doc.name, enqueue_after_commit=True
+	)
+
+
 def _nome_do_perfil(telefone: str) -> str:
+	if _motor() == "ycloud":
+		from crm.api import ycloud
+
+		return frappe.db.get_value(ycloud.CONTATO, telefone, "nome") or ""
 	return frappe.db.get_value("WhatsApp Profile", {"phone_number": telefone}, "profile_name") or ""
 
 
@@ -131,6 +249,41 @@ def processar(mensagem: str):
 	frappe.set_user("Administrator")
 	try:
 		_processar(frappe.get_doc("WhatsApp Message", mensagem))
+		frappe.db.commit()
+	except Exception:
+		frappe.db.rollback()
+		frappe.log_error("Triagem WhatsApp: falha", frappe.get_traceback())
+
+
+class MensagemYCloud:
+	"""Faz uma CRM WhatsApp Mensagem responder como a mensagem que `_processar` espera."""
+
+	def __init__(self, doc):
+		self._doc = doc
+		self.message = doc.message or ""
+		self.reference_doctype = "CRM Lead" if doc.lead else None
+		self.reference_docname = doc.lead or None
+
+	def get(self, campo, padrao=None):
+		return {"from": self._doc.contato}.get(campo, padrao)
+
+	def db_set(self, valores: dict, update_modified=True):
+		lead = valores.get("reference_docname")
+		if not lead:
+			return
+		from crm.api import ycloud
+
+		frappe.db.set_value(ycloud.MENSAGEM, self._doc.name, "lead", lead, update_modified=False)
+		frappe.db.set_value(ycloud.CONTATO, self._doc.contato, "lead", lead, update_modified=False)
+		self.reference_doctype, self.reference_docname = "CRM Lead", lead
+
+
+def processar_ycloud(mensagem: str):
+	from crm.api import ycloud
+
+	frappe.set_user("Administrator")
+	try:
+		_processar(MensagemYCloud(frappe.get_doc(ycloud.MENSAGEM, mensagem)))
 		frappe.db.commit()
 	except Exception:
 		frappe.db.rollback()
@@ -148,6 +301,8 @@ def _processar(msg):
 		# já é contato conhecido (cliente, caso ou atendimento em curso): quem atende é a equipe
 		if msg.reference_doctype and msg.reference_docname:
 			return
+		if not _pode_iniciar(texto, cfg):
+			return
 		lead = _novo_atendimento(telefone, _nome_do_perfil(telefone), cfg)
 		msg.db_set({"reference_doctype": "CRM Lead", "reference_docname": lead}, update_modified=False)
 		t = frappe.get_doc(
@@ -157,7 +312,7 @@ def _processar(msg):
 		if URGENTE.search(texto):
 			_avisar_urgente(t, texto, cfg)
 		perguntas = _perguntas(cfg)
-		_enviar(telefone, lead, (cfg.get("triagem_boas_vindas") or BOAS_VINDAS) + "\n\n" + perguntas[0])
+		_enviar(telefone, lead, _texto(cfg, "boas_vindas") + "\n\n" + perguntas[0])
 		return
 
 	perguntas = _perguntas(cfg)
@@ -180,7 +335,7 @@ def _processar(msg):
 	t.status = "Concluída"
 	t.concluida_em = now_datetime()
 	t.save(ignore_permissions=True)
-	_enviar(telefone, t.lead, cfg.get("triagem_encerramento") or ENCERRAMENTO)
+	_enviar(telefone, t.lead, _texto(cfg, "encerramento"))
 	_concluir(t, cfg)
 
 
@@ -219,7 +374,7 @@ def _concluir(t, cfg):
 	t.save(ignore_permissions=True)
 	partes = [_("Triagem pelo WhatsApp concluída.")]
 	if t.area:
-		partes.append(_("Área provável: {0}").format(t.area))
+		partes.append((_("Interesse: {0}") if _na_agencia() else _("Área provável: {0}")).format(t.area))
 	if t.urgencia:
 		partes.append(_("Urgência: {0}").format(t.urgencia))
 	if t.resumo:
@@ -248,14 +403,25 @@ def _classificar(t) -> dict:
 	key = _api_key()
 	if not key or not credito_ia.saldo_suficiente():
 		return {}
-	areas = frappe.get_all("CRM Modelo Area", pluck="area") or []
-	sistema = (
-		"Você organiza a triagem de um escritório de advocacia. Leia as respostas do cliente e devolva "
-		"SOMENTE um JSON com: \"area\" (uma destas, ou \"Outra\": " + ", ".join(areas) + "), "
-		"\"urgencia\" (\"Alta\", \"Média\" ou \"Baixa\": Alta se houver prisão, audiência ou prazo em até 5 dias), "
-		"\"resumo\" (até 3 frases objetivas, sem opinar sobre o mérito nem sobre chances de êxito). "
-		"Não invente fatos que não estejam nas respostas."
-	)
+	if _na_agencia():
+		sistema = (
+			"Você organiza a triagem de uma agência que vende sistema, site e marketing para advogados. "
+			"Leia as respostas e devolva SOMENTE um JSON com: "
+			"\"area\" (o que a pessoa procura — um destes, ou \"Outra\": " + ", ".join(SERVICOS) + "), "
+			"\"urgencia\" (\"Alta\", \"Média\" ou \"Baixa\": Alta se a pessoa já quer contratar ou tem prazo "
+			"próprio; Baixa se está só olhando), "
+			"\"resumo\" (até 3 frases objetivas: porte do escritório, área de atuação e o que ela quer resolver). "
+			"Não invente fatos que não estejam nas respostas."
+		)
+	else:
+		areas = frappe.get_all("CRM Modelo Area", pluck="area") or []
+		sistema = (
+			"Você organiza a triagem de um escritório de advocacia. Leia as respostas do cliente e devolva "
+			"SOMENTE um JSON com: \"area\" (uma destas, ou \"Outra\": " + ", ".join(areas) + "), "
+			"\"urgencia\" (\"Alta\", \"Média\" ou \"Baixa\": Alta se houver prisão, audiência ou prazo em até 5 dias), "
+			"\"resumo\" (até 3 frases objetivas, sem opinar sobre o mérito nem sobre chances de êxito). "
+			"Não invente fatos que não estejam nas respostas."
+		)
 	try:
 		resp = requests.post(
 			API_URL,
@@ -284,13 +450,16 @@ def _classificar(t) -> dict:
 @frappe.whitelist()
 def estado() -> dict:
 	frappe.only_for(("System Manager", "Sales Manager"))
-	conectado = "whatsapp" in frappe.get_installed_apps() and bool(
-		frappe.db.count("WhatsApp Account", {"status": ["!=", "Inactive"]})
+	motor = _motor()
+	conectado = motor == "ycloud" or (
+		motor == "meta" and bool(frappe.db.count("WhatsApp Account", {"status": ["!=", "Inactive"]}))
 	)
 	cfg = _cfg()
 	return {
 		"conectado": conectado,
-		"padrao": {"boas_vindas": BOAS_VINDAS, "perguntas": PERGUNTAS, "encerramento": ENCERRAMENTO},
+		"motor": motor,
+		"por_palavra": _na_agencia(),
+		"padrao": padroes(),
 		"ultimas": frappe.get_all(
 			"CRM Triagem", fields=["name", "lead", "status", "area", "urgencia", "creation"],
 			order_by="creation desc", limit=10,

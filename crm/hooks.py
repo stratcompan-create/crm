@@ -196,6 +196,9 @@ doc_events = {
 		"on_update": ["crm.api.whatsapp.on_update"],
 		"after_insert": ["crm.api.triagem_whatsapp.ao_receber"],
 	},
+	"CRM WhatsApp Mensagem": {
+		"after_insert": ["crm.api.triagem_whatsapp.ao_receber_ycloud"],
+	},
 	"CRM Task": {
 		"on_update": ["crm.api.automacoes.on_task_update"],
 	},

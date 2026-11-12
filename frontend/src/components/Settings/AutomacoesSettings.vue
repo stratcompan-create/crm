@@ -98,19 +98,23 @@
       </section>
 
       <!-- Triagem no WhatsApp -->
-      <section v-if="['escritorio', 'escritorio_empresarial'].includes(perfil)" class="rounded-lg border border-outline-gray-2 p-4">
+      <section class="rounded-lg border border-outline-gray-2 p-4">
         <div class="flex items-start justify-between gap-3">
           <div>
             <div class="text-base-semibold text-ink-gray-9">{{ __('Triagem no WhatsApp') }}</div>
             <p class="mt-1 text-p-sm text-ink-gray-6">
-              {{ __('Quem escreve pela primeira vez vira atendimento e recebe as perguntas abaixo. O robô nunca responde dúvidas: a IA só organiza área, urgência e resumo para a equipe. Quando alguém da equipe responde, o robô para.') }}
+              {{ __('Quem escreve pela primeira vez vira atendimento e recebe as perguntas abaixo. O robô nunca responde dúvidas: a IA só organiza o contato, a urgência e o resumo para a equipe. Quando alguém responde — aqui ou pelo celular — o robô para naquela conversa.') }}
             </p>
           </div>
           <Toggle v-model="cfg.triagem_ativa" />
         </div>
         <div v-if="triagem && !triagem.conectado" class="mt-3 rounded-md bg-surface-amber-1 px-3 py-2 text-p-sm text-ink-amber-6">
-          {{ __('O WhatsApp Business (API oficial da Meta) ainda não está conectado. A triagem começa a funcionar assim que a conta for ligada.') }}
+          {{ __('O WhatsApp ainda não está conectado neste CRM. A triagem começa a funcionar assim que o número for ligado.') }}
         </div>
+        <div v-if="triagem?.por_palavra" class="mt-3 rounded-md bg-surface-gray-2 px-3 py-2 text-p-sm text-ink-gray-7">
+          {{ __('Este número também é usado no dia a dia, então o robô não aborda qualquer pessoa: ele só entra quando a mensagem traz uma das palavras abaixo — a mesma que você pede no vídeo ou no anúncio. Contato marcado como pessoal nunca é abordado.') }}
+        </div>
+        <Field v-if="triagem?.por_palavra" class="mt-3" :label="__('Palavras que ligam o robô (separadas por vírgula; vazio = todo contato novo)')"><FormControl v-model="cfg.triagem_palavra_chave" type="text" :placeholder="triagem?.padrao.palavra_chave" /></Field>
         <Field class="mt-3" :label="__('Mensagem de boas-vindas')"><FormControl v-model="cfg.triagem_boas_vindas" type="textarea" :rows="2" :placeholder="triagem?.padrao.boas_vindas" /></Field>
         <Field class="mt-3" :label="__('Perguntas (uma por linha, na ordem)')"><FormControl v-model="cfg.triagem_perguntas" type="textarea" :rows="4" :placeholder="triagem?.padrao.perguntas" /></Field>
         <Field class="mt-3" :label="__('Mensagem final')"><FormControl v-model="cfg.triagem_encerramento" type="textarea" :rows="2" :placeholder="triagem?.padrao.encerramento" /></Field>
