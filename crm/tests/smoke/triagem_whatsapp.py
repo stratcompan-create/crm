@@ -39,8 +39,9 @@ def run():
 			t = frappe.get_doc("CRM Triagem", {"telefone": TEL})
 			leads.append(t.lead)
 			ck("número desconhecido vira atendimento com origem WhatsApp", frappe.db.get_value("CRM Lead", t.lead, "source") == "WhatsApp")
-			ck("boas-vindas + 1ª pergunta saem pela API oficial", len(enviados) == 1 and "orientação jurídica" in enviados[0]["message"]
-			   and enviados[0]["reference_docname"] == t.lead)
+			ck("apresentação e 1ª pergunta saem em duas mensagens, pela API oficial",
+			   len(enviados) == 2 and "orientação jurídica" in enviados[0]["message"]
+			   and enviados[0]["reference_docname"] == t.lead and enviados[1]["message"] == tw._perguntas(au.get_config())[0])
 
 			perguntas = tw._perguntas(au.get_config())
 			respostas = ["Carlos Alberto Souza", "Trabalhei 4 anos sem carteira", "Não", "Petrolina"]
@@ -85,7 +86,7 @@ def run():
 			t3 = frappe.get_doc("CRM Triagem", {"telefone": TEL3})
 			leads.append(t3.lead)
 			ck("sem palavra configurada, qualquer contato novo entra na triagem",
-			   len(enviados) == antes + 1 and "Stratcompany" in enviados[-1]["message"])
+			   len(enviados) == antes + 2 and "Stratcompany" in enviados[-2]["message"])
 			ck("sem nome no perfil, a triagem começa perguntando o nome",
 			   cint(t3.etapa) == 0 and "como você se chama" in enviados[-1]["message"].lower())
 
@@ -96,9 +97,11 @@ def run():
 				t4 = frappe.get_doc("CRM Triagem", {"telefone": TEL4})
 				leads.append(t4.lead)
 				ck("com nome no perfil, pula a pergunta do nome e já chama pelo nome",
-				   cint(t4.etapa) == 1 and "Maria" in enviados[-1]["message"]
+				   len(enviados) == antes + 2 and cint(t4.etapa) == 1 and "Maria" in enviados[-1]["message"]
 				   and "como você se chama" not in enviados[-1]["message"].lower(),
 				   enviados[-1]["message"][-70:])
+				ck("a apresentação também chama a pessoa pelo nome",
+				   "Oi, Maria" in enviados[-2]["message"], enviados[-2]["message"][:40])
 
 			# quem quiser limitar escreve as palavras em Configurações
 			com_trava = frappe._dict(dict(cfg, triagem_palavra_chave="DEMO, CRM"))

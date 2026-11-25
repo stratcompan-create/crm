@@ -19,6 +19,7 @@
 
 import json
 import re
+import time
 
 import frappe
 import requests
@@ -27,10 +28,12 @@ from frappe.utils import add_days, cint, now_datetime, nowdate
 
 ORIGEM = "WhatsApp"
 EXPIRA_HORAS = 48  # conversa parada há mais tempo que isso recomeça do zero
+PAUSA = 1.2  # segundos entre a apresentação e a primeira pergunta, para chegarem na ordem
 
 BOAS_VINDAS = (
-	"Olá! Aqui é o atendimento do escritório. Vou fazer algumas perguntas rápidas para "
-	"organizar o seu contato e um advogado vai retornar. Por aqui não damos orientação jurídica."
+	"Olá, {nome}, tudo bem? Aqui é o atendimento do escritório. Vou fazer algumas perguntas "
+	"rápidas para organizar o seu contato e um advogado vai retornar. Por aqui não damos "
+	"orientação jurídica."
 )
 PERGUNTAS = (
 	"Qual é o seu nome completo?\n"
@@ -45,8 +48,8 @@ ENCERRAMENTO = (
 
 # --- perfil agência: quem escreve é advogado interessado no sistema, não cliente com um caso
 BOAS_VINDAS_AGENCIA = (
-	"Olá! Aqui é a Stratcompany. Vou fazer algumas perguntas rápidas para entender o seu "
-	"escritório e já te mandar o acesso de demonstração."
+	"Oi, {nome}, tudo bem? Muito prazer! Sou a assistente da Stratcompany e faço o primeiro "
+	"atendimento antes de te passar para o Thiago, tudo bem?"
 )
 # {nome} vira o primeiro nome de quem escreve; sem nome conhecido, some sem quebrar a frase.
 # A primeira pergunta só é feita quando o WhatsApp não diz o nome da pessoa.
@@ -61,8 +64,8 @@ PERGUNTAS_AGENCIA = (
 	"por onde você conheceu a Stratcompany?"
 )
 ENCERRAMENTO_AGENCIA = (
-	"Perfeito, obrigado! Já tenho o que preciso — em instantes te mando o acesso de "
-	"demonstração para você mexer à vontade, sem compromisso."
+	"Perfeito, {nome}, obrigada! Já tenho o que preciso. Vou passar tudo para o Thiago e "
+	"ele te retorna por aqui."
 )
 # Em branco = o robô atende todo contato novo. Quem quiser a trava escreve as palavras
 # em Configurações (ex.: a do CTA do vídeo).
@@ -346,7 +349,10 @@ def _processar(msg):
 		).insert(ignore_permissions=True)
 		if URGENTE.search(texto):
 			_avisar_urgente(t, texto, cfg)
-		_enviar(telefone, lead, _texto(cfg, "boas_vindas") + "\n\n" + _com_nome(perguntas[etapa], nome_perfil))
+		# duas mensagens, como gente escreve: a apresentação e, em seguida, a pergunta
+		_enviar(telefone, lead, _com_nome(_texto(cfg, "boas_vindas"), nome_perfil))
+		time.sleep(PAUSA)
+		_enviar(telefone, lead, _com_nome(perguntas[etapa], nome_perfil))
 		return
 
 	perguntas = _perguntas(cfg)
