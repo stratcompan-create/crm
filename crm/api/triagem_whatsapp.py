@@ -45,14 +45,20 @@ ENCERRAMENTO = (
 
 # --- perfil agência: quem escreve é advogado interessado no sistema, não cliente com um caso
 BOAS_VINDAS_AGENCIA = (
-	"Olá! Aqui é a Stratcompany. Vou fazer três perguntas rápidas para entender o seu "
+	"Olá! Aqui é a Stratcompany. Vou fazer algumas perguntas rápidas para entender o seu "
 	"escritório e já te mandar o acesso de demonstração."
 )
+# {nome} vira o primeiro nome de quem escreve; sem nome conhecido, some sem quebrar a frase.
+# A primeira pergunta só é feita quando o WhatsApp não diz o nome da pessoa.
 PERGUNTAS_AGENCIA = (
-	"Qual é o seu nome e o nome do escritório?\n"
+	"Como você se chama?\n"
+	"Então, {nome}, qual é o nome do seu escritório?\n"
 	"Em que área você atua?\n"
-	"Hoje são quantas pessoas no escritório (só você, ou equipe)?\n"
-	"O que te chamou atenção: a triagem no WhatsApp, o acompanhamento do cliente, o financeiro, ou o sistema todo?"
+	"Hoje o escritório é só você, ou vocês já são uma equipe?\n"
+	"Hoje, o que te chamou a atenção nos nossos serviços? Pode me explicar com suas palavras?\n"
+	"E isso é algo urgente para você? Me conta um pouco.\n"
+	"Então, {nome}, é a última pergunta antes de eu te encaminhar para o Thiago: "
+	"por onde você conheceu a Stratcompany?"
 )
 ENCERRAMENTO_AGENCIA = (
 	"Perfeito, obrigado! Já tenho o que preciso — em instantes te mando o acesso de "
@@ -239,6 +245,29 @@ def ao_receber_ycloud(doc, method=None):
 	)
 
 
+def _primeiro_nome(nome: str) -> str:
+	"""Primeiro nome de quem escreve, ou vazio. Ignora o nome de fábrica ('WhatsApp 4412')."""
+	nome = (nome or "").strip()
+	if not nome or nome.lower().startswith("whatsapp"):
+		return ""
+	primeiro = nome.split()[0]
+	return primeiro if len(primeiro) > 1 and not any(c.isdigit() for c in primeiro) else ""
+
+
+def _com_nome(texto: str, nome: str) -> str:
+	"""Troca {nome} pelo primeiro nome. Sem nome conhecido, a frase continua natural:
+	"Então, {nome}, qual é o nome do escritório?" vira "Então, qual é o nome do escritório?"."""
+	primeiro = _primeiro_nome(nome)
+	if primeiro:
+		return texto.replace("{nome}", primeiro)
+	texto = re.sub(r",?\s*\{nome\}", "", texto)
+	return re.sub(r"\s{2,}", " ", texto).strip()
+
+
+def _nome_do_lead(lead: str) -> str:
+	return frappe.db.get_value("CRM Lead", lead, "first_name") or ""
+
+
 def _nome_do_perfil(telefone: str) -> str:
 	if _motor() == "ycloud":
 		from crm.api import ycloud
@@ -305,39 +334,44 @@ def _processar(msg):
 			return
 		if not _pode_iniciar(texto, cfg):
 			return
-		lead = _novo_atendimento(telefone, _nome_do_perfil(telefone), cfg)
+		nome_perfil = _nome_do_perfil(telefone)
+		lead = _novo_atendimento(telefone, nome_perfil, cfg)
 		msg.db_set({"reference_doctype": "CRM Lead", "reference_docname": lead}, update_modified=False)
+		perguntas = _perguntas(cfg)
+		# o WhatsApp já diz como a pessoa se chama: quando sabemos, não perguntamos de novo
+		etapa = 1 if (_primeiro_nome(nome_perfil) and len(perguntas) > 1) else 0
 		t = frappe.get_doc(
-			{"doctype": "CRM Triagem", "lead": lead, "telefone": telefone, "etapa": 0, "status": "Em andamento",
+			{"doctype": "CRM Triagem", "lead": lead, "telefone": telefone, "etapa": etapa, "status": "Em andamento",
 			 "respostas": json.dumps([{"pergunta": "Primeira mensagem", "resposta": texto}], ensure_ascii=False)}
 		).insert(ignore_permissions=True)
 		if URGENTE.search(texto):
 			_avisar_urgente(t, texto, cfg)
-		perguntas = _perguntas(cfg)
-		_enviar(telefone, lead, _texto(cfg, "boas_vindas") + "\n\n" + perguntas[0])
+		_enviar(telefone, lead, _texto(cfg, "boas_vindas") + "\n\n" + _com_nome(perguntas[etapa], nome_perfil))
 		return
 
 	perguntas = _perguntas(cfg)
+	nome = _nome_do_lead(t.lead)
 	respostas = json.loads(t.respostas or "[]")
 	etapa = cint(t.etapa)
 	respostas.append({"pergunta": perguntas[etapa] if etapa < len(perguntas) else "", "resposta": texto})
 	t.respostas = json.dumps(respostas, ensure_ascii=False)
 	if etapa == 0 and texto and len(texto) <= 80 and not any(c.isdigit() for c in texto):
-		# primeira pergunta é o nome: corrige o atendimento com o nome que a pessoa informou
+		# a primeira pergunta só é feita a quem o WhatsApp não identificou: grava o nome informado
 		first, _sep, last = texto.partition(" ")
 		frappe.db.set_value("CRM Lead", t.lead, {"first_name": first[:140], "last_name": last[:140]})
+		nome = texto
 	if URGENTE.search(texto) and t.urgencia != "Alta":
 		_avisar_urgente(t, texto, cfg)
 	etapa += 1
 	t.etapa = etapa
 	if etapa < len(perguntas):
 		t.save(ignore_permissions=True)
-		_enviar(telefone, t.lead, perguntas[etapa])
+		_enviar(telefone, t.lead, _com_nome(perguntas[etapa], nome))
 		return
 	t.status = "Concluída"
 	t.concluida_em = now_datetime()
 	t.save(ignore_permissions=True)
-	_enviar(telefone, t.lead, _texto(cfg, "encerramento"))
+	_enviar(telefone, t.lead, _com_nome(_texto(cfg, "encerramento"), nome))
 	_concluir(t, cfg)
 
 

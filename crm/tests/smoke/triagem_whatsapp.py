@@ -4,6 +4,7 @@ import json
 from unittest.mock import patch
 
 import frappe
+from frappe.utils import cint
 
 from crm.api import automacoes as au
 from crm.api import triagem_whatsapp as tw
@@ -11,6 +12,7 @@ from crm.api import triagem_whatsapp as tw
 TEL = "5587999990001"
 TEL2 = "5587999990002"
 TEL3 = "5587999990003"
+TEL4 = "5587999990004"
 
 
 class Msg(frappe._dict):
@@ -64,8 +66,19 @@ def run():
 			 patch("crm.api.triagem_whatsapp._motor", return_value="ycloud"), \
 			 patch("crm.api.ycloud.enviar_texto", side_effect=lambda telefone, message: enviados.append({"message": message})):
 			cfg = au.get_config()
-			ck("na agência as perguntas de fábrica são as do funil da agência", "escritório" in tw._perguntas(cfg)[0].lower())
+			perg = tw._perguntas(cfg)
+			ck("na agência as perguntas de fábrica são as do funil da agência", "escritório" in " ".join(perg[:2]).lower())
 			ck("de fábrica não há palavra combinada (o robô atende todo mundo)", tw._palavras_chave(cfg) == [])
+
+			# o WhatsApp já diz o nome: a 1ª pergunta é pulada e o nome entra nas frases
+			ck("primeiro nome sai do nome do perfil", tw._primeiro_nome("Maria Clara Souza") == "Maria")
+			ck("nome de fábrica não conta como nome", tw._primeiro_nome("WhatsApp 4412") == "")
+			ck("com nome conhecido a frase é personalizada",
+			   tw._com_nome("Então, {nome}, qual é o nome do seu escritório?", "Maria Clara")
+			   == "Então, Maria, qual é o nome do seu escritório?")
+			ck("sem nome conhecido a frase continua natural",
+			   tw._com_nome("Então, {nome}, qual é o nome do seu escritório?", "")
+			   == "Então, qual é o nome do seu escritório?")
 
 			antes = len(enviados)
 			tw._processar(Msg({"from": TEL3, "message": "Oi, tudo bem?", "reference_doctype": None, "reference_docname": None}))
@@ -73,6 +86,19 @@ def run():
 			leads.append(t3.lead)
 			ck("sem palavra configurada, qualquer contato novo entra na triagem",
 			   len(enviados) == antes + 1 and "Stratcompany" in enviados[-1]["message"])
+			ck("sem nome no perfil, a triagem começa perguntando o nome",
+			   cint(t3.etapa) == 0 and "como você se chama" in enviados[-1]["message"].lower())
+
+			# quando o WhatsApp identifica a pessoa, a pergunta do nome é pulada
+			with patch("crm.api.triagem_whatsapp._nome_do_perfil", return_value="Maria Clara Souza"):
+				antes = len(enviados)
+				tw._processar(Msg({"from": TEL4, "message": "Oi, vi o vídeo de vocês", "reference_doctype": None, "reference_docname": None}))
+				t4 = frappe.get_doc("CRM Triagem", {"telefone": TEL4})
+				leads.append(t4.lead)
+				ck("com nome no perfil, pula a pergunta do nome e já chama pelo nome",
+				   cint(t4.etapa) == 1 and "Maria" in enviados[-1]["message"]
+				   and "como você se chama" not in enviados[-1]["message"].lower(),
+				   enviados[-1]["message"][-70:])
 
 			# quem quiser limitar escreve as palavras em Configurações
 			com_trava = frappe._dict(dict(cfg, triagem_palavra_chave="DEMO, CRM"))
