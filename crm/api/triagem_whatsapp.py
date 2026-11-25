@@ -47,9 +47,11 @@ ENCERRAMENTO = (
 )
 
 # --- perfil agência: quem escreve é advogado interessado no sistema, não cliente com um caso
+# A apresentação não termina em pergunta de propósito: "tudo bem?" no fim convida a um
+# "perfeito" que não responde nada e atrapalhava a conversa.
 BOAS_VINDAS_AGENCIA = (
 	"Oi, {nome}, tudo bem? Muito prazer! Sou a assistente da Stratcompany e faço o primeiro "
-	"atendimento antes de te passar para o Thiago, tudo bem?"
+	"atendimento antes de te passar para o Thiago."
 )
 # {nome} vira o primeiro nome de quem escreve; sem nome conhecido, some sem quebrar a frase.
 # A primeira pergunta só é feita quando o WhatsApp não diz o nome da pessoa.
@@ -248,6 +250,74 @@ def ao_receber_ycloud(doc, method=None):
 	)
 
 
+# Palavras que, sozinhas, são só educação ou concordância. "sim" e "não" ficam de fora
+# porque respondem perguntas fechadas ("é urgente?").
+SO_EDUCACAO = {
+	"ok", "okay", "blz", "beleza", "perfeito", "perfeita", "claro", "certo", "certinho",
+	"isso", "exato", "show", "massa", "legal", "top", "ótimo", "otimo", "bom", "boa",
+	"bem", "tudo", "oi", "olá", "ola", "eae", "opa", "dia", "tarde", "noite", "obrigado",
+	"obrigada", "brigado", "vlw", "valeu", "uhum", "aham", "entendi", "entendido",
+	"bora", "fechado", "combinado", "ótima", "otima", "🙏", "👍", "😊", "😁", "🙂",
+}
+PEDIR_DE_NOVO = "Só pra eu registrar certinho: {pergunta}"
+MAX_REFORCOS = 2  # depois disso segue em frente, para não ficar insistindo com a pessoa
+
+
+def _so_educacao(texto: str) -> bool:
+	"""'Perfeito', 'ok', 'bom dia' — gentileza que não responde pergunta nenhuma."""
+	limpo = re.sub(r"[^\w\sÀ-ÿ]", " ", (texto or "").lower())
+	palavras = [p for p in limpo.split() if p]
+	if not palavras or len(palavras) > 4:
+		return not palavras
+	return all(p in SO_EDUCACAO for p in palavras)
+
+
+def _responde_a_pergunta(pergunta: str, texto: str) -> bool:
+	"""A mensagem responde ao que foi perguntado? Quem decide é a IA; sem ela, a heurística.
+
+	É o que impede a conversa de andar sozinha quando a pessoa só diz "perfeito".
+	"""
+	texto = (texto or "").strip()
+	if not texto:
+		return False
+	if _so_educacao(texto):
+		return False
+	if not pergunta:
+		return True
+
+	from crm.api import credito_ia
+	from crm.api.ficha import API_URL, MODEL, _api_key
+
+	key = _api_key()
+	if not key or not credito_ia.saldo_suficiente():
+		return True  # sem IA, não trava a conversa: segue com a heurística que já passou
+	try:
+		resp = requests.post(
+			API_URL,
+			headers={"x-api-key": key, "anthropic-version": "2023-06-01", "content-type": "application/json"},
+			json={
+				"model": MODEL,
+				"max_tokens": 5,
+				"system": (
+					"Você confere uma triagem por WhatsApp. Dada a PERGUNTA e a MENSAGEM da pessoa, "
+					"responda só SIM se a mensagem traz a informação pedida, mesmo que de forma curta "
+					"ou informal, e só NAO se for cumprimento, concordância, dúvida ou assunto diferente. "
+					"Responda apenas SIM ou NAO."
+				),
+				"messages": [{"role": "user", "content": f"PERGUNTA: {pergunta}\nMENSAGEM: {texto[:600]}"}],
+			},
+			timeout=20,
+		)
+		if not resp.ok:
+			return True
+		data = resp.json()
+		credito_ia.registrar_uso(data.get("usage"))
+		saida = "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text")
+		return "NAO" not in saida.strip().upper()[:4]
+	except (requests.RequestException, ValueError):
+		return True
+
+
 def _primeiro_nome(nome: str) -> str:
 	"""Primeiro nome de quem escreve, ou vazio. Ignora o nome de fábrica ('WhatsApp 4412')."""
 	nome = (nome or "").strip()
@@ -359,15 +429,29 @@ def _processar(msg):
 	nome = _nome_do_lead(t.lead)
 	respostas = json.loads(t.respostas or "[]")
 	etapa = cint(t.etapa)
-	respostas.append({"pergunta": perguntas[etapa] if etapa < len(perguntas) else "", "resposta": texto})
+	pergunta = perguntas[etapa] if etapa < len(perguntas) else ""
+
+	if URGENTE.search(texto) and t.urgencia != "Alta":
+		_avisar_urgente(t, texto, cfg)
+
+	# "perfeito", "ok", "bom dia": gentileza não é resposta. Em vez de avançar, pede de novo —
+	# mas sem insistir para sempre, senão a conversa trava.
+	ja_pediu = sum(1 for r in respostas if r.get("ignorada") and r.get("pergunta") == pergunta)
+	if pergunta and ja_pediu < MAX_REFORCOS and not _responde_a_pergunta(pergunta, texto):
+		respostas.append({"pergunta": pergunta, "resposta": texto, "ignorada": 1})
+		t.respostas = json.dumps(respostas, ensure_ascii=False)
+		t.save(ignore_permissions=True)
+		de_novo = _com_nome(pergunta, nome)
+		_enviar(telefone, t.lead, PEDIR_DE_NOVO.format(pergunta=de_novo[:1].lower() + de_novo[1:]))
+		return
+
+	respostas.append({"pergunta": pergunta, "resposta": texto})
 	t.respostas = json.dumps(respostas, ensure_ascii=False)
 	if etapa == 0 and texto and len(texto) <= 80 and not any(c.isdigit() for c in texto):
 		# a primeira pergunta só é feita a quem o WhatsApp não identificou: grava o nome informado
 		first, _sep, last = texto.partition(" ")
 		frappe.db.set_value("CRM Lead", t.lead, {"first_name": first[:140], "last_name": last[:140]})
 		nome = texto
-	if URGENTE.search(texto) and t.urgencia != "Alta":
-		_avisar_urgente(t, texto, cfg)
 	etapa += 1
 	t.etapa = etapa
 	if etapa < len(perguntas):
@@ -404,7 +488,12 @@ def _tarefa(t, cfg, titulo: str, descricao: str, prioridade: str, dias: int):
 
 
 def _texto_respostas(t) -> str:
-	return "\n\n".join(f"{r['pergunta']}\n→ {r['resposta']}" for r in json.loads(t.respostas or "[]"))
+	"""O que a pessoa de fato respondeu — sem os 'ok' e 'perfeito' que não respondiam nada."""
+	return "\n\n".join(
+		f"{r['pergunta']}\n→ {r['resposta']}"
+		for r in json.loads(t.respostas or "[]")
+		if not r.get("ignorada")
+	)
 
 
 def _concluir(t, cfg):

@@ -102,6 +102,24 @@ def run():
 				   enviados[-1]["message"][-70:])
 				ck("a apresentação também chama a pessoa pelo nome",
 				   "Oi, Maria" in enviados[-2]["message"], enviados[-2]["message"][:40])
+				ck("a apresentação não termina em pergunta (senão vem 'perfeito' no lugar da resposta)",
+				   not enviados[-2]["message"].rstrip().endswith("?"), enviados[-2]["message"][-30:])
+
+				# gentileza não é resposta: a conversa não pode andar com "perfeito"
+				with patch("crm.api.ficha._api_key", return_value=None):
+					antes = len(enviados)
+					tw._processar(Msg({"from": TEL4, "message": "Perfeito", "reference_doctype": "CRM Lead", "reference_docname": t4.lead}))
+					t4.reload()
+					ck("'Perfeito' não avança a conversa e a pergunta volta",
+					   cint(t4.etapa) == 1 and len(enviados) == antes + 1
+					   and "registrar certinho" in enviados[-1]["message"],
+					   enviados[-1]["message"][:50])
+
+					tw._processar(Msg({"from": TEL4, "message": "Oliveira Advocacia", "reference_doctype": "CRM Lead", "reference_docname": t4.lead}))
+					t4.reload()
+					ck("resposta de verdade avança para a próxima pergunta", cint(t4.etapa) == 2)
+					ck("o 'perfeito' não entra no resumo que vai para a equipe",
+					   "Perfeito" not in tw._texto_respostas(t4))
 
 			# quem quiser limitar escreve as palavras em Configurações
 			com_trava = frappe._dict(dict(cfg, triagem_palavra_chave="DEMO, CRM"))
