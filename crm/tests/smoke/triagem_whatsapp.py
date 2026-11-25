@@ -59,23 +59,27 @@ def run():
 			tw.ao_receber(frappe._dict(direction="Outgoing", reference_doctype="CRM Lead", reference_docname=t2.lead))
 			ck("quando a equipe responde, o robô para", frappe.db.get_value("CRM Triagem", t2.name, "status") == "Assumida pela equipe")
 
-		# ---- agência: o número também é pessoal, então o robô só entra pela palavra combinada
+		# ---- agência: todo contato novo entra, e a trava por palavra é opcional
 		with patch("crm.provision.get_profile", return_value="agencia"), \
 			 patch("crm.api.triagem_whatsapp._motor", return_value="ycloud"), \
 			 patch("crm.api.ycloud.enviar_texto", side_effect=lambda telefone, message: enviados.append({"message": message})):
 			cfg = au.get_config()
 			ck("na agência as perguntas de fábrica são as do funil da agência", "escritório" in tw._perguntas(cfg)[0].lower())
+			ck("de fábrica não há palavra combinada (o robô atende todo mundo)", tw._palavras_chave(cfg) == [])
 
 			antes = len(enviados)
 			tw._processar(Msg({"from": TEL3, "message": "Oi, tudo bem?", "reference_doctype": None, "reference_docname": None}))
-			ck("sem a palavra combinada, o robô não aborda ninguém",
-			   not frappe.db.exists("CRM Triagem", {"telefone": TEL3}) and len(enviados) == antes)
-
-			tw._processar(Msg({"from": TEL3, "message": "vi o vídeo, quero a DEMO", "reference_doctype": None, "reference_docname": None}))
 			t3 = frappe.get_doc("CRM Triagem", {"telefone": TEL3})
 			leads.append(t3.lead)
-			ck("com a palavra combinada, a triagem começa e fala pela YCloud",
+			ck("sem palavra configurada, qualquer contato novo entra na triagem",
 			   len(enviados) == antes + 1 and "Stratcompany" in enviados[-1]["message"])
+
+			# quem quiser limitar escreve as palavras em Configurações
+			com_trava = frappe._dict(dict(cfg, triagem_palavra_chave="DEMO, CRM"))
+			ck("com palavra configurada, quem não escreve a palavra não é abordado",
+			   not tw._pode_iniciar("Oi, tudo bem?", com_trava))
+			ck("com palavra configurada, quem escreve a palavra é abordado",
+			   tw._pode_iniciar("vi o vídeo, quero a DEMO", com_trava))
 
 			# resposta do dono pelo próprio celular encerra o robô naquela conversa
 			tw.ao_receber_ycloud(frappe._dict(direction="Sent", contato=TEL3, lead=t3.lead, pelo_celular=1))

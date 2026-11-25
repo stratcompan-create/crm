@@ -11,10 +11,11 @@
 #   - YCloud (coexistência, o número continua no celular) — é o caso da agência
 #   - app `whatsapp` (API oficial da Meta) — escritório com conta Business própria
 #
-# PERFIL AGÊNCIA: o número é pessoal também (o dono usa o mesmo WhatsApp). Por isso lá o robô
-# NÃO aborda quem escrever qualquer coisa: só entra em cena quando a mensagem traz a palavra
-# combinada do anúncio ou do vídeo (ex.: "DEMO"). Em perfil de escritório, o número é do
-# escritório e todo contato novo entra na triagem, como antes.
+# Todo contato novo entra na triagem, em qualquer perfil: é disso que a triagem vive.
+# Quem quiser limitar (porque o número também é pessoal, por exemplo) escreve em
+# Configurações as palavras que ligam o robô — aí só quem escrever uma delas é abordado.
+# Em branco, que é o padrão, o robô atende todo mundo. Contato marcado como pessoal nunca
+# é abordado, e a resposta do dono (pelo CRM ou pelo celular) encerra o robô na conversa.
 
 import json
 import re
@@ -57,8 +58,9 @@ ENCERRAMENTO_AGENCIA = (
 	"Perfeito, obrigado! Já tenho o que preciso — em instantes te mando o acesso de "
 	"demonstração para você mexer à vontade, sem compromisso."
 )
-# palavra que liga o robô no perfil agência (a do CTA do vídeo). Configurável.
-PALAVRA_CHAVE = "DEMO, CRM, SISTEMA"
+# Em branco = o robô atende todo contato novo. Quem quiser a trava escreve as palavras
+# em Configurações (ex.: a do CTA do vídeo).
+PALAVRA_CHAVE = ""
 # o que a agência vende — a IA diz em qual deles o contato está interessado
 SERVICOS = ("CRM Jurídico", "Site", "Tráfego pago", "Audiovisual", "Conteúdo")
 
@@ -116,9 +118,9 @@ def _palavras_chave(cfg) -> list[str]:
 def _pode_iniciar(texto: str, cfg) -> bool:
 	"""Começar uma triagem com quem nunca escreveu antes.
 
-	No escritório, sim: o número é do escritório. Na agência o número também é pessoal,
-	então o robô só entra quando a mensagem traz a palavra combinada no anúncio ou no vídeo.
-	Palavra em branco na configuração = robô atende todo mundo (quem liga, assume).
+	Sem palavras configuradas (o padrão), sim: todo contato novo entra na triagem.
+	Com palavras configuradas, só entra quem escrever uma delas — é a trava de quem usa
+	o mesmo número no dia a dia e não quer que o robô fale com qualquer um.
 	"""
 	palavras = _palavras_chave(cfg)
 	if not palavras:
